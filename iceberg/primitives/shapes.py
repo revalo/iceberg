@@ -1,8 +1,15 @@
+from typing import Tuple
 import skia
 
 from iceberg import Drawable, Bounds, Color
+from iceberg.core import Bounds
+from iceberg.core.properties import PathStyle
+from iceberg.geometry import get_transform, apply_transform
 from dataclasses import dataclass
+from abc import ABC, abstractmethod, abstractproperty
 from enum import Enum
+
+import math
 
 
 class BorderPosition(Enum):
@@ -69,5 +76,48 @@ class Rectangle(Drawable):
         return self._bounds
 
     def draw(self, canvas):
-        canvas.drawRect(self._skia_rect, self._fill_paint)
-        canvas.drawRect(self._border_skia_rect, self._border_paint)
+        if self._fill_paint:
+            canvas.drawRect(self._skia_rect, self._fill_paint)
+
+        if self._border_paint:
+            canvas.drawRect(self._border_skia_rect, self._border_paint)
+
+
+@dataclass
+class Ellipse(Rectangle):
+    def draw(self, canvas):
+        if self._fill_paint:
+            canvas.drawOval(self._skia_rect, self._fill_paint)
+
+        if self._border_paint:
+            canvas.drawOval(self._border_skia_rect, self._border_paint)
+
+
+class Path(Drawable, ABC):
+    def __init__(self, skia_path: skia.Path, path_style: PathStyle):
+        super().__init__()
+
+        self._path = skia_path
+        self._bounds = Bounds.from_skia(self._path.computeTightBounds())
+        self._path_style = path_style
+
+    @property
+    def bounds(self) -> Bounds:
+        return self._bounds
+
+    def draw(self, canvas):
+        canvas.drawPath(self._path, self._path_style.skia_paint)
+
+
+@dataclass
+class Line(Path):
+    start: Tuple[float, float]
+    end: Tuple[float, float]
+    path_style: PathStyle
+
+    def __post_init__(self):
+        path = skia.Path()
+        path.moveTo(*self.start)
+        path.lineTo(*self.end)
+
+        super().__init__(path, self.path_style)

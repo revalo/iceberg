@@ -79,6 +79,24 @@ class Bounds(object):
     def __repr__(self) -> str:
         return f"Bounds({self.left}, {self.top}, {self.right}, {self.bottom})"
 
+    @classmethod
+    def from_skia(cls, rect: skia.Rect) -> "Bounds":
+        return cls(
+            left=rect.left(),
+            right=rect.right(),
+            top=rect.top(),
+            bottom=rect.bottom(),
+        )
+
+    @classmethod
+    def from_points(cls, points: Tuple[Tuple[float, float], ...]) -> "Bounds":
+        left = min([point[0] for point in points])
+        right = max([point[0] for point in points])
+        top = min([point[1] for point in points])
+        bottom = max([point[1] for point in points])
+
+        return cls(left=left, right=right, top=top, bottom=bottom)
+
 
 class Color(object):
     def __init__(self, r: float, g: float, b: float, a: float = 1.0) -> None:
@@ -138,3 +156,33 @@ class Color(object):
 
     def __hash__(self) -> int:
         return hash((self.r, self.g, self.b, self.a))
+
+
+class PathStyle(object):
+    def __init__(self, color: Color, thickness: float = 1.0, anti_alias: bool = True):
+        self._color = color
+        self._thickness = thickness
+        self._anti_alias = anti_alias
+
+        self._skia_paint = skia.Paint(
+            Style=skia.Paint.kStroke_Style,
+            AntiAlias=anti_alias,
+            StrokeWidth=thickness,
+            Color4f=color.to_skia(),
+        )
+
+    @property
+    def color(self) -> Color:
+        return self._color
+
+    @property
+    def thickness(self) -> float:
+        return self._thickness
+
+    @property
+    def anti_alias(self) -> bool:
+        return self._anti_alias
+
+    @property
+    def skia_paint(self) -> skia.Paint:
+        return self._skia_paint

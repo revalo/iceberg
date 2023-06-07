@@ -17,6 +17,8 @@ class Transform(Drawable):
         scale: Tuple[float, float] = (1, 1),
         anchor: Tuple[float, float] = (0, 0),
     ):
+        super().__init__()
+
         self._child = child
         self._position = position
         self._scale = scale
