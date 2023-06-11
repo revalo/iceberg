@@ -3,22 +3,22 @@ from typing import Tuple, Sequence, Union
 from absl import app
 from absl import flags
 
-from iceberg import Renderer, Color, Bounds
-from iceberg.core.drawable import Drawable
-from iceberg.core.properties import Colors, Corner, FontStyle, PathStyle
+from iceberg import (
+    Renderer,
+    Color,
+    Bounds,
+    Drawable,
+    Colors,
+    Corner,
+    PathStyle,
+)
 from iceberg.primitives import (
-    Rectangle,
-    Transform,
-    Padding,
     Compose,
-    Grid,
     Ellipse,
     Line,
     Blank,
-    Text,
+    Arrange,
 )
-from iceberg.primitives.layout import Align, Arrange, Directions
-from iceberg.primitives.shapes import BorderPosition
 
 FLAGS = flags.FLAGS
 
