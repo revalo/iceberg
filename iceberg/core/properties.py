@@ -1,13 +1,29 @@
+from dataclasses import dataclass
 from typing import Tuple
 
 import skia
+import numpy as np
+
+from iceberg.geometry import apply_transform
+
+
+class Corner(object):
+    TOP_LEFT = 0
+    TOP_MIDDLE = 1
+    TOP_RIGHT = 2
+    MIDDLE_RIGHT = 3
+    BOTTOM_RIGHT = 4
+    BOTTOM_MIDDLE = 5
+    BOTTOM_LEFT = 6
+    MIDDLE_LEFT = 7
+    CENTER = 8
 
 
 class Bounds(object):
     def __init__(
         self,
-        top: float = None,
-        left: float = None,
+        top: float = 0,
+        left: float = 0,
         bottom: float = None,
         right: float = None,
         center: Tuple[float, float] = None,
@@ -31,11 +47,26 @@ class Bounds(object):
             right = x + w
             top = y
             bottom = y + h
+        elif position is None and size is not None:
+            w, h = size
+            right = left + w
+            bottom = top + h
 
         self._left = left
         self._right = right
         self._top = top
         self._bottom = bottom
+
+        self._compute_corners()
+
+    def transform(self, transform: np.ndarray):
+        corners = self.corners
+        transformed_corners = apply_transform(corners, transform)
+
+        left, top = transformed_corners[Corner.TOP_LEFT]
+        right, bottom = transformed_corners[Corner.BOTTOM_RIGHT]
+
+        return Bounds(top, left, bottom, right)
 
     @property
     def left(self) -> float:
@@ -89,6 +120,15 @@ class Bounds(object):
         )
 
     @classmethod
+    def empty(cls) -> "Bounds":
+        return cls(
+            left=0,
+            right=0,
+            bottom=0,
+            top=0,
+        )
+
+    @classmethod
     def from_points(cls, points: Tuple[Tuple[float, float], ...]) -> "Bounds":
         left = min([point[0] for point in points])
         right = max([point[0] for point in points])
@@ -96,6 +136,33 @@ class Bounds(object):
         bottom = max([point[1] for point in points])
 
         return cls(left=left, right=right, top=top, bottom=bottom)
+
+    def _compute_corners(self) -> Tuple[Tuple[float, float], ...]:
+        top_left = (self.left, self.top)
+        top_right = (self.right, self.top)
+        bottom_right = (self.right, self.bottom)
+        bottom_left = (self.left, self.bottom)
+        top_middle = (self.left + self.width / 2, self.top)
+        middle_right = (self.right, self.top + self.height / 2)
+        bottom_middle = (self.left + self.width / 2, self.bottom)
+        middle_left = (self.left, self.top + self.height / 2)
+        center = (self.left + self.width / 2, self.top + self.height / 2)
+
+        self._computed_corners = (
+            top_left,
+            top_middle,
+            top_right,
+            middle_right,
+            bottom_right,
+            bottom_middle,
+            bottom_left,
+            middle_left,
+            center,
+        )
+
+    @property
+    def corners(self) -> Tuple[Tuple[float, float], ...]:
+        return self._computed_corners
 
 
 class Color(object):
@@ -130,7 +197,24 @@ class Color(object):
 
     @classmethod
     def from_hex(cls, hex: str) -> "Color":
-        return cls(*skia.Color4f(hex).as4int())
+        hex = hex.lstrip("#")
+
+        # Get RGB or RGBA from hex.
+        if len(hex) == 6:
+            return cls.from_rgb(
+                int(hex[0:2], 16),
+                int(hex[2:4], 16),
+                int(hex[4:6], 16),
+            )
+        elif len(hex) == 8:
+            return cls.from_rgba(
+                int(hex[0:2], 16),
+                int(hex[2:4], 16),
+                int(hex[4:6], 16),
+                int(hex[6:8], 16),
+            )
+        else:
+            raise ValueError(f"Invalid hex value: {hex}")
 
     @classmethod
     def from_rgb(cls, r: int, g: int, b: int) -> "Color":
@@ -156,6 +240,18 @@ class Color(object):
 
     def __hash__(self) -> int:
         return hash((self.r, self.g, self.b, self.a))
+
+
+class Colors(object):
+    BLACK = Color.from_hex("#000000")
+    WHITE = Color.from_hex("#FFFFFF")
+    RED = Color.from_hex("#FF0000")
+    GREEN = Color.from_hex("#00FF00")
+    BLUE = Color.from_hex("#0000FF")
+    YELLOW = Color.from_hex("#FFFF00")
+    CYAN = Color.from_hex("#00FFFF")
+    MAGENTA = Color.from_hex("#FF00FF")
+    TRANSPARENT = Color.from_rgba(0, 0, 0, 0)
 
 
 class PathStyle(object):
@@ -186,3 +282,26 @@ class PathStyle(object):
     @property
     def skia_paint(self) -> skia.Paint:
         return self._skia_paint
+
+
+@dataclass
+class FontStyle(object):
+    family: str
+    size: float = 16
+    font_weight: int = 400
+    font_style: int = 0
+    color: Color = Color(0, 0, 0)
+    anti_alias: bool = True
+
+    def get_skia_paint(self) -> skia.Paint:
+        return skia.Paint(
+            Style=skia.Paint.kFill_Style,
+            AntiAlias=self.anti_alias,
+            Color4f=self.color.to_skia(),
+        )
+
+    def get_skia_font(self) -> skia.Font:
+        return skia.Font(
+            skia.Typeface(self.family),
+            self.size,
+        )

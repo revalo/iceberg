@@ -1,10 +1,44 @@
-from typing import List, Tuple, Union
+from typing import List, Sequence, Tuple, Union
 import skia
 
-from iceberg import Drawable, Bounds, Color
+from iceberg import Drawable, Bounds, Color, Colors
+from iceberg.core.drawable import Drawable
 from iceberg.geometry import get_transform, apply_transform
 from dataclasses import dataclass
+from abc import ABC, abstractmethod, abstractproperty
 from enum import Enum
+import numpy as np
+
+
+class Directions:
+    ORIGIN = np.array([0, 0])
+    UP = np.array([0, -1])
+    DOWN = np.array([0, 1])
+    LEFT = np.array([-1, 0])
+    RIGHT = np.array([1, 0])
+
+
+class Blank(Drawable):
+    """A drawable that is an expansive blank space."""
+
+    def __init__(self, bounds: Bounds, background: Color = Colors.BLACK) -> None:
+        super().__init__()
+
+        self._bounds = bounds
+        self._background = background
+
+        self._paint = skia.Paint(
+            Style=skia.Paint.kFill_Style,
+            AntiAlias=True,
+            Color4f=self._background.to_skia(),
+        )
+
+    @property
+    def bounds(self) -> Bounds:
+        return self._bounds
+
+    def draw(self, canvas: skia.Canvas) -> None:
+        canvas.drawRect(self._bounds.to_skia(), self._paint)
 
 
 class Transform(Drawable):
@@ -60,6 +94,18 @@ class Transform(Drawable):
             right=right,
             bottom=bottom,
         )
+
+    @property
+    def children(self) -> Sequence[Drawable]:
+        return [self._child]
+
+    @property
+    def transform(self) -> np.ndarray:
+        return self._transform
+
+    @property
+    def child(self) -> np.ndarray:
+        return self._child
 
     @property
     def bounds(self) -> Bounds:
@@ -122,19 +168,25 @@ class Compose(Drawable):
 
     def __init__(self, children: Tuple[Drawable, ...]):
         self._children = children
+        self._composed_bounds = Bounds.empty()
 
-        # Compute the bounds of the composed children.
-        left = min([child.bounds.left for child in self._children])
-        top = min([child.bounds.top for child in self._children])
-        right = max([child.bounds.right for child in self._children])
-        bottom = max([child.bounds.bottom for child in self._children])
+        if len(self._children):
+            # Compute the bounds of the composed children.
+            left = min([child.bounds.left for child in self._children])
+            top = min([child.bounds.top for child in self._children])
+            right = max([child.bounds.right for child in self._children])
+            bottom = max([child.bounds.bottom for child in self._children])
 
-        self._composed_bounds = Bounds(
-            left=left,
-            top=top,
-            right=right,
-            bottom=bottom,
-        )
+            self._composed_bounds = Bounds(
+                left=left,
+                top=top,
+                right=right,
+                bottom=bottom,
+            )
+
+    @property
+    def children(self) -> Sequence[Drawable]:
+        return self._children
 
     @property
     def bounds(self) -> Bounds:
@@ -143,6 +195,56 @@ class Compose(Drawable):
     def draw(self, canvas: skia.Canvas):
         for child in self._children:
             child.draw(canvas)
+
+
+class Anchor(Compose):
+    """A drawable that composes it's children without expanding the
+    borders.
+    """
+
+    def __init__(self, children: Tuple[Drawable, ...], anchor_index: int = 0):
+        self._anchor_index = anchor_index
+
+        super().__init__(children)
+
+    @property
+    def anchor(self) -> Drawable:
+        return self._children[self._anchor_index]
+
+    @property
+    def bounds(self) -> Bounds:
+        return self.anchor.bounds
+
+
+class Align(Compose):
+    def __init__(
+        self,
+        anchor: Drawable,
+        child: Drawable,
+        anchor_corner: int,
+        child_corner: int,
+        direction: np.ndarray = Directions.ORIGIN,
+    ):
+        anchor_corner = anchor.bounds.corners[anchor_corner]
+        child_corner = child.bounds.corners[child_corner]
+
+        dx = anchor_corner[0] - child_corner[0]
+        dy = anchor_corner[1] - child_corner[1]
+
+        dx += direction[0]
+        dy += direction[1]
+
+        child_transformed = Transform(
+            child=child,
+            position=(dx, dy),
+        )
+
+        super().__init__(
+            children=[
+                anchor,
+                child_transformed,
+            ]
+        )
 
 
 class Grid(Compose):
