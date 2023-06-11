@@ -76,6 +76,8 @@ class Rectangle(Drawable):
         return self._bounds
 
     def draw(self, canvas):
+        self.__post_init__()
+
         if self._fill_paint:
             canvas.drawRect(self._skia_rect, self._fill_paint)
 
@@ -86,6 +88,8 @@ class Rectangle(Drawable):
 @dataclass
 class Ellipse(Rectangle):
     def draw(self, canvas):
+        self.__post_init__()
+
         if self._fill_paint:
             canvas.drawOval(self._skia_rect, self._fill_paint)
 

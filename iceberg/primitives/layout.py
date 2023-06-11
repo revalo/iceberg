@@ -247,6 +247,29 @@ class Align(Compose):
         )
 
 
+class Arrange(Compose):
+    class Direction(Enum):
+        HORIZONTAL = 0
+        VERTICAL = 1
+
+    def __init__(
+        self,
+        children: List[Drawable],
+        arrange_direction: Direction = Direction.HORIZONTAL,
+        gap: float = 1,
+    ):
+        next_to_direction = (
+            Directions.RIGHT
+            if arrange_direction == Arrange.Direction.HORIZONTAL
+            else Directions.DOWN
+        )
+        arrangement = children[0]
+        for next_child in children[1:]:
+            arrangement = arrangement.next_to(next_child, next_to_direction * gap)
+
+        super().__init__([arrangement])
+
+
 class Grid(Compose):
     def __init__(self, children_matrix: List[List[Drawable]], gap=0):
         self._children_matrix = children_matrix
