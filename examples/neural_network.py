@@ -19,6 +19,7 @@ from iceberg.primitives import (
     Blank,
     Arrange,
 )
+from iceberg.primitives.layout import Transform
 
 FLAGS = flags.FLAGS
 
