@@ -78,7 +78,9 @@ def main(argv):
 
     scene = canvas.center_to(tex)
 
-    Renderer(scene).save("test.png")
+    renderer = Renderer()
+    renderer.render(scene)
+    renderer.save_rendered_image("test.png")
 
 
 if __name__ == "__main__":

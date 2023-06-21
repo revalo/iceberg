@@ -11,6 +11,12 @@ import numpy as np
 
 
 class Directions:
+    """Constants for the four cardinal directions.
+
+    These can be multiplied by a scalar to get a vector in that direction
+    (e.g. `Directions.UP * 5` is a vector pointing up with magnitude 5).
+    """
+
     ORIGIN = np.array([0, 0])
     UP = np.array([0, -1])
     DOWN = np.array([0, 1])
@@ -22,6 +28,13 @@ class Blank(Drawable):
     """A drawable that is an expansive blank space."""
 
     def __init__(self, bounds: Bounds, background: Color = Colors.BLACK) -> None:
+        """Initialize a blank drawable.
+
+        Args:
+            bounds: The bounds of the drawable.
+            background: The background color of the drawable.
+        """
+
         super().__init__()
 
         self._bounds = bounds
@@ -51,6 +64,15 @@ class Transform(Drawable):
         scale: Tuple[float, float] = (1, 1),
         anchor: Tuple[float, float] = (0, 0),
     ):
+        """Initialize a transform drawable.
+
+        Args:
+            child: The child drawable to transform.
+            position: The position of the child drawable.
+            scale: The scale of the child drawable.
+            anchor: The anchor of the child drawable.
+        """
+
         super().__init__()
 
         self._child = child
@@ -97,10 +119,14 @@ class Transform(Drawable):
 
     @property
     def children(self) -> Sequence[Drawable]:
+        """Return the children of the drawable."""
+
         return [self._child]
 
     @property
     def transform(self) -> np.ndarray:
+        """The internal transform matrix."""
+
         return self._transform
 
     @property
@@ -126,6 +152,18 @@ class Padding(Transform):
         child: Drawable,
         padding: Union[Tuple[float, float, float, float], Tuple[float, float], float],
     ):
+        """Initialize a padding drawable.
+
+        Padding can be specified as:
+            - A single float, which is applied to all sides.
+            - A tuple of two floats, which are applied to the left/right and top/bottom.
+            - A tuple of four floats, which are applied to the left, top, right, and bottom.
+
+        Args:
+            child: The child drawable to pad.
+            padding: The padding to apply to the child drawable.
+        """
+
         self._child = child
 
         if isinstance(padding, tuple):
@@ -167,6 +205,12 @@ class Compose(Drawable):
     """A drawable that composes its children."""
 
     def __init__(self, children: Tuple[Drawable, ...]):
+        """Initialize a compose drawable.
+
+        Args:
+            children: The children to compose.
+        """
+
         self._children = children
         self._composed_bounds = Bounds.empty()
 
@@ -203,6 +247,16 @@ class Anchor(Compose):
     """
 
     def __init__(self, children: Tuple[Drawable, ...], anchor_index: int = 0):
+        """Initialize an anchor drawable.
+
+        This drawable will compose its children without expanding the borders.
+
+        Args:
+            children: The children to compose.
+            anchor_index: The index of the child to use as the anchor, which is
+                the child that will be used to compute the bounds of the drawable.
+        """
+
         self._anchor_index = anchor_index
 
         super().__init__(children)
@@ -225,6 +279,30 @@ class Align(Compose):
         child_corner: int,
         direction: np.ndarray = Directions.ORIGIN,
     ):
+        """Initialize an align drawable.
+
+        This drawable will align the child drawable to the anchor drawable. You can specify the
+        two corners to align, and the direction to move the child drawable in.
+
+        Example:
+        ```python
+        from iceberg.core import Corner
+        Align(
+            anchor=anchor,
+            child=child,
+            anchor_corner=Corner.TOP_LEFT,
+            child_corner=Corner.TOP_RIGHT,
+        )
+        ```
+
+        Args:
+            anchor: The anchor drawable.
+            child: The child drawable.
+            anchor_corner: The corner of the anchor to align.
+            child_corner: The corner of the child to align.
+            direction: The direction to move the child drawable in.
+        """
+
         anchor_corner = anchor.bounds.corners[anchor_corner]
         child_corner = child.bounds.corners[child_corner]
 
@@ -258,6 +336,16 @@ class Arrange(Compose):
         arrange_direction: Direction = Direction.HORIZONTAL,
         gap: float = 1,
     ):
+        """Initialize an arrange drawable.
+
+        This drawable will arrange the children in a horizontal or vertical line.
+
+        Args:
+            children: The children to arrange.
+            arrange_direction: The direction to arrange the children in.
+            gap: The gap between the children.
+        """
+
         next_to_direction = (
             Directions.RIGHT
             if arrange_direction == Arrange.Direction.HORIZONTAL
@@ -272,6 +360,15 @@ class Arrange(Compose):
 
 class Grid(Compose):
     def __init__(self, children_matrix: List[List[Drawable]], gap=0):
+        """Initialize a grid drawable.
+
+        This drawable will arrange the children in a grid.
+
+        Args:
+            children_matrix: The matrix of children to arrange.
+            gap: The gap between the children.
+        """
+
         self._children_matrix = children_matrix
         self._nrows = len(children_matrix)
         self._ncols = len(children_matrix[0])

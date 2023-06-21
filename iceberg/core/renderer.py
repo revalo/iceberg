@@ -37,32 +37,73 @@ def get_skia_surface(width, height):
 
 
 class Renderer(object):
-    def __init__(self, drawable: Drawable, gpu: bool = True, skia_surface=None):
-        self._drawable = drawable
-        self._skia_surface = skia_surface
-        self._bounds = self._drawable.bounds
+    def __init__(self, gpu: bool = True, skia_surface=None):
+        """Creates a new Renderer.
 
-        if self._skia_surface is None:
-            if gpu:
+        Args:
+            gpu: Whether to use the GPU for rendering.
+            skia_surface: A Skia surface to render to. If None, a new surface will be created.
+
+        Returns:
+            A new Renderer.
+        """
+
+        self._gpu = gpu
+        self._skia_surface = skia_surface
+        self._bounds = None
+        self._drawable = None
+
+    def _try_create_skia_surface(self, drawable: Drawable):
+        self._drawable = drawable
+        if self._skia_surface is None or self._bounds != drawable.bounds:
+            self._bounds = drawable.bounds
+            if self._gpu:
                 self._skia_surface = self._create_gpu_surface()
             else:
                 self._skia_surface = self._create_cpu_surface()
 
-        self.render()
+    def render(self, drawable: Drawable):
+        """Renders the given Drawable to the surface.
 
-    def render(self):
+        Note that calling this again and again with a differently sized Drawable will
+        incur a performance penalty, as the surface will be resized to fit the Drawable.
+
+        It is best called repeatedly with Drawables of the same size.
+
+        This method does not return anything. To get the rendered image, call
+        `get_rendered_image()`. To save the rendered image, call `save_rendered_image()`.
+
+        Args:
+            drawable: The Drawable to render.
+        """
+
+        self._try_create_skia_surface(drawable)
+
         with self._skia_surface as canvas:
             canvas.clear(skia.Color4f(0, 0, 0, 0))
             canvas.save()
             canvas.translate(-self._bounds.left, -self._bounds.top)
-            self._drawable.draw(canvas)
+            drawable.draw(canvas)
             canvas.restore()
 
     def get_rendered_image(self) -> np.ndarray:
+        """Returns the rendered image as a numpy array.
+
+        Returns:
+            The rendered image as a numpy array.
+        """
+
+        # TODO(revalo): Convert BGR to RGB via Skia.
         image = self._skia_surface.makeImageSnapshot()
         return image.toarray()[:, :, :3][:, :, ::-1]
 
-    def save(self, path: str):
+    def save_rendered_image(self, path: str):
+        """Saves the rendered image to the given path.
+
+        Args:
+            path: The path to save the image to.
+        """
+
         image = self._skia_surface.makeImageSnapshot()
         image.save(path)
 

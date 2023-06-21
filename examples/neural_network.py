@@ -115,7 +115,9 @@ def main(argv):
     canvas = Blank(Bounds(size=(1080, 720)), background=Colors.WHITE)
     scene = canvas.center_to(network)
 
-    Renderer(scene).save("test.png")
+    renderer = Renderer()
+    renderer.render(scene)
+    renderer.save_rendered_image("test.png")
 
 
 if __name__ == "__main__":

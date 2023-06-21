@@ -8,6 +8,8 @@ from iceberg.geometry import apply_transform
 
 
 class Corner(object):
+    """Specifies the index of the corner in a corners array."""
+
     TOP_LEFT = 0
     TOP_MIDDLE = 1
     TOP_RIGHT = 2
@@ -20,6 +22,8 @@ class Corner(object):
 
 
 class Bounds(object):
+    """Represents a bounding box."""
+
     def __init__(
         self,
         top: float = 0,
@@ -30,6 +34,18 @@ class Bounds(object):
         size: Tuple[float, float] = None,
         position: Tuple[float, float] = None,
     ) -> None:
+        """Create a new bounds object.
+
+        Args:
+            top: The top of the bounds.
+            left: The left of the bounds.
+            bottom: The bottom of the bounds.
+            right: The right of the bounds.
+            center: The center of the bounds.
+            size: The size of the bounds.
+            position: The position of the bounds.
+        """
+
         # Convert everything that has been mentioned to a standard left, top, right, bottom.
         if center is not None and size is not None:
             cx, cy = center
@@ -60,6 +76,15 @@ class Bounds(object):
         self._compute_corners()
 
     def transform(self, transform: np.ndarray):
+        """Transform the bounds by the specified transform matrix.
+
+        Args:
+            transform: The 3x3 transform matrix to apply.
+
+        Returns:
+            The transformed bounds.
+        """
+
         corners = self.corners
         transformed_corners = apply_transform(corners, transform)
 
@@ -97,6 +122,16 @@ class Bounds(object):
         return (self.left + self.right) / 2, (self.top + self.bottom) / 2
 
     def inset(self, dx: float, dy: float) -> "Bounds":
+        """Inset the bounds by the specified amount.
+
+        Args:
+            dx: The amount to inset the bounds in the x direction.
+            dy: The amount to inset the bounds in the y direction.
+
+        Returns:
+            The inset bounds.
+        """
+
         return Bounds(
             left=self.left + dx,
             right=self.right - dx,
@@ -105,6 +140,8 @@ class Bounds(object):
         )
 
     def to_skia(self) -> skia.Rect:
+        """Get the bounds as a skia.Rect."""
+
         return skia.Rect.MakeLTRB(self.left, self.top, self.right, self.bottom)
 
     def __repr__(self) -> str:
@@ -112,6 +149,8 @@ class Bounds(object):
 
     @classmethod
     def from_skia(cls, rect: skia.Rect) -> "Bounds":
+        """Create a bounds object from a skia.Rect."""
+
         return cls(
             left=rect.left(),
             right=rect.right(),
@@ -121,6 +160,8 @@ class Bounds(object):
 
     @classmethod
     def empty(cls) -> "Bounds":
+        """Create an empty bounds object."""
+
         return cls(
             left=0,
             right=0,
@@ -130,6 +171,15 @@ class Bounds(object):
 
     @classmethod
     def from_points(cls, points: Tuple[Tuple[float, float], ...]) -> "Bounds":
+        """Create a bounds object from a list of points.
+
+        Args:
+            points: The 2D points to create the bounds from.
+
+        Returns:
+            The bounds object.
+        """
+
         left = min([point[0] for point in points])
         right = max([point[0] for point in points])
         top = min([point[1] for point in points])
@@ -138,6 +188,12 @@ class Bounds(object):
         return cls(left=left, right=right, top=top, bottom=bottom)
 
     def _compute_corners(self) -> Tuple[Tuple[float, float], ...]:
+        """Compute the corners of the bounds.
+
+        Returns:
+            The corners of the bounds.
+        """
+
         top_left = (self.left, self.top)
         top_right = (self.right, self.top)
         bottom_right = (self.right, self.bottom)
@@ -162,11 +218,33 @@ class Bounds(object):
 
     @property
     def corners(self) -> Tuple[Tuple[float, float], ...]:
+        """Get the corners of the bounds.
+
+        Returns:
+            The corners of the bounds.
+        """
+
         return self._computed_corners
 
 
 class Color(object):
     def __init__(self, r: float, g: float, b: float, a: float = 1.0) -> None:
+        """Create a color object.
+
+        The color components should be in the range [0, 1].
+
+        Args:
+            r: The red component of the color.
+            g: The green component of the color.
+            b: The blue component of the color.
+            a: The alpha component of the color.
+        """
+
+        assert 0 <= r <= 1
+        assert 0 <= g <= 1
+        assert 0 <= b <= 1
+        assert 0 <= a <= 1
+
         self._r = r
         self._g = g
         self._b = b
@@ -189,14 +267,25 @@ class Color(object):
         return self._a
 
     def to_skia(self) -> skia.Color4f:
+        """Get the color as a skia.Color4f."""
         return skia.Color4f(self.r, self.g, self.b, self.a)
 
     @classmethod
     def from_skia(cls, color: skia.Color4f) -> "Color":
+        """Create a color object from a skia.Color4f."""
         return cls(color.r, color.g, color.b, color.a)
 
     @classmethod
     def from_hex(cls, hex: str) -> "Color":
+        """Create a color object from a hex string.
+
+        Args:
+            hex: The hex string to create the color from.
+
+        Returns:
+            The color object.
+        """
+
         hex = hex.lstrip("#")
 
         # Get RGB or RGBA from hex.
@@ -218,10 +307,33 @@ class Color(object):
 
     @classmethod
     def from_rgb(cls, r: int, g: int, b: int) -> "Color":
+        """Create a color object from RGB values in the range [0, 255].
+
+        Args:
+            r: The red component of the color.
+            g: The green component of the color.
+            b: The blue component of the color.
+
+        Returns:
+            The color object.
+        """
+
         return cls(r / 255, g / 255, b / 255)
 
     @classmethod
     def from_rgba(cls, r: int, g: int, b: int, a: int) -> "Color":
+        """Create a color object from RGBA values in the range [0, 255].
+
+        Args:
+            r: The red component of the color.
+            g: The green component of the color.
+            b: The blue component of the color.
+            a: The alpha component of the color.
+
+        Returns:
+            The color object.
+        """
+
         return cls(r / 255, g / 255, b / 255, a / 255)
 
     def __repr__(self) -> str:
@@ -242,7 +354,14 @@ class Color(object):
         return hash((self.r, self.g, self.b, self.a))
 
     def to_blend_int(self) -> int:
-        # e.g. 0xAARRGGBB
+        """Get the color as an integer for blending.
+
+        The format is 0xAARRGGBB. And the components are in the range [0, 255].
+
+        Returns:
+            The color as an integer.
+        """
+
         a = int(self.a * 255)
         r = int(self.r * 255)
         g = int(self.g * 255)
@@ -252,6 +371,8 @@ class Color(object):
 
 
 class Colors(object):
+    """A collection of common colors."""
+
     BLACK = Color.from_hex("#000000")
     WHITE = Color.from_hex("#FFFFFF")
     RED = Color.from_hex("#FF0000")
@@ -264,7 +385,17 @@ class Colors(object):
 
 
 class PathStyle(object):
+    """A style for drawing paths."""
+
     def __init__(self, color: Color, thickness: float = 1.0, anti_alias: bool = True):
+        """Create a path style.
+
+        Args:
+            color: The color of the path.
+            thickness: The thickness of the path.
+            anti_alias: Whether to use anti-aliasing.
+        """
+
         self._color = color
         self._thickness = thickness
         self._anti_alias = anti_alias

@@ -33,4 +33,6 @@ if __name__ == "__main__":
     scene = canvas.center_to(rectangle_and_text)
 
     # Render the scene into a file called `test.png`.
-    Renderer(scene).save("test.png")
+    renderer = Renderer()
+    renderer.render(scene)
+    renderer.save_rendered_image("test.png")

@@ -6,6 +6,13 @@ from iceberg.core import Bounds
 
 class SVG(Drawable):
     def __init__(self, svg_filename: str, color: Color = None) -> None:
+        """Initialize the SVG drawable.
+
+        Args:
+            svg_filename: The filename of the SVG file to load.
+            color: The color to use for the SVG. If not specified, the SVG will be drawn as-is.
+        """
+
         self._svg_filename = svg_filename
         self._color = color
         self._paint = None
