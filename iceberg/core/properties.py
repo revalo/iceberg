@@ -241,6 +241,15 @@ class Color(object):
     def __hash__(self) -> int:
         return hash((self.r, self.g, self.b, self.a))
 
+    def to_blend_int(self) -> int:
+        # e.g. 0xAARRGGBB
+        a = int(self.a * 255)
+        r = int(self.r * 255)
+        g = int(self.g * 255)
+        b = int(self.b * 255)
+
+        return (a << 24) | (r << 16) | (g << 8) | b
+
 
 class Colors(object):
     BLACK = Color.from_hex("#000000")

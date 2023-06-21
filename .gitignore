@@ -2,3 +2,9 @@
 *.pyc
 __pycache__
 test*.png
+*.*prof
+*.mp4
+test.svg
+poster_figures
+.iceberg
+*.log

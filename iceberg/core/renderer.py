@@ -3,6 +3,8 @@ from .drawable import Drawable
 import skia
 import glfw
 
+import numpy as np
+
 
 def get_skia_surface(width, height):
     """Creates a Skia surface for rendering to on the GPU.
@@ -50,11 +52,15 @@ class Renderer(object):
 
     def render(self):
         with self._skia_surface as canvas:
-            canvas.clear(skia.Color4f(0, 0, 0, 1))
+            canvas.clear(skia.Color4f(0, 0, 0, 0))
             canvas.save()
             canvas.translate(-self._bounds.left, -self._bounds.top)
             self._drawable.draw(canvas)
             canvas.restore()
+
+    def get_rendered_image(self) -> np.ndarray:
+        image = self._skia_surface.makeImageSnapshot()
+        return image.toarray()[:, :, :3][:, :, ::-1]
 
     def save(self, path: str):
         image = self._skia_surface.makeImageSnapshot()
@@ -64,4 +70,6 @@ class Renderer(object):
         return get_skia_surface(self._bounds.width, self._bounds.height)
 
     def _create_cpu_surface(self):
-        return skia.Surface(self._bounds.width, self._bounds.height)
+        return skia.Surface(
+            int(self._bounds.width + 0.5), int(self._bounds.height + 0.5)
+        )

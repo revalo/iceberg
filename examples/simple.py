@@ -1,5 +1,5 @@
 from iceberg import Renderer, Bounds, Colors, FontStyle
-from iceberg.primitives import Rectangle, Blank, Text, Directions
+from iceberg.primitives import Rectangle, Blank, SimpleText, Directions
 
 if __name__ == "__main__":
     # What font?
@@ -16,7 +16,7 @@ if __name__ == "__main__":
     )
 
     # Create some text.
-    text = Text(
+    text = SimpleText(
         text="Hello, World!",
         font_style=FontStyle(
             family=_FONT_FAMILY,

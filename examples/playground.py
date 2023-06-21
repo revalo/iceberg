@@ -12,7 +12,10 @@ from iceberg.primitives import (
     Ellipse,
     Line,
     Blank,
-    Text,
+    SimpleText,
+    Tex,
+    MathTex,
+    Blur,
 )
 from iceberg.primitives.layout import Align, Directions
 from iceberg.primitives.shapes import BorderPosition
@@ -54,7 +57,7 @@ def main(argv):
         Colors.WHITE,
         border_thickness=3,
     )
-    text = Text(
+    text = SimpleText(
         text="Hello, World!",
         font_style=FontStyle(
             family=_FONT_FAMILY,
@@ -62,9 +65,18 @@ def main(argv):
             color=Colors.WHITE,
         ),
     )
+    # text = SimpleText(
+    #     text="Hello, World!",
+    # )
+
+    tex = MathTex(r"\int_0^\infty x \ dx", scale=5, color=Colors.BLUE)
 
     rectangle_and_text = rectangle.next_to(text, Directions.DOWN * 10)
     scene = canvas.center_to(rectangle_and_text).center_to(matrix)
+
+    canvas = Blank(scene.bounds, background=Colors.WHITE)
+
+    scene = canvas.center_to(tex)
 
     Renderer(scene).save("test.png")
 

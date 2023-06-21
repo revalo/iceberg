@@ -103,12 +103,16 @@ class NeuralNetwork(Compose):
 
 
 def main(argv):
-    network = NeuralNetwork([3, 4, 4, 2])
+    network = NeuralNetwork(
+        [3, 4, 4, 2],
+        node_border_color=Colors.BLACK,
+        line_path_style=PathStyle(Colors.BLACK, thickness=3),
+    )
     node = network.layer_nodes[1][0]
     node.border_color = Colors.RED
     node.border_thickness = 5
 
-    canvas = Blank(Bounds(size=(1080, 720)))
+    canvas = Blank(Bounds(size=(1080, 720)), background=Colors.WHITE)
     scene = canvas.center_to(network)
 
     Renderer(scene).save("test.png")
