@@ -38,7 +38,7 @@ renderer.save_rendered_image("test.png")
 The library is still under heavy development, hence updates are frequent. To install the latest version, run the following command:
 
 ```
-pip install -U iceberg
+pip install -U pyiceberg
 ```
 
 ## Quickstart
