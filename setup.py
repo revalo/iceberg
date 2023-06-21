@@ -1,13 +1,13 @@
 import re
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
 with open("iceberg/__init__.py", encoding="utf8") as f:
     version = re.search(r'__version__ = "(.*?)"', f.read()).group(1)
 
 # Metadata goes in setup.cfg. These are here for GitHub's dependency graph.
 setup(
-    name="pyiceberg",
+    name="iceberg-dsl",
     version=version,
     install_requires=[
         "absl-py>=1.0.0",

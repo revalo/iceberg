@@ -8,3 +8,5 @@ test.svg
 poster_figures
 .iceberg
 *.log
+dist
+*.egg-info
