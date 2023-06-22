@@ -353,7 +353,10 @@ class Arrange(Compose):
         )
         arrangement = children[0]
         for next_child in children[1:]:
-            arrangement = arrangement.next_to(next_child, next_to_direction * gap)
+            if gap == 0:
+                arrangement = arrangement.next_to(next_child, next_to_direction, no_gap=True)
+            else:
+                arrangement = arrangement.next_to(next_child, next_to_direction * gap)
 
         super().__init__([arrangement])
 
