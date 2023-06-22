@@ -92,8 +92,9 @@ class NeuralNetwork(Compose):
                     self._lines.append(line)
 
         # All the children in this composition.
-        children = [nodes_arranged]
-        children.extend(self._lines)
+        # Nodes are drawn on top of lines.
+        children = self._lines
+        children.append(nodes_arranged)
 
         super().__init__(children)
 
