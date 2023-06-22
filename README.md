@@ -48,7 +48,7 @@ renderer.save_rendered_image("test.png")
 
 ## Install
 
-The library is still under heavy development, hence updates are frequent. To install the latest version, run the following command:
+The library is still under development, hence updates are frequent. To install the latest version, run the following command:
 
 ```
 pip install git+https://github.com/revalo/iceberg.git
