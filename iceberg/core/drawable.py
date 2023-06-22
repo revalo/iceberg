@@ -81,7 +81,7 @@ class Drawable(ABC):
         )
 
     def next_to(
-        self, other: "Drawable", direction: np.ndarray = np.zeros(2)
+        self, other: "Drawable", direction: np.ndarray = np.zeros(2), no_gap: bool = False
     ) -> "Drawable":
         """Place another drawable next to this one, and return the new drawable.
 
@@ -96,6 +96,9 @@ class Drawable(ABC):
         Args:
             other: The other drawable to place next to this one.
             direction: The direction to place the other drawable. This is a 2D vector.
+            no_gap: If True, the other drawable will be placed right next to this one, with no gap.
+                The scale of `direction` is ignored in this case (`direction` is only used
+                to determine which corners to align).
 
         Returns:
             The new drawable that contains both this drawable and the other drawable.
@@ -123,6 +126,9 @@ class Drawable(ABC):
         elif direction_equal(direction, Directions.UP):
             anchor_corner = Corner.TOP_MIDDLE
             other_corner = Corner.BOTTOM_MIDDLE
+        
+        if no_gap:
+            direction = Directions.ORIGIN
 
         return Align(self, other, anchor_corner, other_corner, direction)
 
