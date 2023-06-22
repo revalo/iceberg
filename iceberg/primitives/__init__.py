@@ -4,3 +4,4 @@ from .text import SimpleText
 from .svg import SVG
 from .latex import Tex, MathTex
 from .filters import Blur
+from .image import Image
