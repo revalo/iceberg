@@ -126,7 +126,7 @@ class Drawable(ABC):
 
         return Align(self, other, anchor_corner, other_corner, direction)
 
-    def center_to(self, other: "Drawable") -> "Drawable":
+    def add_centered(self, other: "Drawable") -> "Drawable":
         """Place another drawable in the center of this one, and return the new drawable.
 
         Args:

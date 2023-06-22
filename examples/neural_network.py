@@ -113,7 +113,7 @@ def main(argv):
     node.border_thickness = 5
 
     canvas = Blank(Bounds(size=(1080, 720)), background=Colors.WHITE)
-    scene = canvas.center_to(network)
+    scene = canvas.add_centered(network)
 
     renderer = Renderer()
     renderer.render(scene)

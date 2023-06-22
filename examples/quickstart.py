@@ -30,7 +30,7 @@ if __name__ == "__main__":
     rectangle_and_text = rectangle.next_to(text, Directions.DOWN * 10)
 
     # Place the rectangle and text in the center of the canvas.
-    scene = canvas.center_to(rectangle_and_text)
+    scene = canvas.add_centered(rectangle_and_text)
 
     # Render the scene into a file called `test.png`.
     renderer = Renderer()
