@@ -7,8 +7,8 @@ from typing import Tuple
 import numpy as np
 import skia
 
-from iceberg import PathStyle
-from iceberg.primitives import Compose, Line, Path
+from iceberg import PathStyle, Drawable
+from iceberg.primitives import Compose, Line, Path, Transform
 
 
 def arrow_corners(
@@ -67,6 +67,23 @@ class Arrow(Compose):
         arrow_head_start: bool = False,
         arrow_head_end: bool = True,
     ):
+        """Create an arrow.
+
+        Args:
+            start: The start coordinate.
+            end: The end coordinate.
+            line_path_style: The style of the line.
+            head_length: The length of the arrow head.
+            angle: The angle of the arrow head in degrees.
+            arrow_head_style: The style of the arrow head.
+            arrow_head_start: Whether to draw an arrow head at the start.
+            arrow_head_end: Whether to draw an arrow head at the end.
+        """
+
+        self._midpoint = (np.array(start) + np.array(end)) / 2
+        self._start = np.array(start)
+        self._end = np.array(end)
+
         start_corners = arrow_corners(end, start, angle, head_length)
         end_corners = arrow_corners(start, end, angle, head_length)
 
@@ -125,3 +142,81 @@ class Arrow(Compose):
             super().__init__(items)
         else:
             raise ValueError(f"Unknown arrow head style: {arrow_head_style}")
+
+    @property
+    def midpoint(self) -> np.ndarray:
+        """The midpoint of the arrow."""
+        return self._midpoint
+
+    @property
+    def start(self) -> np.ndarray:
+        """The start of the arrow."""
+        return self._start
+
+    @property
+    def end(self) -> np.ndarray:
+        """The end of the arrow."""
+        return self._end
+
+
+class ArrowAlignDirection(Enum):
+    ABOVE = 0
+    BELOW = 1
+
+
+class LabelArrow(Compose):
+    def __init__(
+        self,
+        arrow: Arrow,
+        child: Drawable,
+        child_corner: int,
+        placement: ArrowAlignDirection = ArrowAlignDirection.ABOVE,
+        distance: float = 0,
+        rotated: bool = False,
+    ):
+        """Combine an arrow alongside another drawable in a way that labels the arrow.
+
+        Args:
+            arrow: The arrow to be labeled.
+            child: The label to be placed alongside the arrow.
+            child_corner: The corner of the child to align with. See `Corner` for details.
+            placement: Whether to place the specified corner of the child above or below the arrow.
+            distance: The distance between the arrow and the child's specified corner.
+            rotated: Whether to rotate the child to match the arrow.
+        """
+
+        # Find normal vector.
+        direction = (arrow.end - arrow.start).astype(np.float32)
+        direction /= np.linalg.norm(direction)
+        normal = np.array([-direction[1], direction[0]], dtype=np.float32)
+        normal /= np.linalg.norm(normal)
+
+        angle = np.arctan2(direction[1], direction[0]) if rotated else 0
+
+        # Compute the displacement.
+        displacement = distance * normal
+
+        # Placement above or below.
+        if placement == ArrowAlignDirection.ABOVE:
+            displacement *= -1
+
+        arrow_point = arrow.midpoint + displacement
+
+        delta = arrow_point - child.bounds.corners[child_corner]
+        dx, dy = delta
+
+        if rotated:
+            cx, cy = child.bounds.center
+            child = Transform(
+                child,
+                rotation=angle,
+                rotation_in_degrees=False,
+                anchor=(-cx, -cy),
+            )
+
+        child_transformed = Transform(
+            child,
+            position=(dx, dy),
+        )
+
+        super().__init__([arrow, child_transformed])

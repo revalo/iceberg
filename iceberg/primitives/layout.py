@@ -63,6 +63,8 @@ class Transform(Drawable):
         position: Tuple[float, float] = (0, 0),
         scale: Tuple[float, float] = (1, 1),
         anchor: Tuple[float, float] = (0, 0),
+        rotation: float = 0.0,
+        rotation_in_degrees: bool = True,
     ):
         """Initialize a transform drawable.
 
@@ -71,6 +73,8 @@ class Transform(Drawable):
             position: The position of the child drawable.
             scale: The scale of the child drawable.
             anchor: The anchor of the child drawable.
+            rotation: The rotation of the child drawable.
+            rotation_in_degrees: Whether the rotation is in degrees.
         """
 
         super().__init__()
@@ -90,6 +94,8 @@ class Transform(Drawable):
             position=self._position,
             scale=self._scale,
             anchor=self._anchor,
+            rotation=rotation,
+            in_degrees=rotation_in_degrees,
         )
         self._skia_matrix = skia.Matrix(self._transform)
 
@@ -354,7 +360,9 @@ class Arrange(Compose):
         arrangement = children[0]
         for next_child in children[1:]:
             if gap == 0:
-                arrangement = arrangement.next_to(next_child, next_to_direction, no_gap=True)
+                arrangement = arrangement.next_to(
+                    next_child, next_to_direction, no_gap=True
+                )
             else:
                 arrangement = arrangement.next_to(next_child, next_to_direction * gap)
 
