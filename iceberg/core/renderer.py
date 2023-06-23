@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Union
 from .drawable import Drawable
 
 import skia
@@ -98,7 +99,7 @@ class Renderer(object):
         image = self._skia_surface.makeImageSnapshot()
         return image.toarray()[:, :, :3][:, :, ::-1]
 
-    def save_rendered_image(self, path: str | Path):
+    def save_rendered_image(self, path: Union[str, Path]):
         """Saves the rendered image to the given path.
 
         Args:
