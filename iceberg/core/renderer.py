@@ -78,6 +78,7 @@ class Renderer(object):
 
         Args:
             drawable: The Drawable to render.
+            background_color: The background color to use. If None, the background will be transparent.
         """
 
         self._try_create_skia_surface(drawable)
