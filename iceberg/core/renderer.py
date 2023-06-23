@@ -1,3 +1,5 @@
+from pathlib import Path
+from typing import Union
 from .drawable import Drawable
 from .properties import Color
 
@@ -102,7 +104,7 @@ class Renderer(object):
         image = self._skia_surface.makeImageSnapshot()
         return image.toarray()[:, :, :3][:, :, ::-1]
 
-    def save_rendered_image(self, path: str):
+    def save_rendered_image(self, path: Union[str, Path]):
         """Saves the rendered image to the given path.
 
         Args:
@@ -110,7 +112,7 @@ class Renderer(object):
         """
 
         image = self._skia_surface.makeImageSnapshot()
-        image.save(path)
+        image.save(str(path))
 
     def _create_gpu_surface(self):
         return get_skia_surface(self._bounds.width, self._bounds.height)

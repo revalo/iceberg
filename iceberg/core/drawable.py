@@ -12,7 +12,7 @@ class ChildNotFoundError(ValueError):
 
 
 class Drawable(ABC):
-    """Asbtract base class for all drawable objects.
+    """Abstract base class for all drawable objects.
 
     Each drawable object must know its bounds, and be able to draw itself on a Skia canvas.
     It may also have children, which are also drawable objects.
