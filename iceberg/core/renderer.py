@@ -1,4 +1,5 @@
 from .drawable import Drawable
+from .properties import Color
 
 import skia
 import glfw
@@ -62,7 +63,7 @@ class Renderer(object):
             else:
                 self._skia_surface = self._create_cpu_surface()
 
-    def render(self, drawable: Drawable):
+    def render(self, drawable: Drawable, background_color: Color = None):
         """Renders the given Drawable to the surface.
 
         Note that calling this again and again with a differently sized Drawable will
@@ -80,7 +81,11 @@ class Renderer(object):
         self._try_create_skia_surface(drawable)
 
         with self._skia_surface as canvas:
-            canvas.clear(skia.Color4f(0, 0, 0, 0))
+            if background_color is not None:
+                canvas.clear(background_color.to_skia())
+            else:
+                canvas.clear(skia.Color4f(0, 0, 0, 0))
+
             canvas.save()
             canvas.translate(-self._bounds.left, -self._bounds.top)
             drawable.draw(canvas)
