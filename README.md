@@ -45,7 +45,7 @@ renderer.save_rendered_image("test.png")
 
 ```
 
-## Tex, Arrangements, SVG Outputs
+### Tex, Arrangements, SVG Outputs
 
 Iceberg supports Tex and Arrangements. Full example in `examples/connect.py`.
 
