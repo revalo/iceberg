@@ -190,16 +190,15 @@ class Padding(Transform):
         pl, pt, pr, pb = self._padding
 
         self._padded_bounds = Bounds(
-            left=self._child_bounds.left,
-            top=self._child_bounds.top,
-            right=self._child_bounds.right + pl + pr,
-            bottom=self._child_bounds.bottom + pt + pb,
+            left=self._child_bounds.left - pl,
+            top=self._child_bounds.top - pt,
+            right=self._child_bounds.right + pr,
+            bottom=self._child_bounds.bottom + pb,
         )
 
         super().__init__(
             child=child,
-            position=(pl, pt),
-            anchor=(0, 0),
+            position=(0, 0),
         )
 
     @property

@@ -45,6 +45,68 @@ renderer.save_rendered_image("test.png")
 
 ```
 
+## Tex, Arrangements, SVG Outputs
+
+Iceberg supports Tex and Arrangements. Full example in `examples/connect.py`.
+
+<p align="left">
+<img src="images/connect.svg" width="400">
+</p>
+
+```python
+left_ellipse = Ellipse(
+    Bounds(size=(_CIRCLE_WIDTH, _CIRCLE_WIDTH)),
+    border_color=Color.from_hex("#d63031"),
+    border_thickness=_BORDER_THICKNESS,
+    fill_color=Color.from_hex("#ff7675"),
+).pad(_CIRCLE_PAD)
+
+right_ellipse = Ellipse(
+    Bounds(size=(_CIRCLE_WIDTH, _CIRCLE_WIDTH)),
+    border_color=Color.from_hex("#0984e3"),
+    border_thickness=_BORDER_THICKNESS,
+    fill_color=Color.from_hex("#74b9ff"),
+).pad(_CIRCLE_PAD)
+
+ellipses = Arrange(
+    [left_ellipse, right_ellipse],
+    gap=500,
+)
+
+arrow = Arrow(
+    ellipses.child_bounds(left_ellipse).corners[Corner.MIDDLE_RIGHT],
+    ellipses.child_bounds(right_ellipse).corners[Corner.MIDDLE_LEFT],
+    line_path_style=PathStyle(
+        color=Colors.BLACK,
+        thickness=3,
+    ),
+)
+arrow_label = MathTex("f(x) = x^2", scale=4)
+arrow = LabelArrow(
+    arrow,
+    arrow_label,
+    Corner.BOTTOM_MIDDLE,
+    distance=20,
+)
+connection = Compose([ellipses, arrow])
+
+text_block = Text(
+    "This is some really long text, and it's going to wrap around at some point, because it's so long and I spent a lot of time on it.",
+    font_style=FontStyle(
+        family=_FONT_FAMILY,
+        size=28,
+        color=Colors.BLACK,
+    ),
+    width=connection.bounds.width,
+)
+
+scene = Arrange(
+    [connection, text_block],
+    gap=10,
+    arrange_direction=Arrange.Direction.VERTICAL,
+)
+```
+
 
 ## Install
 
