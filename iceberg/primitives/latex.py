@@ -1,3 +1,7 @@
+"""Latex rendering adapted from
+https://github.com/ManimCommunity/manim
+"""
+
 from absl import logging
 
 import os
