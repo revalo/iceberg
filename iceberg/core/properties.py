@@ -1,6 +1,7 @@
 from dataclasses import dataclass
+
+from typing import Optional, Tuple
 from enum import Enum
-from typing import Tuple
 
 import skia
 import numpy as np
@@ -122,16 +123,19 @@ class Bounds(object):
     def center(self) -> Tuple[float, float]:
         return (self.left + self.right) / 2, (self.top + self.bottom) / 2
 
-    def inset(self, dx: float, dy: float) -> "Bounds":
+    def inset(self, dx: float, dy: Optional[float] = None) -> "Bounds":
         """Inset the bounds by the specified amount.
 
         Args:
             dx: The amount to inset the bounds in the x direction.
             dy: The amount to inset the bounds in the y direction.
+                If `None`, then `dx` is used.
 
         Returns:
             The inset bounds.
         """
+        if dy is None:
+            dy = dx
 
         return Bounds(
             left=self.left + dx,
