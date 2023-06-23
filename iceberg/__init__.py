@@ -9,4 +9,5 @@ from iceberg.core import (
     PathStyle,
     FontStyle,
     Corner,
+    StrokeCap,
 )

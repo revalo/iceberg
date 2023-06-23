@@ -1,5 +1,7 @@
 from dataclasses import dataclass
+
 from typing import Optional, Tuple
+from enum import Enum
 
 import skia
 import numpy as np
@@ -387,27 +389,47 @@ class Colors(object):
     TRANSPARENT = Color.from_rgba(0, 0, 0, 0)
 
 
+class StrokeCap(Enum):
+    """The cap at the end of a stroke."""
+
+    BUTT = skia.Paint.kButt_Cap
+    ROUND = skia.Paint.kRound_Cap
+    SQUARE = skia.Paint.kSquare_Cap
+
+
 class PathStyle(object):
     """A style for drawing paths."""
 
-    def __init__(self, color: Color, thickness: float = 1.0, anti_alias: bool = True):
+    def __init__(
+        self,
+        color: Color,
+        thickness: float = 1.0,
+        anti_alias: bool = True,
+        stroke: bool = True,
+        stroke_cap: StrokeCap = StrokeCap.BUTT,
+    ):
         """Create a path style.
 
         Args:
             color: The color of the path.
             thickness: The thickness of the path.
             anti_alias: Whether to use anti-aliasing.
+            stroke: Whether to stroke the path or fill it.
+            stroke_cap: The cap at the end of a stroke.
         """
 
         self._color = color
         self._thickness = thickness
         self._anti_alias = anti_alias
+        self._stroke = stroke
+        self._stroke_cap = stroke_cap
 
         self._skia_paint = skia.Paint(
-            Style=skia.Paint.kStroke_Style,
+            Style=skia.Paint.kStroke_Style if stroke else skia.Paint.kFill_Style,
             AntiAlias=anti_alias,
             StrokeWidth=thickness,
             Color4f=color.to_skia(),
+            StrokeCap=stroke_cap.value,
         )
 
     @property

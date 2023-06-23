@@ -5,6 +5,7 @@ from .properties import (
     Corner,
     PathStyle,
     FontStyle,
+    StrokeCap,
 )
 from .drawable import Drawable
 from .renderer import Renderer

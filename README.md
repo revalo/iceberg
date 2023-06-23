@@ -1,10 +1,21 @@
 # IceBerg
 
+![PyPI](https://img.shields.io/pypi/v/iceberg-dsl)
+![PyPI - Downloads](https://img.shields.io/pypi/dm/iceberg-dsl)
+![GitHub](https://img.shields.io/github/license/revalo/iceberg)
+
+
 <p align="center">
 <img src="images/logo.png" width="150">
 </p>
 
 Iceberg is a compositional diagramming and graphics library embedding in Python. It is designed to be performant, extensible, and easy to use.
+
+## Testimonials
+
+<p align="left">
+<img src="images/testimonial.jpg" width="400">
+</p>
 
 ## Showcase
 
@@ -37,7 +48,7 @@ renderer.save_rendered_image("test.png")
 
 ## Install
 
-The library is still under heavy development, hence updates are frequent. To install the latest version, run the following command:
+The library is still under development, hence updates are frequent. To install the latest version, run the following command:
 
 ```
 pip install git+https://github.com/revalo/iceberg.git
