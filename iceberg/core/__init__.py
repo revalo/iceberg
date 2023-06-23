@@ -8,4 +8,4 @@ from .properties import (
     StrokeCap,
 )
 from .drawable import Drawable
-from .renderer import Renderer
+from .renderer import Renderer, render_svg

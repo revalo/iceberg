@@ -10,4 +10,5 @@ from iceberg.core import (
     FontStyle,
     Corner,
     StrokeCap,
+    render_svg,
 )

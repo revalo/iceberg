@@ -39,6 +39,18 @@ def get_skia_surface(width, height):
     return surface
 
 
+def _canvas_draw_commands(canvas, drawable: Drawable, background_color: Color = None):
+    if background_color is not None:
+        canvas.clear(background_color.to_skia())
+    else:
+        canvas.clear(skia.Color4f(0, 0, 0, 0))
+
+    canvas.save()
+    canvas.translate(-drawable.bounds.left, -drawable.bounds.top)
+    drawable.draw(canvas)
+    canvas.restore()
+
+
 class Renderer(object):
     def __init__(self, gpu: bool = True, skia_surface=None):
         """Creates a new Renderer.
@@ -84,15 +96,7 @@ class Renderer(object):
         self._try_create_skia_surface(drawable)
 
         with self._skia_surface as canvas:
-            if background_color is not None:
-                canvas.clear(background_color.to_skia())
-            else:
-                canvas.clear(skia.Color4f(0, 0, 0, 0))
-
-            canvas.save()
-            canvas.translate(-self._bounds.left, -self._bounds.top)
-            drawable.draw(canvas)
-            canvas.restore()
+            _canvas_draw_commands(canvas, drawable, background_color)
 
     def get_rendered_image(self) -> np.ndarray:
         """Returns the rendered image as a numpy array.
@@ -122,3 +126,17 @@ class Renderer(object):
         return skia.Surface(
             int(self._bounds.width + 0.5), int(self._bounds.height + 0.5)
         )
+
+
+def render_svg(drawable: Drawable, filename: str, background_color: Color = None):
+    assert filename.endswith(".svg")
+
+    stream = skia.FILEWStream(filename)
+    canvas = skia.SVGCanvas.Make(
+        (drawable.bounds.width, drawable.bounds.height), stream
+    )
+
+    _canvas_draw_commands(canvas, drawable, background_color)
+
+    del canvas
+    stream.flush()
