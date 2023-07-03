@@ -52,7 +52,7 @@ def _canvas_draw_commands(canvas, drawable: Drawable, background_color: Color = 
 
 
 class Renderer(object):
-    def __init__(self, gpu: bool = True, skia_surface=None):
+    def __init__(self, gpu: bool = False, skia_surface=None):
         """Creates a new Renderer.
 
         Args:
