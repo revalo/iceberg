@@ -80,8 +80,22 @@ class Drawable(ABC):
             padding=padding,
         )
 
+    def crop(self, bounds: Bounds):
+        """Crop the drawable to the specified bounds."""
+        from iceberg import Colors
+        from iceberg.primitives.layout import Anchor, Blank
+
+        blank = Blank(bounds, Colors.TRANSPARENT)
+
+        return Anchor(
+            [blank, self],
+        )
+
     def next_to(
-        self, other: "Drawable", direction: np.ndarray = np.zeros(2), no_gap: bool = False
+        self,
+        other: "Drawable",
+        direction: np.ndarray = np.zeros(2),
+        no_gap: bool = False,
     ) -> "Drawable":
         """Place another drawable next to this one, and return the new drawable.
 
@@ -126,7 +140,7 @@ class Drawable(ABC):
         elif direction_equal(direction, Directions.UP):
             anchor_corner = Corner.TOP_MIDDLE
             other_corner = Corner.BOTTOM_MIDDLE
-        
+
         if no_gap:
             direction = Directions.ORIGIN
 
