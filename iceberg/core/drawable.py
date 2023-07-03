@@ -80,7 +80,7 @@ class Drawable(ABC):
             padding=padding,
         )
 
-    def crop(self, bounds: Bounds):
+    def crop(self, bounds: Bounds) -> "Drawable":
         """Crop the drawable to the specified bounds."""
         from iceberg import Colors
         from iceberg.primitives.layout import Anchor, Blank
