@@ -15,6 +15,8 @@ class Image(Drawable):
         Args:
             filename: The filename of the image file to load.
             image: The image to use. If not specified, the image will be loaded from the filename.
+                The image must be a numpy array with shape (height, width, 4). The last channel is
+                the alpha channel, and must be 1 or 255 for opaque pixels and 0 for transparent pixels.
 
         Raises:
             ValueError: If neither filename nor image is specified.
