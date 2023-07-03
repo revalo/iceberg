@@ -10,3 +10,4 @@ poster_figures
 *.log
 dist
 *.egg-info
+build/

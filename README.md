@@ -121,7 +121,8 @@ pip install git+https://github.com/revalo/iceberg.git
 Full example in `examples/quickstart.py`.
 
 ```python
-from iceberg import Blank, Bounds, Rectangle, Colors, Text, FontStyle, Directions, Renderer
+from iceberg import Renderer, Bounds, Colors, FontStyle
+from iceberg.primitives import Rectangle, Blank, SimpleText, Directions
 
 # Blank is a large empty rectangle.
 canvas = Blank(Bounds(size=(1080, 720)))
