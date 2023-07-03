@@ -37,7 +37,7 @@ node.border_color = Colors.RED
 node.border_thickness = 5
 
 canvas = Blank(Bounds(size=(1080, 720)), background=Colors.WHITE)
-scene = canvas.center_to(network)
+scene = canvas.add_centered(network)
 
 renderer = Renderer()
 renderer.render(scene)
@@ -148,7 +148,7 @@ text = Text(
 rectangle_and_text = rectangle.next_to(text, Directions.DOWN * 10)
 
 # Center the rectangle and text combination to the canvas.
-scene = canvas.center_to(rectangle_and_text)
+scene = canvas.add_centered(rectangle_and_text)
 
 # Render the scene and save it to a file.
 renderer = Renderer()
