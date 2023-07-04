@@ -451,10 +451,16 @@ class PathStyle(object):
 
 @dataclass
 class FontStyle(object):
+    class Style(Enum):
+        NORMAL = skia.FontStyle.Normal()
+        ITALIC = skia.FontStyle.Italic()
+        BOLD = skia.FontStyle.Bold()
+        BOLD_ITALIC = skia.FontStyle.BoldItalic()
+
     family: str
     size: float = 16
     font_weight: int = 400
-    font_style: int = 0
+    font_style: Style = Style.NORMAL
     color: Color = Color(0, 0, 0)
     anti_alias: bool = True
 
@@ -467,6 +473,6 @@ class FontStyle(object):
 
     def get_skia_font(self) -> skia.Font:
         return skia.Font(
-            skia.Typeface(self.family),
+            skia.Typeface(self.family, self.font_style.value),
             self.size,
         )
