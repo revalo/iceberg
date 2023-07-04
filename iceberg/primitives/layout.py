@@ -2,6 +2,8 @@ from typing import List, Sequence, Tuple, Union
 import skia
 
 from iceberg import Drawable, Bounds, Color, Colors
+from iceberg.animation import Animatable
+from iceberg.animation.animatable import AnimatableSequence
 from iceberg.core.drawable import Drawable
 from iceberg.geometry import get_transform, apply_transform
 from dataclasses import dataclass
@@ -54,7 +56,7 @@ class Blank(Drawable):
         canvas.drawRect(self._bounds.to_skia(), self._paint)
 
 
-class Transform(Drawable):
+class Transform(Drawable, Animatable):
     """A drawable that transforms its child."""
 
     def __init__(
@@ -83,6 +85,8 @@ class Transform(Drawable):
         self._position = position
         self._scale = scale
         self._anchor = anchor
+        self._rotation = rotation
+        self._rotation_in_degrees = rotation_in_degrees
 
         self._child_bounds = self._child.bounds
 
@@ -149,6 +153,40 @@ class Transform(Drawable):
         self._child.draw(canvas)
         canvas.restore()
 
+    @property
+    def animatables(self) -> AnimatableSequence:
+        position = np.array(self._position)
+        scale = np.array(self._scale)
+        anchor = np.array(self._anchor)
+
+        rv = [
+            position,
+            scale,
+            anchor,
+            self._rotation,
+        ]
+
+        if isinstance(self._child, Animatable):
+            rv.append(self._child)
+
+        return rv
+
+    def copy_with_animatables(self, animatables: AnimatableSequence):
+        if len(animatables) == 4:
+            position, scale, anchor, rotation = animatables
+            child = self._child
+        else:
+            position, scale, anchor, rotation, child = animatables
+
+        return Transform(
+            child=child,
+            position=tuple(position),
+            scale=tuple(scale),
+            anchor=tuple(anchor),
+            rotation=rotation,
+            rotation_in_degrees=self._rotation_in_degrees,
+        )
+
 
 class Padding(Transform):
     """A drawable that pads its child."""
@@ -206,7 +244,7 @@ class Padding(Transform):
         return self._padded_bounds
 
 
-class Compose(Drawable):
+class Compose(Drawable, Animatable):
     """A drawable that composes its children."""
 
     def __init__(self, children: Tuple[Drawable, ...]):
@@ -233,6 +271,14 @@ class Compose(Drawable):
                 bottom=bottom,
             )
 
+        self._animatables = []
+        self._animatables_indices = []
+
+        for i, child in enumerate(self._children):
+            if isinstance(child, Animatable):
+                self._animatables.append(child)
+                self._animatables_indices.append(i)
+
     @property
     def children(self) -> Sequence[Drawable]:
         return self._children
@@ -244,6 +290,16 @@ class Compose(Drawable):
     def draw(self, canvas: skia.Canvas):
         for child in self._children:
             child.draw(canvas)
+
+    @property
+    def animatables(self) -> AnimatableSequence:
+        return self._animatables
+
+    def copy_with_animatables(self, animatables: AnimatableSequence):
+        children = list(self.children)
+        for i, animatable in zip(self._animatables_indices, animatables):
+            children[i] = animatable
+        return Compose(tuple(children))
 
 
 class Anchor(Compose):

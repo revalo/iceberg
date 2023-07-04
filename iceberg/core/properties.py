@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from abc import ABC, abstractproperty, abstractmethod
 
 from typing import Optional, Tuple
 from enum import Enum
@@ -8,6 +7,7 @@ import skia
 import numpy as np
 
 from iceberg.geometry import apply_transform
+from iceberg.animation import Animatable
 
 
 class Corner(object):
@@ -24,21 +24,7 @@ class Corner(object):
     CENTER = 8
 
 
-class AnimatableProperty(ABC):
-    @abstractproperty
-    def animatable_scalars(self) -> np.ndarray:
-        """Should return a numpy array of scalars that can be animated."""
-        pass
-
-    @abstractmethod
-    def copy_with_animatable_scalars(self, animatable_scalars: np.ndarray):
-        """Should return a copy of the object with the animatable scalars set to the specified
-        values.
-        """
-        pass
-
-
-class Bounds(AnimatableProperty):
+class Bounds(Animatable):
     """Represents a bounding box."""
 
     def __init__(
@@ -93,11 +79,12 @@ class Bounds(AnimatableProperty):
         self._compute_corners()
 
     @property
-    def animatable_scalars(self):
-        return np.array([self.left, self.top, self.right, self.bottom])
+    def animatables(self):
+        return [np.array([self.left, self.top, self.right, self.bottom])]
 
-    def copy_with_animatable_scalars(self, animatable_scalars: np.ndarray):
-        return Bounds(*animatable_scalars)
+    def copy_with_animatables(self, animatables):
+        scalars = animatables[0]
+        return Bounds(*scalars)
 
     def transform(self, transform: np.ndarray):
         """Transform the bounds by the specified transform matrix.
@@ -254,7 +241,7 @@ class Bounds(AnimatableProperty):
         return self._computed_corners
 
 
-class Color(AnimatableProperty):
+class Color(Animatable):
     def __init__(self, r: float, g: float, b: float, a: float = 1.0) -> None:
         """Create a color object.
 
@@ -278,11 +265,11 @@ class Color(AnimatableProperty):
         self._a = a
 
     @property
-    def animatable_scalars(self):
-        return np.array([self.r, self.g, self.b, self.a])
+    def animatables(self):
+        return [np.array([self.r, self.g, self.b, self.a])]
 
-    def copy_with_animatable_scalars(self, animatable_scalars: np.ndarray):
-        r, g, b, a = animatable_scalars
+    def copy_with_animatables(self, animatables):
+        r, g, b, a = animatables[0]
         return Color(r, g, b, a)
 
     @property
@@ -427,7 +414,7 @@ class StrokeCap(Enum):
     SQUARE = skia.Paint.kSquare_Cap
 
 
-class PathStyle(object):
+class PathStyle(Animatable):
     """A style for drawing paths."""
 
     def __init__(
@@ -463,23 +450,11 @@ class PathStyle(object):
         )
 
     @property
-    def animatable_scalars(self) -> np.ndarray:
-        color_scalars = self._color.animatable_scalars
-        thickness_scalars = np.array([self._thickness])
+    def animatables(self):
+        return [self.color, self.thickness]
 
-        return np.concatenate((color_scalars, thickness_scalars))
-
-    @abstractmethod
-    def copy_with_animatable_scalars(self, animatable_scalars: np.ndarray):
-        """Should return a copy of the object with the animatable scalars set to the specified
-        values.
-        """
-
-        color_scalars = animatable_scalars[:4]
-        thickness_scalars = animatable_scalars[4:]
-
-        color = Color.from_animatable_scalars(color_scalars)
-        thickness = thickness_scalars[0]
+    def copy_with_animatables(self, animatables):
+        color, thickness = animatables
 
         return PathStyle(
             color, thickness, self._anti_alias, self._stroke, self._stroke_cap
@@ -500,6 +475,9 @@ class PathStyle(object):
     @property
     def skia_paint(self) -> skia.Paint:
         return self._skia_paint
+
+    def __repr__(self) -> str:
+        return f"PathStyle({self.color}, {self.thickness}, {self.anti_alias}, {self._stroke}, {self._stroke_cap})"
 
 
 @dataclass

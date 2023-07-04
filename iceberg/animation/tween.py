@@ -3,7 +3,7 @@ from typing import Union
 from enum import Enum
 import numpy as np
 
-from iceberg.core.properties import AnimatableProperty
+from .animatable import Animatable
 
 
 def linear(x):
@@ -33,8 +33,8 @@ class EaseType(Enum):
 
 
 def tween(
-    start: Union[AnimatableProperty, np.ndarray, float],
-    end: Union[AnimatableProperty, np.ndarray, float],
+    start: Union[Animatable, np.ndarray, float],
+    end: Union[Animatable, np.ndarray, float],
     progress: float,
     ease_type: EaseType = EaseType.EASE_IN_OUT_QUAD,
     ease_fn=None,
@@ -61,12 +61,12 @@ def tween(
     if ping_pong:
         if progress < 0.5:
             progress = progress * 2
-        elif progress > 0.5:
+        elif progress >= 0.5:
             progress = 1 - (progress - 0.5) * 2
 
-    if isinstance(start, AnimatableProperty):
-        start_scalars = start.animatable_scalars
-        end_scalars = end.animatable_scalars
+    if isinstance(start, Animatable):
+        start_scalars = start.animatables_to_vector()
+        end_scalars = end.animatables_to_vector()
 
         tweened_scalars = tween(
             start_scalars,
@@ -74,13 +74,12 @@ def tween(
             progress,
             ease_type=ease_type,
             ease_fn=ease_fn,
-            ping_pong=ping_pong,
         )
 
-        if progress < 0.99:
-            return start.copy_with_animatable_scalars(tweened_scalars)
+        # if progress < 0.99:
+        return start.copy_with_animatable_vector(tweened_scalars)
 
-        return end.copy_with_animatable_scalars(tweened_scalars)
+        # return end.copy_with_animatable_vector(tweened_scalars)
 
     return start + (end - start) * ease_fn(progress)
 

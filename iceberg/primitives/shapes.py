@@ -2,6 +2,8 @@ from typing import Tuple
 import skia
 
 from iceberg import Drawable, Bounds, Color
+from iceberg.animation import Animatable
+from iceberg.animation.animatable import AnimatableSequence
 from iceberg.core import Bounds
 from iceberg.core.properties import PathStyle
 from iceberg.geometry import get_transform, apply_transform
@@ -19,7 +21,7 @@ class BorderPosition(Enum):
 
 
 @dataclass
-class Rectangle(Drawable):
+class Rectangle(Drawable, Animatable):
     rectangle: Bounds
     border_color: Color = None
     fill_color: Color = None
@@ -83,6 +85,27 @@ class Rectangle(Drawable):
 
         if self._border_paint:
             canvas.drawRect(self._border_skia_rect, self._border_paint)
+
+    @property
+    def animatables(self) -> AnimatableSequence:
+        return [
+            self.rectangle,
+            self.border_color,
+            self.fill_color,
+            self.border_thickness,
+        ]
+
+    def copy_with_animatables(self, animatables: AnimatableSequence):
+        rectangle, border_color, fill_color, border_thickness = animatables
+
+        return Rectangle(
+            rectangle=rectangle,
+            border_color=border_color,
+            fill_color=fill_color,
+            border_thickness=border_thickness,
+            anti_alias=self.anti_alias,
+            border_position=self.border_position,
+        )
 
 
 @dataclass
