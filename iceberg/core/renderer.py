@@ -5,6 +5,7 @@ from .properties import Color
 
 import skia
 import glfw
+import re
 
 import numpy as np
 
@@ -128,7 +129,22 @@ class Renderer(object):
         )
 
 
-def render_svg(drawable: Drawable, filename: str, background_color: Color = None):
+def _svg_postprocess(svg: str) -> str:
+    # Skia adds a trailing comma to `y="0"`, which is invalid SVG.
+    # While Chrome can render it, Firefox cannot.
+
+    # Replace `y="<number>, "` with `y="<number>"`.
+    svg = re.sub(r'y="(\d+\.?\d*), "', r'y="\1"', svg)
+
+    return svg
+
+
+def render_svg(
+    drawable: Drawable,
+    filename: str,
+    background_color: Color = None,
+    run_postprocess: bool = True,
+):
     assert filename.endswith(".svg")
 
     stream = skia.FILEWStream(filename)
@@ -140,3 +156,10 @@ def render_svg(drawable: Drawable, filename: str, background_color: Color = None
 
     del canvas
     stream.flush()
+
+    if run_postprocess:
+        with open(filename, "r") as f:
+            svg = f.read()
+        svg = _svg_postprocess(svg)
+        with open(filename, "w") as f:
+            f.write(svg)
