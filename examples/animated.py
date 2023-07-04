@@ -29,17 +29,23 @@ class Scene1(Scene):
     def make_frame(self, t: float) -> Drawable:
         blank = Blank(Bounds(size=(1920, 1080)), Colors.WHITE)
 
+        _SIZE = 500
+        _DISPLACEMENT = 600
+        y = blank.bounds.height / 2 - _SIZE / 2
+        start_x = blank.bounds.width / 2 - _SIZE / 2 - _DISPLACEMENT
+        end_x = blank.bounds.width / 2 - _SIZE / 2 + _DISPLACEMENT
+
         rect = animate(
             Rectangle(
-                Bounds(size=(500, 500)),
+                Bounds(size=(_SIZE, _SIZE)),
                 fill_color=Colors.BLUE,
                 border_radius=0,
-            ).move(100, 100),
+            ).move(start_x, y),
             Rectangle(
-                Bounds(size=(500, 500)),
+                Bounds(size=(_SIZE, _SIZE)),
                 fill_color=Colors.RED,
                 border_radius=1000,
-            ).move(1000, 100),
+            ).move(end_x, y),
             t / self.duration,
         )
 
@@ -49,4 +55,4 @@ class Scene1(Scene):
 if __name__ == "__main__":
     scene = Scene1()
     final = scene + scene.freeze(0.5) + scene.reverse()
-    final.render("test.mp4", fps=60)
+    final.render("test.gif", fps=60)
