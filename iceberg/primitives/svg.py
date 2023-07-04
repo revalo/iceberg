@@ -44,7 +44,7 @@ class SVG(Drawable):
         self._skia_picture = picture_recorder.finishRecordingAsPicture()
 
     @property
-    def bounds(self) -> Bounds:
+    def native_bounds(self) -> Bounds:
         return self._bounds
 
     def draw(self, canvas: skia.Canvas) -> None:

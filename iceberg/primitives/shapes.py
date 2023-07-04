@@ -73,7 +73,7 @@ class Rectangle(Drawable):
             ).to_skia()
 
     @property
-    def bounds(self) -> Bounds:
+    def native_bounds(self) -> Bounds:
         return self._bounds
 
     def draw(self, canvas):
@@ -112,7 +112,7 @@ class Path(Drawable, ABC):
         self._path_style = path_style
 
     @property
-    def bounds(self) -> Bounds:
+    def native_bounds(self) -> Bounds:
         return self._bounds
 
     def draw(self, canvas):

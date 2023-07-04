@@ -39,7 +39,7 @@ class Image(Drawable):
         )
 
     @property
-    def bounds(self) -> Bounds:
+    def native_bounds(self) -> Bounds:
         return self._bounds
 
     def draw(self, canvas: skia.Canvas) -> None:

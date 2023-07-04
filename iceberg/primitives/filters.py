@@ -12,7 +12,7 @@ class Filter(Drawable):
         self._child = child
         picture_recorder = skia.PictureRecorder()
         fake_canvas = picture_recorder.beginRecording(
-            child.bounds.width, child.bounds.height
+            child.native_bounds.width, child.native_bounds.height
         )
         child.draw(fake_canvas)
         self._skia_picture = picture_recorder.finishRecordingAsPicture()
@@ -22,8 +22,8 @@ class Filter(Drawable):
         return [self._child]
 
     @property
-    def bounds(self) -> Bounds:
-        return self._child.bounds
+    def native_bounds(self) -> Bounds:
+        return self._child.native_bounds
 
     def draw(self, canvas: skia.Canvas) -> None:
         canvas.drawPicture(self._skia_picture, paint=self._paint)

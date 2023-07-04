@@ -6,6 +6,8 @@ from iceberg.utils import direction_equal
 import numpy as np
 import skia
 
+# Stack of contexts for Drawable.bounds, from outermost to innermost
+scene_context_stack = []
 
 class ChildNotFoundError(ValueError):
     pass
@@ -22,9 +24,27 @@ class Drawable(ABC):
     the details of drawing them on a canvas with skia.
     """
 
-    @abstractproperty
+    @property
     def bounds(self) -> Bounds:
         """Return the bounds of the drawable."""
+        global scene_context_stack
+        
+        # Go from innermost to outermost context and return the transformed bounds
+        # if self is a child of that context.
+        for scene in reversed(scene_context_stack):
+            try:
+                return scene.child_bounds(self)
+            except ChildNotFoundError:
+                pass
+
+        # Self is not a child of any context, so return the native bounds
+        return self.native_bounds
+
+    @abstractproperty
+    def native_bounds(self) -> Bounds:
+        """Return the untransformed bounds of the drawable.
+        
+        Subclasses should implement this property and not override `bounds`."""
         pass
 
     @abstractmethod
@@ -205,4 +225,14 @@ class Drawable(ABC):
         """
 
         transform = self.child_transform(search_child)
-        return search_child.bounds.transform(transform)
+        # Use native_bounds instead of bounds to avoid infinite recursion and because
+        # if the parent is explicitly specified, we should ignore the current scene.
+        return search_child.native_bounds.transform(transform)
+
+    def __enter__(self):
+        global scene_context_stack
+        scene_context_stack.append(self)
+    
+    def __exit__(self, exc_type, exc_value, traceback):
+        global current_scene
+        assert scene_context_stack.pop() is self

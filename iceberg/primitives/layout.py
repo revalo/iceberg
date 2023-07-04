@@ -47,7 +47,7 @@ class Blank(Drawable):
         )
 
     @property
-    def bounds(self) -> Bounds:
+    def native_bounds(self) -> Bounds:
         return self._bounds
 
     def draw(self, canvas: skia.Canvas) -> None:
@@ -84,7 +84,7 @@ class Transform(Drawable):
         self._scale = scale
         self._anchor = anchor
 
-        self._child_bounds = self._child.bounds
+        self._child_bounds = self._child.native_bounds
 
         # Compute the bounds of the transformed child.
         left, top = self._child_bounds.left, self._child_bounds.top
@@ -140,7 +140,7 @@ class Transform(Drawable):
         return self._child
 
     @property
-    def bounds(self) -> Bounds:
+    def native_bounds(self) -> Bounds:
         return self._transformed_bounds
 
     def draw(self, canvas: skia.Canvas):
@@ -185,7 +185,7 @@ class Padding(Transform):
             )
 
         self._padding = padding
-        self._child_bounds = self._child.bounds
+        self._child_bounds = self._child.native_bounds
 
         pl, pt, pr, pb = self._padding
 
@@ -202,7 +202,7 @@ class Padding(Transform):
         )
 
     @property
-    def bounds(self) -> Bounds:
+    def native_bounds(self) -> Bounds:
         return self._padded_bounds
 
 
@@ -221,10 +221,10 @@ class Compose(Drawable):
 
         if len(self._children):
             # Compute the bounds of the composed children.
-            left = min([child.bounds.left for child in self._children])
-            top = min([child.bounds.top for child in self._children])
-            right = max([child.bounds.right for child in self._children])
-            bottom = max([child.bounds.bottom for child in self._children])
+            left = min([child.native_bounds.left for child in self._children])
+            top = min([child.native_bounds.top for child in self._children])
+            right = max([child.native_bounds.right for child in self._children])
+            bottom = max([child.native_bounds.bottom for child in self._children])
 
             self._composed_bounds = Bounds(
                 left=left,
@@ -238,7 +238,7 @@ class Compose(Drawable):
         return self._children
 
     @property
-    def bounds(self) -> Bounds:
+    def native_bounds(self) -> Bounds:
         return self._composed_bounds
 
     def draw(self, canvas: skia.Canvas):
@@ -271,8 +271,8 @@ class Anchor(Compose):
         return self._children[self._anchor_index]
 
     @property
-    def bounds(self) -> Bounds:
-        return self.anchor.bounds
+    def native_bounds(self) -> Bounds:
+        return self.anchor.native_bounds
 
 
 class Align(Compose):
@@ -308,8 +308,8 @@ class Align(Compose):
             direction: The direction to move the child drawable in.
         """
 
-        anchor_corner = anchor.bounds.corners[anchor_corner]
-        child_corner = child.bounds.corners[child_corner]
+        anchor_corner = anchor.native_bounds.corners[anchor_corner]
+        child_corner = child.native_bounds.corners[child_corner]
 
         dx = anchor_corner[0] - child_corner[0]
         dy = anchor_corner[1] - child_corner[1]
@@ -401,9 +401,9 @@ class Grid(Compose):
                 child = child.pad(_conditional_padding(x, y)).move(current_x, current_y)
                 self._padded_children.append(child)
 
-                current_x += child.bounds.width
+                current_x += child.native_bounds.width
 
-            current_y += child.bounds.height
+            current_y += child.native_bounds.height
             current_x = 0
 
         super().__init__(children=tuple(self._padded_children))
