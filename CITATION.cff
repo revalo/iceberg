@@ -1,0 +1,13 @@
+# YAML 1.2
+---
+authors:
+  -
+    name: "Shreyas Kapur"
+  -
+    name: "Erik Jenner"
+cff-version: "1.2.0"
+date-released: 2023-07-04
+license: MIT
+title: IceBerg – Compositional Graphics & Diagramming
+url: "https://github.com/revalo/iceberg"
+...

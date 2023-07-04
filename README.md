@@ -162,3 +162,7 @@ renderer.save_rendered_image("test.png")
 Should produce:
 
 <img src="images/quickstart.png" width="500">
+
+# Citation
+
+Cite Iceberg by clicking the "cite this repository" button on the right sidebar.
