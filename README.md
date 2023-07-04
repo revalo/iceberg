@@ -163,6 +163,17 @@ Should produce:
 
 <img src="images/quickstart.png" width="500">
 
-# Citation
+## Citation
 
 Cite Iceberg by clicking the "cite this repository" button on the right sidebar.
+
+```
+@software{IceBerg_Contributors_IceBerg_Compositional_2023,
+    author = {{IceBerg Contributors}},
+    license = {MIT},
+    month = jul,
+    title = {{IceBerg – Compositional Graphics & Diagramming}},
+    url = {https://github.com/revalo/iceberg},
+    year = {2023}
+}
+```
