@@ -11,3 +11,5 @@ poster_figures
 dist
 *.egg-info
 build/
+.coverage
+.pytest_cache

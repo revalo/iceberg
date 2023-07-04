@@ -1,16 +1,13 @@
 from iceberg import (
-    Renderer,
     Bounds,
     Colors,
     FontStyle,
     Corner,
     PathStyle,
     Color,
-    render_svg,
 )
 from iceberg.primitives import (
     Ellipse,
-    Rectangle,
     Arrange,
     Compose,
     Text,
@@ -18,7 +15,10 @@ from iceberg.primitives import (
 )
 from iceberg.arrows import Arrow, LabelArrow
 
-if __name__ == "__main__":
+from .scene_tester import check_render
+
+
+def test_connect():
     # What font?
     _FONT_FAMILY = "Arial"
     _CIRCLE_WIDTH = 100
@@ -83,10 +83,4 @@ if __name__ == "__main__":
 
     scene = scene.pad(20).scale(2)
 
-    # Render the scene into a file called `test.png`.
-    renderer = Renderer()
-    renderer.render(scene, background_color=Colors.WHITE)
-    renderer.save_rendered_image("test.png")
-
-    # Also render to svg.
-    render_svg(scene, "test.svg", background_color=Colors.WHITE)
+    check_render(scene, "connect.png")

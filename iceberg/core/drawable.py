@@ -6,6 +6,9 @@ from iceberg.utils import direction_equal
 import numpy as np
 import skia
 
+# Global variable to store the stack of scene contexts.
+_scene_context_stack = []
+
 
 class ChildNotFoundError(ValueError):
     pass
@@ -31,6 +34,28 @@ class Drawable(ABC):
     def draw(self, canvas: skia.Canvas):
         """Execute the Skia drawing commands on the canvas."""
         pass
+
+    @property
+    def relative_bounds(self) -> Bounds:
+        """Get the bounds of the drawable relative to the current scene context.
+
+        Example:
+            >>> with some_drawable:
+            >>>     print(child_drawable.relative_bounds)
+
+        The above code will print the bounds of `child_drawable` relative to `some_drawable`.
+        """
+
+        # Go from innermost to outermost context and return the transformed bounds
+        # if self is a child of that context.
+        for scene in reversed(_scene_context_stack):
+            try:
+                return scene.child_bounds(self)
+            except ChildNotFoundError:
+                pass
+
+        # Self is not a child of any context, so raise an error.
+        raise ChildNotFoundError()
 
     @property
     def children(self) -> Sequence["Drawable"]:
@@ -206,3 +231,9 @@ class Drawable(ABC):
 
         transform = self.child_transform(search_child)
         return search_child.bounds.transform(transform)
+
+    def __enter__(self):
+        _scene_context_stack.append(self)
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        assert _scene_context_stack.pop() is self

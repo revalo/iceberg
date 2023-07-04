@@ -16,6 +16,9 @@ Iceberg is a compositional diagramming and graphics library embedding in Python.
 <p align="left">
 <img src="images/testimonial.jpg" width="400">
 </p>
+<p align="left">
+<img src="images/testimonial2.jpg" width="400">
+</p>
 
 ## Showcase
 
@@ -73,14 +76,18 @@ ellipses = Arrange(
     gap=500,
 )
 
-arrow = Arrow(
-    ellipses.child_bounds(left_ellipse).corners[Corner.MIDDLE_RIGHT],
-    ellipses.child_bounds(right_ellipse).corners[Corner.MIDDLE_LEFT],
-    line_path_style=PathStyle(
-        color=Colors.BLACK,
-        thickness=3,
-    ),
-)
+with ellipses:
+    # Within this context, we can use `relative_bounds` to get the bounds of the
+    # `left_ellipse` and `right_ellipse` relative to the `ellipses` object.
+    arrow = Arrow(
+        left_ellipse.relative_bounds.corners[Corner.MIDDLE_RIGHT],
+        right_ellipse.relative_bounds.corners[Corner.MIDDLE_LEFT],
+        line_path_style=PathStyle(
+            color=Colors.BLACK,
+            thickness=3,
+        ),
+    )
+
 arrow_label = MathTex("f(x) = x^2", scale=4)
 arrow = LabelArrow(
     arrow,
@@ -159,3 +166,18 @@ renderer.save_rendered_image("test.png")
 Should produce:
 
 <img src="images/quickstart.png" width="500">
+
+## Citation
+
+Cite Iceberg by clicking the "cite this repository" button on the right sidebar.
+
+```
+@software{IceBerg_Contributors_IceBerg_Compositional_2023,
+    author = {{IceBerg Contributors}},
+    license = {MIT},
+    month = jul,
+    title = {{IceBerg – Compositional Graphics & Diagramming}},
+    url = {https://github.com/revalo/iceberg},
+    year = {2023}
+}
+```

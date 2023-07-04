@@ -108,7 +108,10 @@ class Renderer(object):
 
         # TODO(revalo): Convert BGR to RGB via Skia.
         image = self._skia_surface.makeImageSnapshot()
-        return image.toarray()[:, :, :3][:, :, ::-1]
+        array = image.toarray()
+        array = array[:, :, [2, 1, 0, 3]]
+
+        return array
 
     def save_rendered_image(self, path: Union[str, Path]):
         """Saves the rendered image to the given path.
