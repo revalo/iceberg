@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from typing import Optional, Tuple
+from typing import List, Optional, Tuple
 from enum import Enum
 
 import skia
@@ -482,12 +482,26 @@ class PathStyle(Animatable):
 
 @dataclass
 class FontStyle(object):
+    class Style(Enum):
+        NORMAL = skia.FontStyle.Normal()
+        ITALIC = skia.FontStyle.Italic()
+        BOLD = skia.FontStyle.Bold()
+        BOLD_ITALIC = skia.FontStyle.BoldItalic()
+
     family: str
+    filename: str = None
     size: float = 16
     font_weight: int = 400
-    font_style: int = 0
+    font_style: Style = Style.NORMAL
     color: Color = Color(0, 0, 0)
     anti_alias: bool = True
+
+    def __post_init__(self):
+        families = set(FontStyle.available_fonts())
+        if self.filename is None and not self.family in families:
+            raise ValueError(
+                f"Invalid font family: {self.family}. Please call FontStyle.get_available_fonts_families() to get the list of available fonts."
+            )
 
     def get_skia_paint(self) -> skia.Paint:
         return skia.Paint(
@@ -497,7 +511,17 @@ class FontStyle(object):
         )
 
     def get_skia_font(self) -> skia.Font:
+        if self.filename is not None:
+            return skia.Font(
+                skia.Typeface.MakeFromFile(self.filename, self.font_style.value),
+                self.size,
+            )
+
         return skia.Font(
-            skia.Typeface(self.family),
+            skia.Typeface(self.family, self.font_style.value),
             self.size,
         )
+
+    @staticmethod
+    def available_fonts() -> List[str]:
+        return list(skia.FontMgr())
