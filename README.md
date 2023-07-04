@@ -16,6 +16,9 @@ Iceberg is a compositional diagramming and graphics library embedding in Python.
 <p align="left">
 <img src="images/testimonial.jpg" width="400">
 </p>
+<p align="left">
+<img src="images/testimonial2.jpg" width="400">
+</p>
 
 ## Showcase
 
