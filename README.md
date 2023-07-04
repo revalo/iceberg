@@ -76,14 +76,18 @@ ellipses = Arrange(
     gap=500,
 )
 
-arrow = Arrow(
-    ellipses.child_bounds(left_ellipse).corners[Corner.MIDDLE_RIGHT],
-    ellipses.child_bounds(right_ellipse).corners[Corner.MIDDLE_LEFT],
-    line_path_style=PathStyle(
-        color=Colors.BLACK,
-        thickness=3,
-    ),
-)
+with ellipses:
+    # Within this context, we can use `relative_bounds` to get the bounds of the
+    # `left_ellipse` and `right_ellipse` relative to the `ellipses` object.
+    arrow = Arrow(
+        left_ellipse.relative_bounds.corners[Corner.MIDDLE_RIGHT],
+        right_ellipse.relative_bounds.corners[Corner.MIDDLE_LEFT],
+        line_path_style=PathStyle(
+            color=Colors.BLACK,
+            thickness=3,
+        ),
+    )
+
 arrow_label = MathTex("f(x) = x^2", scale=4)
 arrow = LabelArrow(
     arrow,
