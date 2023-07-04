@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from abc import ABC, abstractproperty, abstractmethod
 
 from typing import Optional, Tuple
 from enum import Enum
@@ -23,7 +24,21 @@ class Corner(object):
     CENTER = 8
 
 
-class Bounds(object):
+class AnimatableProperty(ABC):
+    @abstractproperty
+    def animatable_scalars(self) -> np.ndarray:
+        """Should return a numpy array of scalars that can be animated."""
+        pass
+
+    @abstractmethod
+    def copy_with_animatable_scalars(self, animatable_scalars: np.ndarray):
+        """Should return a copy of the object with the animatable scalars set to the specified
+        values.
+        """
+        pass
+
+
+class Bounds(AnimatableProperty):
     """Represents a bounding box."""
 
     def __init__(
@@ -76,6 +91,13 @@ class Bounds(object):
         self._bottom = bottom
 
         self._compute_corners()
+
+    @property
+    def animatable_scalars(self):
+        return np.array([self.left, self.top, self.right, self.bottom])
+
+    def copy_with_animatable_scalars(self, animatable_scalars: np.ndarray):
+        return Bounds(*animatable_scalars)
 
     def transform(self, transform: np.ndarray):
         """Transform the bounds by the specified transform matrix.
@@ -232,7 +254,7 @@ class Bounds(object):
         return self._computed_corners
 
 
-class Color(object):
+class Color(AnimatableProperty):
     def __init__(self, r: float, g: float, b: float, a: float = 1.0) -> None:
         """Create a color object.
 
@@ -254,6 +276,14 @@ class Color(object):
         self._g = g
         self._b = b
         self._a = a
+
+    @property
+    def animatable_scalars(self):
+        return np.array([self.r, self.g, self.b, self.a])
+
+    def copy_with_animatable_scalars(self, animatable_scalars: np.ndarray):
+        r, g, b, a = animatable_scalars
+        return Color(r, g, b, a)
 
     @property
     def r(self) -> float:
@@ -430,6 +460,29 @@ class PathStyle(object):
             StrokeWidth=thickness,
             Color4f=color.to_skia(),
             StrokeCap=stroke_cap.value,
+        )
+
+    @property
+    def animatable_scalars(self) -> np.ndarray:
+        color_scalars = self._color.animatable_scalars
+        thickness_scalars = np.array([self._thickness])
+
+        return np.concatenate((color_scalars, thickness_scalars))
+
+    @abstractmethod
+    def copy_with_animatable_scalars(self, animatable_scalars: np.ndarray):
+        """Should return a copy of the object with the animatable scalars set to the specified
+        values.
+        """
+
+        color_scalars = animatable_scalars[:4]
+        thickness_scalars = animatable_scalars[4:]
+
+        color = Color.from_animatable_scalars(color_scalars)
+        thickness = thickness_scalars[0]
+
+        return PathStyle(
+            color, thickness, self._anti_alias, self._stroke, self._stroke_cap
         )
 
     @property
