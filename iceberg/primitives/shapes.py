@@ -78,13 +78,19 @@ class Rectangle(Drawable, Animatable):
     def bounds(self) -> Bounds:
         return self._bounds
 
-    def draw(self, canvas):
-        self.__post_init__()
-
+    @property
+    def border_radius_tuple(self) -> Tuple[float, float]:
         if isinstance(self.border_radius, tuple):
             rx, ry = self.border_radius
         else:
             rx = ry = self.border_radius
+
+        return rx, ry
+
+    def draw(self, canvas):
+        self.__post_init__()
+
+        rx, ry = self.border_radius_tuple
 
         if self._fill_paint:
             canvas.drawRoundRect(self._skia_rect, rx, ry, self._fill_paint)
@@ -94,15 +100,18 @@ class Rectangle(Drawable, Animatable):
 
     @property
     def animatables(self) -> AnimatableSequence:
+        rx, ry = self.border_radius_tuple
         return [
             self.rectangle,
             self.border_color,
             self.fill_color,
             self.border_thickness,
+            rx,
+            ry,
         ]
 
     def copy_with_animatables(self, animatables: AnimatableSequence):
-        rectangle, border_color, fill_color, border_thickness = animatables
+        rectangle, border_color, fill_color, border_thickness, rx, ry = animatables
 
         return Rectangle(
             rectangle=rectangle,
@@ -111,6 +120,7 @@ class Rectangle(Drawable, Animatable):
             border_thickness=border_thickness,
             anti_alias=self.anti_alias,
             border_position=self.border_position,
+            border_radius=(rx, ry),
         )
 
 

@@ -39,7 +39,7 @@ def tween(
     ease_type: EaseType = EaseType.EASE_IN_OUT_QUAD,
     ease_fn=None,
     ping_pong: bool = False,
-) -> Union[np.ndarray, float]:
+) -> Union[np.ndarray, float, Animatable]:
     """Tween between two values.
 
     Args:

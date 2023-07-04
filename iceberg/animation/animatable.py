@@ -35,8 +35,11 @@ class Animatable(ABC):
                 placeholder_vector = animatable.animatables_to_vector()
             elif isinstance(animatable, np.ndarray):
                 placeholder_vector = animatable
-            else:
+            elif isinstance(animatable, float) or isinstance(animatable, int):
                 placeholder_vector = np.array([animatable])
+            else:
+                # Skip.
+                continue
 
             current_vector = animatable_vector[
                 cursor : cursor + len(placeholder_vector)

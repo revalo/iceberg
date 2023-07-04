@@ -227,6 +227,11 @@ class Padding(Transform):
 
         pl, pt, pr, pb = self._padding
 
+        self._pl = pl
+        self._pt = pt
+        self._pr = pr
+        self._pb = pb
+
         self._padded_bounds = Bounds(
             left=self._child_bounds.left - pl,
             top=self._child_bounds.top - pt,
@@ -242,6 +247,18 @@ class Padding(Transform):
     @property
     def bounds(self) -> Bounds:
         return self._padded_bounds
+
+    @property
+    def animatables(self) -> AnimatableSequence:
+        return [self._pl, self._pt, self._pr, self._pb, self._child]
+
+    def copy_with_animatables(self, animatables: AnimatableSequence):
+        pl, pt, pr, pb, child = animatables
+
+        return Padding(
+            child=child,
+            padding=(pl, pt, pr, pb),
+        )
 
 
 class Compose(Drawable, Animatable):

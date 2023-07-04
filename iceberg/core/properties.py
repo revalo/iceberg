@@ -7,7 +7,7 @@ import skia
 import numpy as np
 
 from iceberg.geometry import apply_transform
-from iceberg.animation import Animatable
+from iceberg.animation.animatable import Animatable
 
 
 class Corner(object):
