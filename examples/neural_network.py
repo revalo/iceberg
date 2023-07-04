@@ -78,18 +78,19 @@ class NeuralNetwork(Compose):
 
         # Draw the lines.
         self._lines = []
-        for layer_a, layer_b in zip(self.layer_nodes[:-1], self.layer_nodes[1:]):
-            for circle_a in layer_a:
-                for circle_b in layer_b:
-                    start = nodes_arranged.child_bounds(circle_a).corners[
-                        Corner.MIDDLE_RIGHT
-                    ]
-                    end = nodes_arranged.child_bounds(circle_b).corners[
-                        Corner.MIDDLE_LEFT
-                    ]
+        with nodes_arranged:
+            for layer_a, layer_b in zip(self.layer_nodes[:-1], self.layer_nodes[1:]):
+                for circle_a in layer_a:
+                    for circle_b in layer_b:
+                        start = circle_a.bounds.corners[
+                            Corner.MIDDLE_RIGHT
+                        ]
+                        end = circle_b.bounds.corners[
+                            Corner.MIDDLE_LEFT
+                        ]
 
-                    line = Line(start, end, self._line_path_style)
-                    self._lines.append(line)
+                        line = Line(start, end, self._line_path_style)
+                        self._lines.append(line)
 
         # All the children in this composition.
         # Nodes are drawn on top of lines.

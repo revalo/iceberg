@@ -44,14 +44,15 @@ if __name__ == "__main__":
         gap=500,
     )
 
-    arrow = Arrow(
-        ellipses.child_bounds(left_ellipse).corners[Corner.MIDDLE_RIGHT],
-        ellipses.child_bounds(right_ellipse).corners[Corner.MIDDLE_LEFT],
-        line_path_style=PathStyle(
-            color=Colors.BLACK,
-            thickness=3,
-        ),
-    )
+    with ellipses:
+        arrow = Arrow(
+            left_ellipse.bounds.corners[Corner.MIDDLE_RIGHT],
+            right_ellipse.bounds.corners[Corner.MIDDLE_LEFT],
+            line_path_style=PathStyle(
+                color=Colors.BLACK,
+                thickness=3,
+            ),
+        )
     arrow_label = MathTex("f(x) = x^2", scale=4)
     arrow = LabelArrow(
         arrow,
