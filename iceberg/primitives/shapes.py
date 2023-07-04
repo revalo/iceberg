@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Tuple, Union
 import skia
 
 from iceberg import Drawable, Bounds, Color
@@ -26,6 +26,7 @@ class Rectangle(Drawable):
     border_thickness: float = 1.0
     anti_alias: bool = True
     border_position: BorderPosition = BorderPosition.CENTER
+    border_radius: Union[float, Tuple[float, float]] = 0.0
 
     def __post_init__(
         self,
@@ -78,11 +79,16 @@ class Rectangle(Drawable):
     def draw(self, canvas):
         self.__post_init__()
 
+        if isinstance(self.border_radius, tuple):
+            rx, ry = self.border_radius
+        else:
+            rx = ry = self.border_radius
+
         if self._fill_paint:
-            canvas.drawRect(self._skia_rect, self._fill_paint)
+            canvas.drawRoundRect(self._skia_rect, rx, ry, self._fill_paint)
 
         if self._border_paint:
-            canvas.drawRect(self._border_skia_rect, self._border_paint)
+            canvas.drawRoundRect(self._border_skia_rect, rx, ry, self._border_paint)
 
 
 @dataclass
