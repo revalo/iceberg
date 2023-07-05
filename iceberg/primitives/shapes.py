@@ -156,7 +156,7 @@ class Path(Drawable, ABC):
         canvas.drawPath(self._path, self._path_style.skia_paint)
 
 
-class PartialPath(Drawable):
+class PartialPath(Drawable, Animatable):
     def __init__(
         self,
         child_path: Path,
@@ -203,6 +203,14 @@ class PartialPath(Drawable):
     @property
     def bounds(self) -> Bounds:
         return self._child_path.bounds
+
+    @property
+    def animatables(self) -> AnimatableSequence:
+        return [self._start, self._end]
+
+    def copy_with_animatables(self, animatables: AnimatableSequence):
+        start, end = animatables
+        return PartialPath(self._child_path, start, end)
 
 
 @dataclass
