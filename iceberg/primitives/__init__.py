@@ -1,4 +1,11 @@
-from .shapes import Rectangle, Ellipse, Line, BorderPosition, Path
+from .shapes import (
+    Rectangle,
+    Ellipse,
+    Line,
+    BorderPosition,
+    Path,
+    CurvedCubicLine,
+)
 from .layout import (
     Transform,
     Padding,

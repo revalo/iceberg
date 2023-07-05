@@ -1,4 +1,4 @@
-from typing import Tuple, Union
+from typing import List, Tuple, Union
 import skia
 
 from iceberg import Drawable, Bounds, Color
@@ -129,5 +129,22 @@ class Line(Path):
         path = skia.Path()
         path.moveTo(*self.start)
         path.lineTo(*self.end)
+
+        super().__init__(path, self.path_style)
+
+
+@dataclass
+class CurvedCubicLine(Path):
+    points: List[Tuple[float, float]]
+    path_style: PathStyle
+
+    def __post_init__(self):
+        assert (
+            len(self.points) == 3
+        ), f"Cubic curves require exactly 3 points, got {len(self.points)}."
+
+        path = skia.Path()
+        path.moveTo(*self.points[0])
+        path.cubicTo(*self.points[0], *self.points[1], *self.points[2])
 
         super().__init__(path, self.path_style)
