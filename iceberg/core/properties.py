@@ -469,7 +469,7 @@ class FontStyle(object):
         families = set(FontStyle.available_fonts())
         if self.filename is None and not self.family in families:
             raise ValueError(
-                f"Invalid font family: {self.family}. Please call FontStyle.get_available_fonts_families() to get the list of available fonts."
+                f"Invalid font family: {self.family}. Please call FontStyle.available_fonts() to get the list of available fonts."
             )
 
     def get_skia_paint(self) -> skia.Paint:
