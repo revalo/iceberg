@@ -42,13 +42,16 @@ def check_render(
 
     # Use numpy to calculate the number of pixels that don't match.
     number_of_total_pixels = expected_image.size[0] * expected_image.size[1]
-    number_of_mismatched_pixels = np.sum(
-        (
-            (np.array(expected_image, dtype=np.float32) / 255)
-            - (np.array(rendered_image, dtype=np.float32) / 255)
+    try:
+        number_of_mismatched_pixels = np.sum(
+            (
+                (np.array(expected_image, dtype=np.float32) / 255)
+                - (np.array(rendered_image, dtype=np.float32) / 255)
+            )
+            > pixel_tolerance
         )
-        > pixel_tolerance
-    )
+    except ValueError:
+        number_of_mismatched_pixels = number_of_total_pixels
 
     fraction_mismatched = number_of_mismatched_pixels / number_of_total_pixels
 

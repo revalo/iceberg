@@ -468,7 +468,7 @@ class FontStyle(object):
         BOLD = skia.FontStyle.Bold()
         BOLD_ITALIC = skia.FontStyle.BoldItalic()
 
-    family: str
+    family: str = None
     filename: str = None
     size: float = 16
     font_weight: int = 400
@@ -493,7 +493,7 @@ class FontStyle(object):
     def get_skia_font(self) -> skia.Font:
         if self.filename is not None:
             return skia.Font(
-                skia.Typeface.MakeFromFile(self.filename, self.font_style.value),
+                skia.Typeface.MakeFromFile(self.filename),
                 self.size,
             )
 
