@@ -407,6 +407,9 @@ class PathStyle(object):
         anti_alias: bool = True,
         stroke: bool = True,
         stroke_cap: StrokeCap = StrokeCap.BUTT,
+        dashed: bool = False,
+        dash_intervals: List[float] = [20, 10],
+        dash_phase: float = 0,
     ):
         """Create a path style.
 
@@ -416,6 +419,9 @@ class PathStyle(object):
             anti_alias: Whether to use anti-aliasing.
             stroke: Whether to stroke the path or fill it.
             stroke_cap: The cap at the end of a stroke.
+            dashed: Whether to draw the path dashed.
+            dash_intervals: The intervals for the dashed path.
+            dash_phase: The phase of the dashed path.
         """
 
         self._color = color
@@ -430,6 +436,11 @@ class PathStyle(object):
             StrokeWidth=thickness,
             Color4f=color.to_skia(),
             StrokeCap=stroke_cap.value,
+            PathEffect=skia.DashPathEffect.Make(
+                intervals=dash_intervals, phase=dash_phase
+            )
+            if dashed
+            else None,
         )
 
     @property
