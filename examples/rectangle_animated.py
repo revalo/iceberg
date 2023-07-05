@@ -1,20 +1,11 @@
 from iceberg import (
-    Renderer,
     Bounds,
     Colors,
-    FontStyle,
-    Corner,
-    PathStyle,
-    Color,
     Drawable,
 )
 from iceberg.primitives import (
-    Ellipse,
     Rectangle,
-    Arrange,
     Compose,
-    Text,
-    MathTex,
     Blank,
 )
 from iceberg.animation import animate
