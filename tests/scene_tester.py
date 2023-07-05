@@ -7,7 +7,10 @@ from pixelmatch.contrib.PIL import pixelmatch
 
 
 def check_render(
-    drawable: Drawable, expected_filename: str, generate_expected: bool = False
+    drawable: Drawable,
+    expected_filename: str,
+    generate_expected: bool = False,
+    tolerance: float = 0.1,
 ):
     """Checks that the given Drawable renders to the expected image.
 
@@ -37,14 +40,17 @@ def check_render(
     # Use numpy to calculate the number of pixels that don't match.
     number_of_total_pixels = expected_image.size[0] * expected_image.size[1]
     number_of_mismatched_pixels = np.sum(
-        np.array(expected_image) != np.array(rendered_image)
+        (
+            (np.array(expected_image, dtype=np.float32) / 255)
+            - (np.array(rendered_image, dtype=np.float32) / 255)
+        )
+        > tolerance
     )
 
-    fraction_missmatched = number_of_mismatched_pixels / number_of_total_pixels
+    fraction_mismatched = number_of_mismatched_pixels / number_of_total_pixels
 
-    if fraction_missmatched > 0.01:
-        mismatch = pixelmatch(expected_image, rendered_image, img_diff, 0.1)
-        percent_mismatch = mismatch / (expected_image.size[0] * expected_image.size[1])
+    if fraction_mismatched > 0.01:
+        pixelmatch(expected_image, rendered_image, img_diff, tolerance)
 
         # Save the rendered image, the expected image, and the diff image.
         debug_dir = os.path.join("tests", "testoutput")
@@ -52,4 +58,4 @@ def check_render(
         rendered_image.save(os.path.join(debug_dir, f"rendered_{expected_filename}"))
         expected_image.save(os.path.join(debug_dir, f"expected_{expected_filename}"))
         img_diff.save(os.path.join(debug_dir, f"diff_{expected_filename}"))
-        assert False, f"Image mismatch: {percent_mismatch * 100:.2f}%"
+        assert False, f"Image mismatch: {fraction_mismatched * 100:.2f}%"
