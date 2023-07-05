@@ -37,6 +37,6 @@ def test_cubic():
             dash_intervals=[20.0, 10.0],
             dash_phase=0.0,
         ),
-    )
-    scene = Compose([blank, line])
-    check_render(scene, "cubic.png", generate_expected=True)
+    ).scale(0.5)
+    scene = blank.add_centered(line)
+    check_render(scene, "cubic.png")
