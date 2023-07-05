@@ -34,10 +34,18 @@ def check_render(
     rendered_image = Image.fromarray(rendered_image)
     img_diff = Image.new("RGBA", expected_image.size)
 
-    mismatch = pixelmatch(expected_image, rendered_image, img_diff, 0.1)
-    percent_mismatch = mismatch / (expected_image.size[0] * expected_image.size[1])
+    # Use numpy to calculate the number of pixels that don't match.
+    number_of_total_pixels = expected_image.size[0] * expected_image.size[1]
+    number_of_mismatched_pixels = np.sum(
+        np.array(expected_image) != np.array(rendered_image)
+    )
 
-    if percent_mismatch > 0.01:
+    fraction_missmatched = number_of_mismatched_pixels / number_of_total_pixels
+
+    if fraction_missmatched > 0.01:
+        mismatch = pixelmatch(expected_image, rendered_image, img_diff, 0.1)
+        percent_mismatch = mismatch / (expected_image.size[0] * expected_image.size[1])
+
         # Save the rendered image, the expected image, and the diff image.
         debug_dir = os.path.join("tests", "testoutput")
         os.makedirs(debug_dir, exist_ok=True)
