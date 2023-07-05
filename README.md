@@ -26,7 +26,7 @@ Iceberg is a compositional diagramming and graphics library embedding in Python.
 
 A composable Neural Network diagramming class written in iceberg. Full example in `examples/neural_network.py`.
 
-<img src="images/nn.png" width="500">
+<img src="images/nn.gif" width="500">
 
 ```python
 network = NeuralNetwork(
