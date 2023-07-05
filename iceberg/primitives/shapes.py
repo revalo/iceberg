@@ -2,6 +2,8 @@ from typing import List, Tuple, Union
 import skia
 
 from iceberg import Drawable, Bounds, Color
+from iceberg.animation import Animatable
+from iceberg.animation.animatable import AnimatableSequence
 from iceberg.core import Bounds
 from iceberg.core.properties import PathStyle
 from iceberg.geometry import get_transform, apply_transform
@@ -19,7 +21,7 @@ class BorderPosition(Enum):
 
 
 @dataclass
-class Rectangle(Drawable):
+class Rectangle(Drawable, Animatable):
     rectangle: Bounds
     border_color: Color = None
     fill_color: Color = None
@@ -76,19 +78,50 @@ class Rectangle(Drawable):
     def bounds(self) -> Bounds:
         return self._bounds
 
-    def draw(self, canvas):
-        self.__post_init__()
-
+    @property
+    def border_radius_tuple(self) -> Tuple[float, float]:
         if isinstance(self.border_radius, tuple):
             rx, ry = self.border_radius
         else:
             rx = ry = self.border_radius
+
+        return rx, ry
+
+    def draw(self, canvas):
+        self.__post_init__()
+
+        rx, ry = self.border_radius_tuple
 
         if self._fill_paint:
             canvas.drawRoundRect(self._skia_rect, rx, ry, self._fill_paint)
 
         if self._border_paint:
             canvas.drawRoundRect(self._border_skia_rect, rx, ry, self._border_paint)
+
+    @property
+    def animatables(self) -> AnimatableSequence:
+        rx, ry = self.border_radius_tuple
+        return [
+            self.rectangle,
+            self.border_color,
+            self.fill_color,
+            self.border_thickness,
+            rx,
+            ry,
+        ]
+
+    def copy_with_animatables(self, animatables: AnimatableSequence):
+        rectangle, border_color, fill_color, border_thickness, rx, ry = animatables
+
+        return Rectangle(
+            rectangle=rectangle,
+            border_color=border_color,
+            fill_color=fill_color,
+            border_thickness=border_thickness,
+            anti_alias=self.anti_alias,
+            border_position=self.border_position,
+            border_radius=(rx, ry),
+        )
 
 
 @dataclass
@@ -123,7 +156,7 @@ class Path(Drawable, ABC):
         canvas.drawPath(self._path, self._path_style.skia_paint)
 
 
-class PartialPath(Drawable):
+class PartialPath(Drawable, Animatable):
     def __init__(
         self,
         child_path: Path,
@@ -170,6 +203,14 @@ class PartialPath(Drawable):
     @property
     def bounds(self) -> Bounds:
         return self._child_path.bounds
+
+    @property
+    def animatables(self) -> AnimatableSequence:
+        return [self._start, self._end]
+
+    def copy_with_animatables(self, animatables: AnimatableSequence):
+        start, end = animatables
+        return PartialPath(self._child_path, start, end)
 
 
 @dataclass

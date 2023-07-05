@@ -7,6 +7,7 @@ import skia
 import numpy as np
 
 from iceberg.geometry import apply_transform
+from iceberg.animation.animatable import Animatable
 
 
 class Corner(object):
@@ -23,7 +24,7 @@ class Corner(object):
     CENTER = 8
 
 
-class Bounds(object):
+class Bounds(Animatable):
     """Represents a bounding box."""
 
     def __init__(
@@ -76,6 +77,14 @@ class Bounds(object):
         self._bottom = bottom
 
         self._compute_corners()
+
+    @property
+    def animatables(self):
+        return [np.array([self.left, self.top, self.right, self.bottom])]
+
+    def copy_with_animatables(self, animatables):
+        scalars = animatables[0]
+        return Bounds(*scalars)
 
     def transform(self, transform: np.ndarray):
         """Transform the bounds by the specified transform matrix.
@@ -232,7 +241,7 @@ class Bounds(object):
         return self._computed_corners
 
 
-class Color(object):
+class Color(Animatable):
     def __init__(self, r: float, g: float, b: float, a: float = 1.0) -> None:
         """Create a color object.
 
@@ -254,6 +263,14 @@ class Color(object):
         self._g = g
         self._b = b
         self._a = a
+
+    @property
+    def animatables(self):
+        return [np.array([self.r, self.g, self.b, self.a])]
+
+    def copy_with_animatables(self, animatables):
+        r, g, b, a = animatables[0]
+        return Color(r, g, b, a)
 
     @property
     def r(self) -> float:
@@ -397,7 +414,7 @@ class StrokeCap(Enum):
     SQUARE = skia.Paint.kSquare_Cap
 
 
-class PathStyle(object):
+class PathStyle(Animatable):
     """A style for drawing paths."""
 
     def __init__(
@@ -444,6 +461,17 @@ class PathStyle(object):
         )
 
     @property
+    def animatables(self):
+        return [self.color, self.thickness]
+
+    def copy_with_animatables(self, animatables):
+        color, thickness = animatables
+
+        return PathStyle(
+            color, thickness, self._anti_alias, self._stroke, self._stroke_cap
+        )
+
+    @property
     def color(self) -> Color:
         return self._color
 
@@ -458,6 +486,9 @@ class PathStyle(object):
     @property
     def skia_paint(self) -> skia.Paint:
         return self._skia_paint
+
+    def __repr__(self) -> str:
+        return f"PathStyle({self.color}, {self.thickness}, {self.anti_alias}, {self._stroke}, {self._stroke_cap})"
 
 
 @dataclass
