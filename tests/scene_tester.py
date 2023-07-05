@@ -10,7 +10,8 @@ def check_render(
     drawable: Drawable,
     expected_filename: str,
     generate_expected: bool = False,
-    tolerance: float = 0.1,
+    pixel_tolerance: float = 0.1,
+    fractional_mismatch_tolerance: float = 0.01,
 ):
     """Checks that the given Drawable renders to the expected image.
 
@@ -18,6 +19,8 @@ def check_render(
         drawable: The Drawable to render.
         expected_filename: The filename of the expected image.
         generate_expected: Whether to generate the expected image if it does not exist.
+        pixel_tolerance: The maximum difference in pixel values between the rendered image and the expected image.
+        fractional_mismatch_tolerance: The maximum fraction of pixels that can differ between the rendered image and the expected image.
 
     Raises:
         AssertionError: If the rendered image does not match the expected image.
@@ -44,13 +47,13 @@ def check_render(
             (np.array(expected_image, dtype=np.float32) / 255)
             - (np.array(rendered_image, dtype=np.float32) / 255)
         )
-        > tolerance
+        > pixel_tolerance
     )
 
     fraction_mismatched = number_of_mismatched_pixels / number_of_total_pixels
 
-    if fraction_mismatched > 0.01:
-        pixelmatch(expected_image, rendered_image, img_diff, tolerance)
+    if fraction_mismatched > fractional_mismatch_tolerance:
+        pixelmatch(expected_image, rendered_image, img_diff, pixel_tolerance)
 
         # Save the rendered image, the expected image, and the diff image.
         debug_dir = os.path.join("tests", "testoutput")
