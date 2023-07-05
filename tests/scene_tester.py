@@ -37,5 +37,5 @@ def check_render(
     mismatch = pixelmatch(expected_image, rendered_image, img_diff, 0.1)
     percent_mismatch = mismatch / (expected_image.size[0] * expected_image.size[1])
 
-    if percent_mismatch > 1:
+    if percent_mismatch > 0.1:
         assert False, f"Image mismatch: {percent_mismatch * 100:.2f}%"
