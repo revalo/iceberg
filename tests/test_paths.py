@@ -25,7 +25,9 @@ def test_cubic():
     line = CurvedCubicLine(
         [
             (10, 10),
-            (500, 10),
+            (256, 10),
+            (256, 256),
+            (256, 500),
             (500, 500),
         ],
         PathStyle(
