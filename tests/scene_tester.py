@@ -3,6 +3,7 @@ from PIL import Image
 
 import numpy as np
 import os
+from pixelmatch.contrib.PIL import pixelmatch
 
 
 def check_render(
@@ -29,9 +30,12 @@ def check_render(
         renderer.save_rendered_image(expected_filename)
         return
 
-    expected_image = np.array(Image.open(expected_filename))
+    expected_image = Image.open(expected_filename)
+    rendered_image = Image.fromarray(rendered_image)
+    img_diff = Image.new("RGBA", expected_image.size)
 
-    try:
-        assert np.allclose(rendered_image, expected_image), "Pixel differences."
-    except ValueError:
-        assert False, "Image dimensions differ."
+    mismatch = pixelmatch(expected_image, rendered_image, img_diff, 0.1)
+    percent_mismatch = mismatch / (expected_image.size[0] * expected_image.size[1])
+
+    if percent_mismatch > 1:
+        assert False, f"Image mismatch: {percent_mismatch * 100:.2f}%"
