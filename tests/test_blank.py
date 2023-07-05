@@ -2,8 +2,6 @@ from iceberg import Bounds, Colors
 from iceberg.primitives import Blank
 from .scene_tester import check_render
 
-import os
-
 
 def test_blank_bounds():
     blank = Blank(Bounds(10, 10, 100, 100))

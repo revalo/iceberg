@@ -424,6 +424,9 @@ class PathStyle(Animatable):
         anti_alias: bool = True,
         stroke: bool = True,
         stroke_cap: StrokeCap = StrokeCap.BUTT,
+        dashed: bool = False,
+        dash_intervals: List[float] = [20, 10],
+        dash_phase: float = 0,
     ):
         """Create a path style.
 
@@ -433,6 +436,9 @@ class PathStyle(Animatable):
             anti_alias: Whether to use anti-aliasing.
             stroke: Whether to stroke the path or fill it.
             stroke_cap: The cap at the end of a stroke.
+            dashed: Whether to draw the path dashed.
+            dash_intervals: The intervals for the dashed path.
+            dash_phase: The phase of the dashed path.
         """
 
         self._color = color
@@ -447,6 +453,11 @@ class PathStyle(Animatable):
             StrokeWidth=thickness,
             Color4f=color.to_skia(),
             StrokeCap=stroke_cap.value,
+            PathEffect=skia.DashPathEffect.Make(
+                intervals=dash_intervals, phase=dash_phase
+            )
+            if dashed
+            else None,
         )
 
     @property
@@ -488,7 +499,7 @@ class FontStyle(object):
         BOLD = skia.FontStyle.Bold()
         BOLD_ITALIC = skia.FontStyle.BoldItalic()
 
-    family: str
+    family: str = None
     filename: str = None
     size: float = 16
     font_weight: int = 400
@@ -500,7 +511,7 @@ class FontStyle(object):
         families = set(FontStyle.available_fonts())
         if self.filename is None and not self.family in families:
             raise ValueError(
-                f"Invalid font family: {self.family}. Please call FontStyle.get_available_fonts_families() to get the list of available fonts."
+                f"Invalid font family: {self.family}. Please call FontStyle.available_fonts() to get the list of available fonts."
             )
 
     def get_skia_paint(self) -> skia.Paint:
@@ -513,7 +524,7 @@ class FontStyle(object):
     def get_skia_font(self) -> skia.Font:
         if self.filename is not None:
             return skia.Font(
-                skia.Typeface.MakeFromFile(self.filename, self.font_style.value),
+                skia.Typeface.MakeFromFile(self.filename),
                 self.size,
             )
 

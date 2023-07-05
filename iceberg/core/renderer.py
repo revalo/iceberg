@@ -6,6 +6,7 @@ from .properties import Color
 import skia
 import glfw
 import re
+import os
 
 import numpy as np
 
@@ -108,8 +109,7 @@ class Renderer(object):
 
         # TODO(revalo): Convert BGR to RGB via Skia.
         image = self._skia_surface.makeImageSnapshot()
-        array = image.toarray()
-        array = array[:, :, [2, 1, 0, 3]]
+        array = image.toarray(colorType=skia.ColorType.kRGBA_8888_ColorType)
 
         return array
 
@@ -119,6 +119,13 @@ class Renderer(object):
         Args:
             path: The path to save the image to.
         """
+
+        path = Path(path)
+
+        if not path.parent.exists():
+            raise RuntimeError(
+                f"Destination directory {path.parent} does not exist. Please create it first."
+            )
 
         image = self._skia_surface.makeImageSnapshot()
         image.save(str(path))

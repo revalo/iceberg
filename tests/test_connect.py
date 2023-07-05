@@ -16,11 +16,11 @@ from iceberg.primitives import (
 from iceberg.arrows import Arrow, LabelArrow
 
 from .scene_tester import check_render
+import os
 
 
 def test_connect():
     # What font?
-    _FONT_FAMILY = "Arial"
     _CIRCLE_WIDTH = 100
     _BORDER_THICKNESS = 8
     _CIRCLE_PAD = 20
@@ -66,9 +66,9 @@ def test_connect():
     connection = Compose([ellipses, arrow])
 
     text_block = Text(
-        "This is some really long text, and it's going to wrap around at some point, because it's so long and I spent a lot of time on it.",
+        "This is some really long text, and it's going to wrap around at some point, because it's so long and I spent a lot of time.",
         font_style=FontStyle(
-            family=_FONT_FAMILY,
+            filename=os.path.join("tests", "testdata", "OpenSans-Regular.ttf"),
             size=28,
             color=Colors.BLACK,
         ),
