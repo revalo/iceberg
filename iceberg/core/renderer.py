@@ -108,8 +108,7 @@ class Renderer(object):
 
         # TODO(revalo): Convert BGR to RGB via Skia.
         image = self._skia_surface.makeImageSnapshot()
-        array = image.toarray()
-        array = array[:, :, [2, 1, 0, 3]]
+        array = image.toarray(colorType=skia.ColorType.kRGBA_8888_ColorType)
 
         return array
 
