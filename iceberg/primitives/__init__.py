@@ -5,6 +5,7 @@ from .shapes import (
     BorderPosition,
     Path,
     CurvedCubicLine,
+    PartialPath,
 )
 from .layout import (
     Transform,

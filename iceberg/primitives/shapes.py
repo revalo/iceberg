@@ -115,8 +115,61 @@ class Path(Drawable, ABC):
     def bounds(self) -> Bounds:
         return self._bounds
 
+    @property
+    def skia_path(self) -> skia.Path:
+        return self._path
+
     def draw(self, canvas):
         canvas.drawPath(self._path, self._path_style.skia_paint)
+
+
+class PartialPath(Drawable):
+    def __init__(
+        self,
+        child_path: Path,
+        start: float = 0,
+        end: float = 1,
+        subdivide_increment: float = 0.01,
+    ):
+        super().__init__()
+
+        assert 0 <= start < end <= 1, "Start and end must be between 0 and 1."
+
+        self._child_path = child_path
+        self._start = start
+        self._end = end
+
+        self._path_measure = skia.PathMeasure(self._child_path.skia_path, False)
+        self._total_length = self._path_measure.getLength()
+
+        self._points = []
+        self._tangents = []
+
+        # Subdivide the path and store the points and tangents.
+        current_t = start
+
+        while current_t < end:
+            current_distance = self._total_length * current_t
+
+            point, tangent = self._path_measure.getPosTan(current_distance)
+
+            self._points.append(point)
+            self._tangents.append(tangent)
+
+            current_t += subdivide_increment
+
+        self._partial_path = skia.Path()
+        self._partial_path.moveTo(*self._points[0])
+
+        for point in self._points[1:]:
+            self._partial_path.lineTo(*point)
+
+    def draw(self, canvas: skia.Canvas):
+        canvas.drawPath(self._partial_path, self._child_path._path_style.skia_paint)
+
+    @property
+    def bounds(self) -> Bounds:
+        return self._child_path.bounds
 
 
 @dataclass
