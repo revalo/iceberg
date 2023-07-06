@@ -2,34 +2,10 @@ from typing import Union, Sequence
 
 from enum import Enum
 import numpy as np
+import math
 
 from .animatable import Animatable
-
-
-def linear(x):
-    return x
-
-
-def ease_in_out_quad(x):
-    if x < 0.5:
-        return 2 * x * x
-    else:
-        return 1 - (-2 * x + 2) ** 2 / 2
-
-
-def ease_out_cubic(x):
-    return 1 - (1 - x) ** 3
-
-
-def ease_in_cubic(x):
-    return x**3
-
-
-class EaseType(Enum):
-    LINEAR = linear
-    EASE_IN_OUT_QUAD = ease_in_out_quad
-    EASE_OUT_CUBIC = ease_out_cubic
-    EASE_IN_CUBIC = ease_in_cubic
+from .ease import EaseType
 
 
 def tween(
