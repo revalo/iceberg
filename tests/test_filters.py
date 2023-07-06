@@ -15,8 +15,8 @@ def test_image():
 
 def test_np_image():
     blank = Blank(Bounds(size=(256, 256)), Colors.GREEN)
-    array = np.zeros((128, 128, 3))
-    array[:, :, 2] = 1.0
+    array = np.zeros((128, 128))
+    array[:, :64] = 1.0
     image = Image(image=array)
     scene = blank.add_centered(image)
     check_render(scene, "np_image.png")
