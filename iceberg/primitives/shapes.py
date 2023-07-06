@@ -1,10 +1,11 @@
-from typing import List, Tuple, Union
+from typing import List, Sequence, Tuple, Union
 import skia
 
 from iceberg import Drawable, Bounds, Color
 from iceberg.animation import Animatable
 from iceberg.animation.animatable import AnimatableSequence
 from iceberg.core import Bounds
+from iceberg.core.drawable import Drawable
 from iceberg.core.properties import PathStyle
 from iceberg.geometry import get_transform, apply_transform
 from dataclasses import dataclass
@@ -199,6 +200,10 @@ class PartialPath(Drawable, Animatable):
 
     def draw(self, canvas: skia.Canvas):
         canvas.drawPath(self._partial_path, self._child_path._path_style.skia_paint)
+
+    @property
+    def children(self) -> Sequence[Drawable]:
+        return [self._child_path]
 
     @property
     def bounds(self) -> Bounds:
