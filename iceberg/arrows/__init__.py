@@ -11,6 +11,34 @@ from iceberg import PathStyle, Drawable
 from iceberg.primitives import Compose, Line, Path, Transform
 
 
+def arrow_corners_from_direction_and_point(
+    point: Tuple[float, float],
+    direction: Tuple[float, float],
+    angle_degrees: float,
+    distance: float,
+) -> Tuple[Tuple[float, float], Tuple[float, float]]:
+    # Compute the direction of the arrow.
+    direction = -np.array(direction, dtype=np.float32)
+    direction /= np.linalg.norm(direction)
+
+    point = np.array(point, dtype=np.float32)
+
+    # Compute the angle of the arrow.
+    angle = np.deg2rad(angle_degrees)
+
+    # Compute the two corners of the arrow.
+    corner1 = point + distance * (
+        direction * np.cos(angle)
+        + np.array([-direction[1], direction[0]]) * np.sin(angle)
+    )
+    corner2 = point + distance * (
+        direction * np.cos(angle)
+        + np.array([direction[1], -direction[0]]) * np.sin(angle)
+    )
+
+    return corner1, corner2
+
+
 def arrow_corners(
     start: Tuple[float, float],
     end: Tuple[float, float],
@@ -31,28 +59,71 @@ def arrow_corners(
 
     # Compute the direction of the arrow.
     direction = np.array(end, dtype=np.float32) - np.array(start)
-    direction *= -1
     direction /= np.linalg.norm(direction)
 
-    # Compute the angle of the arrow.
-    angle = np.deg2rad(angle_degrees)
-
-    # Compute the two corners of the arrow.
-    corner1 = end + distance * (
-        direction * np.cos(angle)
-        + np.array([-direction[1], direction[0]]) * np.sin(angle)
+    return arrow_corners_from_direction_and_point(
+        end, direction, angle_degrees, distance
     )
-    corner2 = end + distance * (
-        direction * np.cos(angle)
-        + np.array([direction[1], -direction[0]]) * np.sin(angle)
-    )
-
-    return corner1, corner2
 
 
 class ArrowHeadStyle(Enum):
     TRIANGLE = 0
     FILLED_TRIANGLE = 1
+
+
+class ArrowHead(Compose):
+    def __init__(
+        self,
+        point: Tuple[float, float],
+        direction: Tuple[float, float],
+        line_path_style: PathStyle,
+        angle: float = 30,
+        head_length: float = 20,
+        arrow_head_style: ArrowHeadStyle = ArrowHeadStyle.TRIANGLE,
+    ):
+        """Just the arrow head.
+
+        Args:
+            point: The point of the arrow head.
+            direction: The direction of the arrow head.
+            line_path_style: The style of the line.
+            angle: The angle of the arrow head in degrees.
+            head_length: The length of the arrow head.
+            arrow_head_style: The style of the arrow head.
+        """
+
+        items = []
+
+        corners = arrow_corners_from_direction_and_point(
+            point, direction, angle, head_length
+        )
+
+        if arrow_head_style == ArrowHeadStyle.FILLED_TRIANGLE:
+            head_path_style = PathStyle(
+                color=line_path_style.color,
+                stroke=False,
+                anti_alias=line_path_style.anti_alias,
+            )
+
+            path = skia.Path()
+            path.moveTo(*corners[0])
+            path.lineTo(*point)
+            path.lineTo(*corners[1])
+            path.close()
+
+            items.append(Path(path, head_path_style))
+            items.append(Path(path, line_path_style))
+        elif arrow_head_style == ArrowHeadStyle.TRIANGLE:
+            path = skia.Path()
+            path.moveTo(*corners[0])
+            path.lineTo(*point)
+            path.lineTo(*corners[1])
+
+            items.append(Path(path, line_path_style))
+        else:
+            raise ValueError(f"Unknown arrow head style {arrow_head_style}.")
+
+        super().__init__(items)
 
 
 class Arrow(Compose):
@@ -84,64 +155,39 @@ class Arrow(Compose):
         self._start = np.array(start)
         self._end = np.array(end)
 
-        start_corners = arrow_corners(end, start, angle, head_length)
-        end_corners = arrow_corners(start, end, angle, head_length)
+        items = []
 
-        if arrow_head_style == ArrowHeadStyle.FILLED_TRIANGLE:
-            items = [Line(start, end, line_path_style)]
+        # Draw the line.
+        line = Line(start, end, line_path_style)
+        items.append(line)
 
-            head_path_style = PathStyle(
-                color=line_path_style.color,
-                stroke=False,
-                anti_alias=line_path_style.anti_alias,
+        # Draw the arrow heads.
+
+        if arrow_head_end:
+            items.append(
+                ArrowHead(
+                    self._end,
+                    self._end - self._start,
+                    line_path_style,
+                    angle,
+                    head_length,
+                    arrow_head_style,
+                )
             )
 
-            if arrow_head_end:
-                path = skia.Path()
-                path.moveTo(*end_corners[0])
-                path.lineTo(*end)
-                path.lineTo(*end_corners[1])
-                path.close()
-                arrow_head = Path(path, head_path_style)
-                arrow_head_2 = Path(path, line_path_style)
-                items.append(arrow_head)
-                items.append(arrow_head_2)
+        if arrow_head_start:
+            items.append(
+                ArrowHead(
+                    self._start,
+                    self._start - self._end,
+                    line_path_style,
+                    angle,
+                    head_length,
+                    arrow_head_style,
+                )
+            )
 
-            if arrow_head_start:
-                path = skia.Path()
-                path.moveTo(*start_corners[0])
-                path.lineTo(*start)
-                path.lineTo(*start_corners[1])
-                path.close()
-                arrow_head = Path(path, head_path_style)
-                arrow_head_2 = Path(path, line_path_style)
-                items.append(arrow_head)
-                items.append(arrow_head_2)
-
-            super().__init__(items)
-        elif arrow_head_style == ArrowHeadStyle.TRIANGLE:
-            items = []
-            if arrow_head_end:
-                path = skia.Path()
-                path.moveTo(*end_corners[0])
-                path.lineTo(*end)
-                path.lineTo(*end_corners[1])
-                path.moveTo(*end)
-                path.lineTo(*start)
-                items.append(Path(path, line_path_style))
-
-            if arrow_head_start:
-                path = skia.Path()
-                path.moveTo(*start_corners[0])
-                path.lineTo(*start)
-                path.lineTo(*start_corners[1])
-                path.moveTo(*start)
-                path.lineTo(*end)
-                items.append(Path(path, line_path_style))
-
-            super().__init__(items)
-        else:
-            raise ValueError(f"Unknown arrow head style: {arrow_head_style}")
+        super().__init__(items)
 
     @property
     def midpoint(self) -> np.ndarray:
