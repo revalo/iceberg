@@ -114,6 +114,21 @@ scene = Arrange(
 )
 ```
 
+### Animations
+
+IceBerg can take a difference between two scenes and interpolate the difference.
+
+```python
+sceneA = blank.add_centered(arrangeA)
+sceneB = blank.add_centered(arrangeB)
+
+# Interpolate between two different arrangements.
+scene = animate(sceneA, sceneB, t / self.duration)
+```
+
+<p align="left">
+<img src="images/arrange_animate.gif" width="300">
+</p>
 
 ## Install
 
