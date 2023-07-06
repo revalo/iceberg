@@ -15,8 +15,11 @@ class Image(Drawable):
         Args:
             filename: The filename of the image file to load.
             image: The image to use. If not specified, the image will be loaded from the filename.
-                The image must be a numpy array with shape (height, width, 4). The last channel is
-                the alpha channel, and must be 1 or 255 for opaque pixels and 0 for transparent pixels.
+                The image must be a numpy array with shape one of
+                  - (height, width) or (height, width, 1) for grayscale
+                  - (height, width, 3) for RGB
+                  - (height, width, 4) for RGBA
+                Values can be either integers from 0 to 255 or floats between 0 and 1.
 
         Raises:
             ValueError: If neither filename nor image is specified.
@@ -29,6 +32,28 @@ class Image(Drawable):
         if filename is not None:
             self._skia_image = skia.Image.open(filename)
         else:
+            assert image.ndim in {
+                2,
+                3,
+            }, f"Invalid image shape: {image.shape}, must be 2- or 3-dimensional."
+
+            if image.ndim == 2:
+                # grayscale image, add channel
+                image = image[..., np.newaxis]
+
+            if image.shape[-1] == 1:
+                # grayscale image, copy channels
+                image = np.repeat(image, 3, axis=-1)
+
+            if image.shape[-1] == 3:
+                # Add alpha channel
+                image = np.concatenate([image, np.ones_like(image[..., :1])], axis=-1)
+
+            if not np.issubdtype(image.dtype, np.integer):
+                assert np.all(image >= 0) and np.all(image <= 1)
+                image = image * 255
+            image = image.astype(np.uint8)
+
             self._skia_image = skia.Image.fromarray(image)
 
         self._bounds = Bounds(
