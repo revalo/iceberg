@@ -114,7 +114,7 @@ class Rectangle(Drawable, Animatable):
     def copy_with_animatables(self, animatables: AnimatableSequence):
         rectangle, border_color, fill_color, border_thickness, rx, ry = animatables
 
-        return Rectangle(
+        return self.__class__(
             rectangle=rectangle,
             border_color=border_color,
             fill_color=fill_color,

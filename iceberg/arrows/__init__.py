@@ -8,6 +8,7 @@ import numpy as np
 import skia
 
 from iceberg import PathStyle, Drawable
+from iceberg.animation.animatable import AnimatableSequence
 from iceberg.primitives import Compose, Line, Path, PartialPath, Transform
 
 
@@ -158,6 +159,14 @@ class Arrow(Compose):
         self._midpoint = (np.array(start) + np.array(end)) / 2
         self._start = np.array(start)
         self._end = np.array(end)
+        self._path_style = line_path_style
+        self._head_length = head_length
+        self._angle = angle
+        self._arrow_head_style = arrow_head_style
+        self._arrow_head_start = arrow_head_start
+        self._arrow_head_end = arrow_head_end
+        self._partial_start = partial_start
+        self._partial_end = partial_end
 
         items = []
 
@@ -223,6 +232,42 @@ class Arrow(Compose):
     def end(self) -> np.ndarray:
         """The end of the arrow."""
         return self._end
+
+    @property
+    def animatables(self) -> AnimatableSequence:
+        return [
+            self._start,
+            self._end,
+            self._path_style,
+            self._head_length,
+            self._angle,
+            self._partial_start,
+            self._partial_end,
+        ]
+
+    def copy_with_animatables(self, animatables: AnimatableSequence):
+        (
+            start,
+            end,
+            path_style,
+            head_length,
+            angle,
+            partial_start,
+            partial_end,
+        ) = animatables
+
+        return Arrow(
+            start,
+            end,
+            path_style,
+            head_length,
+            angle,
+            self._arrow_head_style,
+            self._arrow_head_start,
+            self._arrow_head_end,
+            partial_start,
+            partial_end,
+        )
 
 
 class ArrowAlignDirection(Enum):
