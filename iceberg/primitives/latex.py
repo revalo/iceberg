@@ -6,8 +6,8 @@ from absl import logging
 
 import os
 import re
+import shutil
 
-import skia
 from iceberg.primitives.layout import Transform
 
 from iceberg.utils import temp_filename, temp_directory
@@ -31,6 +31,13 @@ def create_tex_svg(full_tex: str, svg_file: str, compiler: str):
         dvi_ext = ".xdv"
     else:
         raise NotImplementedError(f"Compiler '{compiler}' is not implemented")
+
+    # Check if program is installed.
+    if shutil.which(program.split()[0]) is None:
+        raise LatexError(
+            f"Program '{program.split()[0]}' is not installed for LaTeX rendering. "
+            f"Please install it and make it available in your PATH environment variable."
+        )
 
     # Write tex file
     root, _ = os.path.splitext(svg_file)
