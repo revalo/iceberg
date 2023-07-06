@@ -192,6 +192,15 @@ class PartialPath(Drawable, Animatable):
 
             current_t += subdivide_increment
 
+        # Add the end point.
+        point, tangent = self._path_measure.getPosTan(self._total_length * end)
+
+        self._points.append(point)
+        self._tangents.append(tangent)
+
+        self._points = [tuple(point) for point in self._points]
+        self._tangents = [tuple(tangent) for tangent in self._tangents]
+
         self._partial_path = skia.Path()
         self._partial_path.moveTo(*self._points[0])
 
@@ -200,6 +209,14 @@ class PartialPath(Drawable, Animatable):
 
     def draw(self, canvas: skia.Canvas):
         canvas.drawPath(self._partial_path, self._child_path._path_style.skia_paint)
+
+    @property
+    def tangents(self) -> Sequence[Tuple[float, float]]:
+        return self._tangents
+
+    @property
+    def points(self) -> Sequence[Tuple[float, float]]:
+        return self._points
 
     @property
     def children(self) -> Sequence[Drawable]:

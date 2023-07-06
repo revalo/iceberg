@@ -8,7 +8,7 @@ import numpy as np
 import skia
 
 from iceberg import PathStyle, Drawable
-from iceberg.primitives import Compose, Line, Path, Transform
+from iceberg.primitives import Compose, Line, Path, PartialPath, Transform
 
 
 def arrow_corners_from_direction_and_point(
@@ -137,6 +137,8 @@ class Arrow(Compose):
         arrow_head_style: ArrowHeadStyle = ArrowHeadStyle.TRIANGLE,
         arrow_head_start: bool = False,
         arrow_head_end: bool = True,
+        partial_start: float = 0,
+        partial_end: float = 1,
     ):
         """Create an arrow.
 
@@ -149,6 +151,8 @@ class Arrow(Compose):
             arrow_head_style: The style of the arrow head.
             arrow_head_start: Whether to draw an arrow head at the start.
             arrow_head_end: Whether to draw an arrow head at the end.
+            partial_start: The fraction of the arrow to draw at the start.
+            partial_end: The fraction of the arrow to draw at the end.
         """
 
         self._midpoint = (np.array(start) + np.array(end)) / 2
@@ -158,16 +162,28 @@ class Arrow(Compose):
         items = []
 
         # Draw the line.
-        line = Line(start, end, line_path_style)
+        line = PartialPath(
+            Line(start, end, line_path_style),
+            partial_start,
+            partial_end,
+            # We want to subdivide the line into 1 pixel increments
+            # for performance reasons because we know that the line
+            # is straight.
+            subdivide_increment=1,
+        )
         items.append(line)
 
         # Draw the arrow heads.
+        head_start = line.points[0]
+        head_end = line.points[-1]
+        head_start_tangent = line.tangents[0]
+        head_end_tangent = line.tangents[-1]
 
         if arrow_head_end:
             items.append(
                 ArrowHead(
-                    self._end,
-                    self._end - self._start,
+                    head_end,
+                    head_end_tangent,
                     line_path_style,
                     angle,
                     head_length,
@@ -176,10 +192,14 @@ class Arrow(Compose):
             )
 
         if arrow_head_start:
+            # Negate the tangent to get the direction of the arrow head.
+            x, y = head_start_tangent
+            head_start_tangent = (-x, -y)
+
             items.append(
                 ArrowHead(
-                    self._start,
-                    self._start - self._end,
+                    head_start,
+                    head_start_tangent,
                     line_path_style,
                     angle,
                     head_length,
