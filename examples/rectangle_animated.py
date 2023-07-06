@@ -8,7 +8,7 @@ from iceberg.primitives import (
     Compose,
     Blank,
 )
-from iceberg.animation import animate
+from iceberg.animation import tween
 from iceberg.animation.scene import Scene
 from iceberg.arrows import Arrow, LabelArrow
 
@@ -26,7 +26,7 @@ class Scene1(Scene):
         start_x = blank.bounds.width / 2 - _SIZE / 2 - _DISPLACEMENT
         end_x = blank.bounds.width / 2 - _SIZE / 2 + _DISPLACEMENT
 
-        rect = animate(
+        rect = tween(
             Rectangle(
                 Bounds(size=(_SIZE, _SIZE)),
                 fill_color=Colors.BLUE,

@@ -4,14 +4,17 @@ from abc import ABC, abstractproperty, abstractmethod
 import numpy as np
 
 
+AnimatableSequence = Sequence[Union[float, np.ndarray, "Animatable", None]]
+
+
 class Animatable(ABC):
     @abstractproperty
-    def animatables(self) -> "AnimatableSequence":
+    def animatables(self) -> AnimatableSequence:
         """Should return a sequence of sub-objects that can be animated."""
         pass
 
     @abstractmethod
-    def copy_with_animatables(self, animatables: "AnimatableSequence"):
+    def copy_with_animatables(self, animatables: AnimatableSequence):
         """Should return a copy of the object with the animatable scalars set to the specified
         values.
         """
@@ -81,6 +84,3 @@ class Animatable(ABC):
                 pass
 
         return np.concatenate(animatable_vectors)
-
-
-AnimatableSequence = Sequence[Union[float, np.ndarray, Animatable, None]]

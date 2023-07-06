@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Union, Sequence
 
 from enum import Enum
 import numpy as np
@@ -82,7 +82,3 @@ def tween(
         # return end.copy_with_animatable_vector(tweened_scalars)
 
     return start + (end - start) * ease_fn(progress)
-
-
-# Alias for tween.
-animate = tween

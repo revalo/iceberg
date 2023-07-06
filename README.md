@@ -123,7 +123,7 @@ sceneA = blank.add_centered(arrangeA)
 sceneB = blank.add_centered(arrangeB)
 
 # Interpolate between two different arrangements.
-scene = animate(sceneA, sceneB, t / self.duration)
+scene = tween(sceneA, sceneB, t / self.duration)
 ```
 
 <p align="left">

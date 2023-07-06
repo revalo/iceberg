@@ -132,6 +132,10 @@ class Bounds(Animatable):
     def center(self) -> Tuple[float, float]:
         return (self.left + self.right) / 2, (self.top + self.bottom) / 2
 
+    @property
+    def size(self) -> Tuple[float, float]:
+        return self.width, self.height
+
     def inset(self, dx: float, dy: Optional[float] = None) -> "Bounds":
         """Inset the bounds by the specified amount.
 

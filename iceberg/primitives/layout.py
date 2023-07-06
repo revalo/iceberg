@@ -48,6 +48,8 @@ class Blank(Drawable):
             Color4f=self._background.to_skia(),
         )
 
+        super().__init__()
+
     @property
     def bounds(self) -> Bounds:
         return self._bounds
@@ -398,6 +400,46 @@ class Align(Compose):
         super().__init__(
             children=[
                 anchor,
+                child_transformed,
+            ]
+        )
+
+
+class PointAlign(Compose):
+    def __init__(
+        self,
+        anchor: Tuple[float, float],
+        child: Drawable,
+        child_corner: int,
+        direction: np.ndarray = Directions.ORIGIN,
+    ):
+        """Initialize a point align drawable.
+
+        This drawable will align the child drawable to the anchor point. You can specify the
+        corner to align, and the direction to move the child drawable in.
+
+        Args:
+            anchor: The anchor point.
+            child: The child drawable.
+            child_corner: The corner of the child to align.
+            direction: The direction to move the child drawable in.
+        """
+
+        child_corner = child.bounds.corners[child_corner]
+
+        dx = anchor[0] - child_corner[0]
+        dy = anchor[0] - child_corner[1]
+
+        dx += direction[0]
+        dy += direction[1]
+
+        child_transformed = Transform(
+            child=child,
+            position=(dx, dy),
+        )
+
+        super().__init__(
+            children=[
                 child_transformed,
             ]
         )

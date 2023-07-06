@@ -17,6 +17,8 @@ class Filter(Drawable):
         child.draw(fake_canvas)
         self._skia_picture = picture_recorder.finishRecordingAsPicture()
 
+        super().__init__()
+
     @property
     def children(self) -> Sequence[Drawable]:
         return [self._child]
@@ -32,4 +34,10 @@ class Filter(Drawable):
 class Blur(Filter):
     def __init__(self, child: Drawable, sigma: float) -> None:
         paint = skia.Paint(ImageFilter=skia.ImageFilters.Blur(sigma, sigma))
+        super().__init__(child=child, paint=paint)
+
+
+class Opacity(Filter):
+    def __init__(self, child: Drawable, opacity: float) -> None:
+        paint = skia.Paint(Color4f=skia.Color4f(0, 0, 0, opacity))
         super().__init__(child=child, paint=paint)

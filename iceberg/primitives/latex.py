@@ -147,13 +147,13 @@ class Tex(Transform):
     tex: str
     preamble: str = _DEFAULT_PREAMBLE
     compiler: str = "latex"
-    scale: float = 1.0
+    svg_scale: float = 1.0
     color: Color = Color(0, 0, 0, 1)
 
     def __post_init__(self) -> None:
         svg_filename = tex_content_to_svg_file(self.tex, self.preamble, self.compiler)
         self._svg = SVG(svg_filename, color=self.color)
-        super().__init__(self._svg, scale=(self.scale, self.scale))
+        super().__init__(self._svg, scale=(self.svg_scale, self.svg_scale))
 
 
 class MathTex(Tex):

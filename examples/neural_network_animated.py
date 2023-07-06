@@ -7,7 +7,7 @@ from iceberg import (
 from iceberg.primitives import (
     Blank,
 )
-from iceberg.animation import animate
+from iceberg.animation import tween
 from iceberg.animation.scene import Scene
 from iceberg.primitives.shapes import CurvedCubicLine, PartialPath
 from neural_network import NeuralNetwork
@@ -19,8 +19,8 @@ class Scene1(Scene):
 
     def make_frame(self, t: float) -> Drawable:
         progress = t / self.duration
-        layer_gap = animate(50, 200, progress)
-        node_vertical_gap = animate(20, 50, progress)
+        layer_gap = tween(50, 200, progress)
+        node_vertical_gap = tween(20, 50, progress)
 
         network = NeuralNetwork(
             [3, 4, 4, 2],

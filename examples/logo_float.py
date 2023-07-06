@@ -9,7 +9,7 @@ from iceberg.primitives import (
     Image,
     Anchor,
 )
-from iceberg.animation import animate
+from iceberg.animation import tween
 from iceberg.animation.scene import Scene
 from iceberg.primitives.shapes import CurvedCubicLine, PartialPath
 
@@ -26,7 +26,7 @@ class Scene1(Scene):
         logo = Image(os.path.join("images", "logo.png"))
         blank = Blank(logo.bounds, Colors.TRANSPARENT)
 
-        dy = animate(-10, 10, progress)
+        dy = tween(-10, 10, progress)
 
         scene = Anchor([blank, logo.move(0, dy)])
 

@@ -43,6 +43,8 @@ class SVG(Drawable):
         self._skia_svg.render(fake_canvas)
         self._skia_picture = picture_recorder.finishRecordingAsPicture()
 
+        super().__init__()
+
     @property
     def bounds(self) -> Bounds:
         return self._bounds

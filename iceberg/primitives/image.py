@@ -63,6 +63,8 @@ class Image(Drawable):
             bottom=self._skia_image.height(),
         )
 
+        super().__init__()
+
     @property
     def bounds(self) -> Bounds:
         return self._bounds
