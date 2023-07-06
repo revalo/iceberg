@@ -123,6 +123,13 @@ The library is still under development, hence updates are frequent. To install t
 pip install git+https://github.com/revalo/iceberg.git
 ```
 
+**Not recommended yet**, but if you want a stable version, use the PyPI package.:
+
+
+```
+pip install -U iceberg-dsl
+```
+
 ## Quickstart
 
 Full example in `examples/quickstart.py`.
