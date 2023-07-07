@@ -11,6 +11,10 @@
 
 Iceberg is a compositional diagramming and graphics library embedding in Python. It is designed to be performant, extensible, and easy to use.
 
+<p align="center">
+<video src="images/neural_network_compute.mp4" width="500">
+</p>
+
 ## Testimonials
 
 <p align="left">

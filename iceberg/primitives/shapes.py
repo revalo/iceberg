@@ -167,7 +167,7 @@ class PartialPath(Drawable, Animatable):
     ):
         super().__init__()
 
-        assert 0 <= start < end <= 1, "Start and end must be between 0 and 1."
+        assert 0 <= start <= end <= 1, "Start and end must be between 0 and 1."
 
         self._child_path = child_path
         self._start = start
