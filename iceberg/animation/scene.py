@@ -82,7 +82,7 @@ class Animated(Drawable):
         if t < 0:
             return self._states[0]
 
-        if t >= self._total_duration:
+        if t >= self._total_duration - self._start_time:
             return self._states[-1]
 
         time_so_far = 0
