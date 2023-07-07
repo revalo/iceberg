@@ -142,8 +142,10 @@ class Path(Drawable, ABC):
         super().__init__()
 
         self._path = skia_path
-        self._bounds = Bounds.from_skia(self._path.computeTightBounds())
         self._path_style = path_style
+        self._fill_path = skia.Path()
+        self._path_style.skia_paint.getFillPath(self._path, self._fill_path)
+        self._bounds = Bounds.from_skia(self._fill_path.computeTightBounds())
 
     @property
     def bounds(self) -> Bounds:

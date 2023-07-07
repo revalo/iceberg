@@ -135,7 +135,7 @@ class Arrow(Compose):
         line_path_style: PathStyle,
         head_length: float = 20,
         angle: float = 30,
-        arrow_head_style: ArrowHeadStyle = ArrowHeadStyle.TRIANGLE,
+        arrow_head_style: ArrowHeadStyle = ArrowHeadStyle.FILLED_TRIANGLE,
         arrow_head_start: bool = False,
         arrow_head_end: bool = True,
         partial_start: float = 0,
@@ -168,11 +168,46 @@ class Arrow(Compose):
         self._partial_start = partial_start
         self._partial_end = partial_end
 
+        # Compute the direction of the arrow.
+        self._direction = self._end - self._start
+        self._direction /= np.linalg.norm(self._direction)
+
+        # We put in a lot of effort to make sure that the arrow head actually =
+        # ends at the end of the line. If the arrow head has thickness, then
+        # it extends past the end of the line. We compute the length of the
+        # arrow head, and then shorten the line by that amount.
+
+        backup_length = 0
+
+        if arrow_head_end or arrow_head_start:
+            # Create a fake arrow head to measure its length.
+            fake_head = ArrowHead(
+                (0, 0),
+                (1, 0),
+                line_path_style,
+                angle,
+                head_length,
+                arrow_head_style,
+            )
+            backup_length = fake_head.bounds.right
+
+        # Modified start and end points.
+        # By default there is no modification.
+        self._line_start = self._start
+        self._line_end = self._end
+
+        # Back-up or advance the start and end points.
+        if arrow_head_end:
+            self._line_end -= self._direction * backup_length
+
+        if arrow_head_start:
+            self._line_start += self._direction * backup_length
+
         items = []
 
         # Draw the line.
         line = PartialPath(
-            Line(start, end, line_path_style),
+            Line(self._line_start, self._line_end, line_path_style),
             partial_start,
             partial_end,
             # We want to subdivide the line into 1 pixel increments
