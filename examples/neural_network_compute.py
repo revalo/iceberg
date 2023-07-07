@@ -125,7 +125,7 @@ class Play(Playbook):
         _LINE_GREY = Color.from_hex("#2c3134")
         _LASER_COLOR = Color.from_hex("#959fcc")
 
-        background = Blank(Bounds(size=(1920, 1080)), Colors.TRANSPARENT)
+        background = Blank(Bounds(size=(1920, 1080)), Color.from_hex("#0d1117"))
         network = NeuralNetwork(
             (3, 4, 4, 3),
             node_radius=70,
@@ -162,12 +162,12 @@ class Play(Playbook):
                         )
                         animated_lasers.append(laser_animated)
                 animated_network = Compose([network, *animated_lasers])
-                scene = background.add_centered(animated_network)
+                scene = background.add_centered(animated_network).scale(0.5)
                 self.play(scene)
 
 
 def main(argv):
-    Play().combined_scene.render("test.mp4")
+    Play().combined_scene.render("test.gif")
 
 
 if __name__ == "__main__":
