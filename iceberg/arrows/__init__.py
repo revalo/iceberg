@@ -135,7 +135,7 @@ class Arrow(Compose):
         line_path_style: PathStyle,
         head_length: float = 20,
         angle: float = 30,
-        arrow_head_style: ArrowHeadStyle = ArrowHeadStyle.FILLED_TRIANGLE,
+        arrow_head_style: ArrowHeadStyle = ArrowHeadStyle.TRIANGLE,
         arrow_head_start: bool = False,
         arrow_head_end: bool = True,
         partial_start: float = 0,
