@@ -265,6 +265,27 @@ class Drawable(ABC):
         transform = self.child_transform(search_child)
         return search_child.bounds.transform(transform)
 
+    def child_transformed_point(
+        self, search_child: "Drawable", point: Tuple[float, float]
+    ) -> Tuple[float, float]:
+        """Get the point of the specified child relative to this drawable.
+
+        Args:
+            search_child: The child to search for.
+            point: The point to transform.
+
+        Returns:
+            The point of the specified child relative to this drawable.
+
+        Raises:
+            ChildNotFoundError: If the specified child is not a child of this drawable.
+        """
+
+        from iceberg.geometry import apply_transform
+
+        transform = self.child_transform(search_child)
+        return apply_transform([point], transform)[0]
+
     def find_all(self, condition: Callable[["Drawable"], bool]) -> Sequence["Drawable"]:
         """Find all children that satisfy the specified condition recursively.
 

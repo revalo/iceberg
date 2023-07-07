@@ -428,7 +428,7 @@ class PointAlign(Compose):
         child_corner = child.bounds.corners[child_corner]
 
         dx = anchor[0] - child_corner[0]
-        dy = anchor[0] - child_corner[1]
+        dy = anchor[1] - child_corner[1]
 
         dx += direction[0]
         dy += direction[1]
