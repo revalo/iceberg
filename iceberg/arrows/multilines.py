@@ -1,3 +1,4 @@
+import functools
 import itertools
 from typing import List, Optional, Sequence, Tuple, Union
 import numpy as np
@@ -7,7 +8,7 @@ from iceberg.core import Drawable, Bounds
 from iceberg.core.properties import PathStyle, Corner
 from iceberg.primitives.shapes import Path, Line
 from iceberg.primitives.layout import Compose
-from iceberg.arrows import arrow_corners, ArrowHeadStyle
+from . import arrow_corners, ArrowHeadStyle
 
 
 class MultiLine(Compose):
@@ -25,12 +26,34 @@ class MultiLine(Compose):
     ):
         assert len(points) >= 2
 
-        self._points = points
+        self._points = np.array(points)
+        self._midpoints = (self.points[:-1] + self.points[1:]) / 2
 
         start = points[0]
         end = points[-1]
+
         start_corners = arrow_corners(points[1], start, angle, head_length)
         end_corners = arrow_corners(points[-2], end, angle, head_length)
+
+        path = skia.Path()
+        draw_args = []
+
+        if smooth:
+            # Command is path.quadTo(direction_point, target_point)
+            draw_fn = path.quadTo
+            assert corner_radius == 0
+            # targets = np.concatenate([self.midpoints, [end]], axis=0)
+            draw_args = np.stack([points[1:-1], self.midpoints[1:]], axis=1).reshape(
+                -1, 4
+            )
+        elif corner_radius == 0:
+            draw_fn = path.lineTo
+            # We have a final path.lineTo(*end) in all cases, exclude that here.
+            draw_args = points[1:-1]
+        else:
+            # Command is path.arcTo(point, next, corner_radius)
+            draw_fn = functools.partial(path.arcTo, radius=corner_radius)
+            draw_args = np.stack([points[1:-1], points[2:]], axis=1).reshape(-1, 4)
 
         if arrow_head_style == ArrowHeadStyle.FILLED_TRIANGLE:
             items = [Line(start, end, path_style)]
@@ -67,58 +90,25 @@ class MultiLine(Compose):
         elif arrow_head_style == ArrowHeadStyle.TRIANGLE:
             items = []
             if arrow_head_end:
-                path = skia.Path()
                 path.moveTo(*end_corners[0])
                 path.lineTo(*end)
                 path.lineTo(*end_corners[1])
                 path.moveTo(*end)
-                if smooth:
-                    assert corner_radius == 0
-                    midpoints = [start]
-                    midpoints += [
-                        ((p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2)
-                        for p1, p2 in zip(points[1:-2], points[2:-1])
-                    ]
-                    midpoints.append(end)
-                    for direction_point, midpoint in zip(
-                        points[-2:0:-1], midpoints[-2::-1]
-                    ):
-                        path.quadTo(direction_point, midpoint)
-                    path.lineTo(*start)
-                elif corner_radius == 0:
-                    for point in points[-2::-1]:
-                        path.lineTo(*point)
-                else:
-                    for point, next in zip(points[-2:0:-1], points[-3::-1]):
-                        path.arcTo(point, next, corner_radius)
-                    path.lineTo(*start)
+                for args in draw_args[::-1]:
+                    draw_fn(*args)
+                path.lineTo(*start)
 
                 items.append(Path(path, path_style))
 
             if arrow_head_start:
-                path = skia.Path()
                 path.moveTo(*start_corners[0])
                 path.lineTo(*start)
                 path.lineTo(*start_corners[1])
                 path.moveTo(*start)
-                if smooth:
-                    assert corner_radius == 0
-                    midpoints = [start]
-                    midpoints += [
-                        ((p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2)
-                        for p1, p2 in zip(points[1:-2], points[2:-1])
-                    ]
-                    midpoints.append(end)
-                    for direction_point, midpoint in zip(points[1:-1], midpoints[1:]):
-                        path.quadTo(direction_point, midpoint)
-                    path.lineTo(*end)
-                elif corner_radius == 0:
-                    for point in points[1:]:
-                        path.lineTo(*point)
-                else:
-                    for point, next in zip(points[1:-1], points[2:]):
-                        path.arcTo(point, next, corner_radius)
-                    path.lineTo(*end)
+                for args in draw_args:
+                    draw_fn(*args)
+                path.lineTo(*end)
+
                 items.append(Path(path, path_style))
 
             super().__init__(items)
@@ -126,8 +116,24 @@ class MultiLine(Compose):
             raise ValueError(f"Unknown arrow head style: {arrow_head_style}")
 
     @property
-    def points(self) -> Sequence[Tuple[float, float]]:
+    def points(self) -> np.ndarray:
+        """The corner points of the line, shape (n, 2)."""
         return self._points
+
+    @property
+    def midpoints(self) -> np.ndarray:
+        """The midpoints of the line segments."""
+        return self._midpoints
+
+    @property
+    def start(self) -> np.ndarray:
+        """The start of the line."""
+        return self.points[0]
+
+    @property
+    def end(self) -> np.ndarray:
+        """The end of the lined."""
+        return self.points[-1]
 
 
 class AutoLine(MultiLine):

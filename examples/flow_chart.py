@@ -74,5 +74,3 @@ if __name__ == "__main__":
     renderer = Renderer()
     renderer.render(scene, background_color=Colors.WHITE)
     renderer.save_rendered_image("test.png")
-
-    # render_svg(scene, "test.svg", background_color=Colors.WHITE)
