@@ -27,6 +27,8 @@ class SimpleText(Drawable):
             bottom=self._spacing,
         )
 
+        super().__init__()
+
     @property
     def bounds(self) -> Bounds:
         return self._bounds
@@ -101,6 +103,8 @@ class Text(Drawable):
         self._height = (
             self._spacing + (len(self._lines) - 1) * self._spacing * self.line_spacing
         )
+
+        super().__init__()
 
     @property
     def bounds(self) -> Bounds:

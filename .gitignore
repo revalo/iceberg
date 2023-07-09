@@ -5,6 +5,7 @@ test*.png
 *.*prof
 *.mp4
 test.svg
+test.gif
 poster_figures
 .iceberg
 *.log

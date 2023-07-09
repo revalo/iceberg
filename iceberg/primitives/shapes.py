@@ -1,8 +1,11 @@
-from typing import List, Tuple, Union
+from typing import List, Sequence, Tuple, Union
 import skia
 
 from iceberg import Drawable, Bounds, Color
+from iceberg.animation import Animatable
+from iceberg.animation.animatable import AnimatableSequence
 from iceberg.core import Bounds
+from iceberg.core.drawable import Drawable
 from iceberg.core.properties import PathStyle
 from iceberg.geometry import get_transform, apply_transform
 from dataclasses import dataclass
@@ -19,7 +22,7 @@ class BorderPosition(Enum):
 
 
 @dataclass
-class Rectangle(Drawable):
+class Rectangle(Drawable, Animatable):
     rectangle: Bounds
     border_color: Color = None
     fill_color: Color = None
@@ -76,19 +79,50 @@ class Rectangle(Drawable):
     def bounds(self) -> Bounds:
         return self._bounds
 
-    def draw(self, canvas):
-        self.__post_init__()
-
+    @property
+    def border_radius_tuple(self) -> Tuple[float, float]:
         if isinstance(self.border_radius, tuple):
             rx, ry = self.border_radius
         else:
             rx = ry = self.border_radius
+
+        return rx, ry
+
+    def draw(self, canvas):
+        self.__post_init__()
+
+        rx, ry = self.border_radius_tuple
 
         if self._fill_paint:
             canvas.drawRoundRect(self._skia_rect, rx, ry, self._fill_paint)
 
         if self._border_paint:
             canvas.drawRoundRect(self._border_skia_rect, rx, ry, self._border_paint)
+
+    @property
+    def animatables(self) -> AnimatableSequence:
+        rx, ry = self.border_radius_tuple
+        return [
+            self.rectangle,
+            self.border_color,
+            self.fill_color,
+            self.border_thickness,
+            rx,
+            ry,
+        ]
+
+    def copy_with_animatables(self, animatables: AnimatableSequence):
+        rectangle, border_color, fill_color, border_thickness, rx, ry = animatables
+
+        return self.__class__(
+            rectangle=rectangle,
+            border_color=border_color,
+            fill_color=fill_color,
+            border_thickness=border_thickness,
+            anti_alias=self.anti_alias,
+            border_position=self.border_position,
+            border_radius=(rx, ry),
+        )
 
 
 @dataclass
@@ -108,15 +142,99 @@ class Path(Drawable, ABC):
         super().__init__()
 
         self._path = skia_path
-        self._bounds = Bounds.from_skia(self._path.computeTightBounds())
         self._path_style = path_style
+        self._fill_path = skia.Path()
+        self._path_style.skia_paint.getFillPath(self._path, self._fill_path)
+        self._bounds = Bounds.from_skia(self._fill_path.computeTightBounds())
 
     @property
     def bounds(self) -> Bounds:
         return self._bounds
 
+    @property
+    def skia_path(self) -> skia.Path:
+        return self._path
+
     def draw(self, canvas):
         canvas.drawPath(self._path, self._path_style.skia_paint)
+
+
+class PartialPath(Drawable, Animatable):
+    def __init__(
+        self,
+        child_path: Path,
+        start: float = 0,
+        end: float = 1,
+        subdivide_increment: float = 0.01,
+    ):
+        super().__init__()
+
+        assert 0 <= start <= end <= 1, "Start and end must be between 0 and 1."
+
+        self._child_path = child_path
+        self._start = start
+        self._end = end
+
+        self._path_measure = skia.PathMeasure(self._child_path.skia_path, False)
+        self._total_length = self._path_measure.getLength()
+
+        self._points = []
+        self._tangents = []
+
+        # Subdivide the path and store the points and tangents.
+        current_t = start
+
+        while current_t < end:
+            current_distance = self._total_length * current_t
+
+            point, tangent = self._path_measure.getPosTan(current_distance)
+
+            self._points.append(point)
+            self._tangents.append(tangent)
+
+            current_t += subdivide_increment
+
+        # Add the end point.
+        point, tangent = self._path_measure.getPosTan(self._total_length * end)
+
+        self._points.append(point)
+        self._tangents.append(tangent)
+
+        self._points = [tuple(point) for point in self._points]
+        self._tangents = [tuple(tangent) for tangent in self._tangents]
+
+        self._partial_path = skia.Path()
+        self._partial_path.moveTo(*self._points[0])
+
+        for point in self._points[1:]:
+            self._partial_path.lineTo(*point)
+
+    def draw(self, canvas: skia.Canvas):
+        canvas.drawPath(self._partial_path, self._child_path._path_style.skia_paint)
+
+    @property
+    def tangents(self) -> Sequence[Tuple[float, float]]:
+        return self._tangents
+
+    @property
+    def points(self) -> Sequence[Tuple[float, float]]:
+        return self._points
+
+    @property
+    def children(self) -> Sequence[Drawable]:
+        return [self._child_path]
+
+    @property
+    def bounds(self) -> Bounds:
+        return self._child_path.bounds
+
+    @property
+    def animatables(self) -> AnimatableSequence:
+        return [self._start, self._end]
+
+    def copy_with_animatables(self, animatables: AnimatableSequence):
+        start, end = animatables
+        return PartialPath(self._child_path, start, end)
 
 
 @dataclass

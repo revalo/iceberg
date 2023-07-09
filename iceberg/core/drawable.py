@@ -1,4 +1,4 @@
-from typing import Union, Tuple, Sequence
+from typing import Union, Tuple, Sequence, Callable
 
 from abc import ABC, abstractmethod, abstractproperty
 from iceberg.core import Bounds, Corner
@@ -25,6 +25,11 @@ class Drawable(ABC):
     the details of drawing them on a canvas with skia.
     """
 
+    def __init__(self) -> None:
+        super().__init__()
+
+        self._time = 0
+
     @abstractproperty
     def bounds(self) -> Bounds:
         """Return the bounds of the drawable."""
@@ -32,8 +37,29 @@ class Drawable(ABC):
 
     @abstractmethod
     def draw(self, canvas: skia.Canvas):
-        """Execute the Skia drawing commands on the canvas."""
+        """Execute the Skia drawing commands on the canvas.
+
+        Args:
+            canvas: The canvas to draw on.
+        """
         pass
+
+    @property
+    def children(self) -> Sequence["Drawable"]:
+        """Return the children of the drawable."""
+        return []
+
+    def set_time(self, t: float):
+        """Recursively set the time of all drawables in the tree.
+
+        Most drawables do not need to implement this method, but it is useful for animations.
+        A drawable may choose to use `self._time` as the time for its animation to draw itself.
+        """
+
+        self._time = t
+
+        for child in self.children:
+            child.set_time(t)
 
     @property
     def relative_bounds(self) -> Bounds:
@@ -57,10 +83,17 @@ class Drawable(ABC):
         # Self is not a child of any context, so raise an error.
         raise ChildNotFoundError()
 
-    @property
-    def children(self) -> Sequence["Drawable"]:
-        """Return the children of the drawable."""
-        return []
+    def anchor(self, corner: int):
+        """Anchor the drawable to the specified corner.
+
+        Args:
+            corner: The corner to anchor to.
+
+        Returns:
+            The new drawable that is anchored.
+        """
+        cx, cy = self.bounds.corners[corner]
+        return self.move(-cx, -cy)
 
     def move(self, x: float, y: float):
         """Move the drawable by the specified amount."""
@@ -231,6 +264,44 @@ class Drawable(ABC):
 
         transform = self.child_transform(search_child)
         return search_child.bounds.transform(transform)
+
+    def child_transformed_point(
+        self, search_child: "Drawable", point: Tuple[float, float]
+    ) -> Tuple[float, float]:
+        """Get the point of the specified child relative to this drawable.
+
+        Args:
+            search_child: The child to search for.
+            point: The point to transform.
+
+        Returns:
+            The point of the specified child relative to this drawable.
+
+        Raises:
+            ChildNotFoundError: If the specified child is not a child of this drawable.
+        """
+
+        from iceberg.geometry import apply_transform
+
+        transform = self.child_transform(search_child)
+        return apply_transform([point], transform)[0]
+
+    def find_all(self, condition: Callable[["Drawable"], bool]) -> Sequence["Drawable"]:
+        """Find all children that satisfy the specified condition recursively.
+
+        Args:
+            condition: The condition to satisfy.
+
+        Returns:
+            A list of all children that satisfy the specified condition.
+        """
+
+        children = []
+        for child in self.children:
+            if condition(child):
+                children.append(child)
+            children.extend(child.find_all(condition))
+        return children
 
     def __enter__(self):
         _scene_context_stack.append(self)

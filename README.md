@@ -6,10 +6,17 @@
 
 
 <p align="center">
-<img src="images/logo.png" width="150">
+<img src="images/logo.gif" width="150">
 </p>
 
 Iceberg is a compositional diagramming and graphics library embedding in Python. It is designed to be performant, extensible, and easy to use.
+
+<p align="center">
+<img src="images/neural_network_compute.gif" width="500">
+</p>
+<p align="center">
+<i>The above animation was 33 lines of code</i>
+</p>
 
 ## Testimonials
 
@@ -22,11 +29,16 @@ Iceberg is a compositional diagramming and graphics library embedding in Python.
 
 ## Showcase
 
+### Geometry
+
+<img src="images/angle.gif" width="300">
+
+
 ### Neural Network
 
 A composable Neural Network diagramming class written in iceberg. Full example in `examples/neural_network.py`.
 
-<img src="images/nn.png" width="500">
+<img src="images/nn.gif" width="500">
 
 ```python
 network = NeuralNetwork(
@@ -114,6 +126,21 @@ scene = Arrange(
 )
 ```
 
+### Animations
+
+IceBerg can take a difference between two scenes and interpolate the difference.
+
+```python
+sceneA = blank.add_centered(arrangeA)
+sceneB = blank.add_centered(arrangeB)
+
+# Interpolate between two different arrangements.
+scene = tween(sceneA, sceneB, t / self.duration)
+```
+
+<p align="left">
+<img src="images/arrange_animate.gif" width="300">
+</p>
 
 ## Install
 
@@ -121,6 +148,13 @@ The library is still under development, hence updates are frequent. To install t
 
 ```
 pip install git+https://github.com/revalo/iceberg.git
+```
+
+**Not recommended yet**, but if you want a stable version, use the PyPI package.:
+
+
+```
+pip install -U iceberg-dsl
 ```
 
 ## Quickstart

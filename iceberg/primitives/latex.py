@@ -6,8 +6,8 @@ from absl import logging
 
 import os
 import re
+import shutil
 
-import skia
 from iceberg.primitives.layout import Transform
 
 from iceberg.utils import temp_filename, temp_directory
@@ -31,6 +31,13 @@ def create_tex_svg(full_tex: str, svg_file: str, compiler: str):
         dvi_ext = ".xdv"
     else:
         raise NotImplementedError(f"Compiler '{compiler}' is not implemented")
+
+    # Check if program is installed.
+    if shutil.which(program.split()[0]) is None:
+        raise LatexError(
+            f"Program '{program.split()[0]}' is not installed for LaTeX rendering. "
+            f"Please install it and make it available in your PATH environment variable."
+        )
 
     # Write tex file
     root, _ = os.path.splitext(svg_file)
@@ -140,13 +147,13 @@ class Tex(Transform):
     tex: str
     preamble: str = _DEFAULT_PREAMBLE
     compiler: str = "latex"
-    scale: float = 1.0
+    svg_scale: float = 1.0
     color: Color = Color(0, 0, 0, 1)
 
     def __post_init__(self) -> None:
         svg_filename = tex_content_to_svg_file(self.tex, self.preamble, self.compiler)
         self._svg = SVG(svg_filename, color=self.color)
-        super().__init__(self._svg, scale=(self.scale, self.scale))
+        super().__init__(self._svg, scale=(self.svg_scale, self.svg_scale))
 
 
 class MathTex(Tex):

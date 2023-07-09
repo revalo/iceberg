@@ -5,6 +5,7 @@ from .shapes import (
     BorderPosition,
     Path,
     CurvedCubicLine,
+    PartialPath,
 )
 from .layout import (
     Transform,
@@ -13,6 +14,7 @@ from .layout import (
     Grid,
     Blank,
     Align,
+    PointAlign,
     Arrange,
     Directions,
     Anchor,
@@ -20,5 +22,5 @@ from .layout import (
 from .text import SimpleText, Text
 from .svg import SVG
 from .latex import Tex, MathTex
-from .filters import Blur
+from .filters import Blur, Opacity
 from .image import Image
