@@ -1,7 +1,7 @@
 from typing import List, Sequence, Tuple, Union
 import skia
 
-from iceberg import Drawable, Bounds, Color, FontStyle, Corner
+from iceberg import Drawable, Bounds, Color, FontStyle, Corner, Colors
 from iceberg.animation import Animatable
 from iceberg.animation.animatable import AnimatableSequence
 from iceberg.core import Bounds
@@ -272,23 +272,25 @@ class CurvedCubicLine(Path):
 
 
 class GridOverlay(Compose):
+    """Overlays a grid on top of a scene, for debugging and design."""
+
     def __init__(self, scene: Drawable, spacing: float = 20, label_every: int = 5):
-        self._scene = scene
-        self._spacing = spacing
+        x_lower, x_upper = scene.bounds.left, scene.bounds.right
+        y_lower, y_upper = scene.bounds.top, scene.bounds.bottom
 
-        x_lower, x_upper = self._scene.bounds.left, self._scene.bounds.right
-        y_lower, y_upper = self._scene.bounds.top, self._scene.bounds.bottom
-
+        # Round the lower bounds to the previous multiple of the spacing.
         x_lower = math.floor(x_lower / spacing) * spacing
         y_lower = math.floor(y_lower / spacing) * spacing
 
+        # Number of horizontal and vertical lines
         num_verticals = math.floor((x_upper - x_lower) / spacing)
         num_horizontals = math.floor((y_upper - y_lower) / spacing)
 
+        # Line positions
         xs = [x_lower + spacing * i for i in range(num_verticals + 1)]
         ys = [y_lower + spacing * i for i in range(num_horizontals + 1)]
 
-        # Make the lines longer to make it look nicer
+        # Extend the lines a bit to make the grid look nicer
         x_lower -= spacing / 2
         y_lower -= spacing / 2
         x_upper = max(x_upper, xs[-1] + spacing / 2)
@@ -323,7 +325,7 @@ class GridOverlay(Compose):
         font_style = FontStyle(
             family="Arial",
             size=12,
-            color=Color(0, 0, 0, 0.85),
+            color=Colors.BLACK,
         )
 
         for i, x in enumerate(xs):
