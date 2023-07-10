@@ -5,9 +5,8 @@ from iceberg.primitives import (
     Blank,
     SimpleText,
     Directions,
-    MultiLine,
-    AutoLine,
 )
+from iceberg.arrows import MultiArrow, AutoArrow, ArrowHeadStyle
 
 from .scene_tester import check_render
 
@@ -43,34 +42,39 @@ def test_flow_chart():
 
     boxes = Compose((box_a, box_b.move(200, 200)))
 
-    path = AutoLine(
+    path = AutoArrow(
         box_a,
         box_b,
-        "lurdrdrul",
+        "lurdrdl",
         PathStyle(Colors.BLACK, thickness=3),
-        x_padding=20,
-        y_padding=40,
+        x_padding=40,
+        y_padding=60,
         context=boxes,
         arrow_head_end=True,
-        head_length=15,
-        corner_radius=10,
+        head_length=12,
+        corner_radius=20,
+        subdivide_increment=0.001,
     )
 
     with boxes:
-        path2 = MultiLine(
+        path2 = MultiArrow(
             [
                 box_a.relative_bounds.corners[Corner.BOTTOM_MIDDLE],
-                (-70, 150),
-                (0, 140),
-                (0, 200),
+                (-70, 200),
+                (100, 140),
+                box_b.relative_bounds.corners[Corner.MIDDLE_LEFT],
             ],
-            PathStyle(Colors.BLACK, thickness=3),
+            PathStyle(Colors.BLACK, thickness=3, dashed=True),
+            arrow_path_style=PathStyle(Colors.BLACK, thickness=3),
             arrow_head_start=True,
             arrow_head_end=True,
+            arrow_head_style=ArrowHeadStyle.FILLED_TRIANGLE,
+            head_length=12,
             smooth=True,
         )
 
-    scene = Compose((boxes, path, path2))
-    scene = scene.pad(10)
+    scene = Compose((boxes, path, path2)).scale(2)
+    blank = Blank(Bounds(size=(1000, 1000)), background=Colors.WHITE)
+    scene = blank.add_centered(scene)
 
     check_render(scene, "flow_chart.png")
