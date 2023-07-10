@@ -1,13 +1,15 @@
 from typing import List, Sequence, Tuple, Union
 import skia
 
-from iceberg import Drawable, Bounds, Color
+from iceberg import Drawable, Bounds, Color, FontStyle, Corner
 from iceberg.animation import Animatable
 from iceberg.animation.animatable import AnimatableSequence
 from iceberg.core import Bounds
 from iceberg.core.drawable import Drawable
 from iceberg.core.properties import PathStyle
 from iceberg.geometry import get_transform, apply_transform
+from .layout import Compose
+from .text import SimpleText
 from dataclasses import dataclass
 from abc import ABC, abstractmethod, abstractproperty
 from enum import Enum
@@ -267,3 +269,79 @@ class CurvedCubicLine(Path):
             path.cubicTo(*self.points[i], *self.points[i + 1], *self.points[i + 2])
 
         super().__init__(path, self.path_style)
+
+
+class GridOverlay(Compose):
+    def __init__(self, scene: Drawable, spacing: float = 20, label_every: int = 5):
+        self._scene = scene
+        self._spacing = spacing
+
+        x_lower, x_upper = self._scene.bounds.left, self._scene.bounds.right
+        y_lower, y_upper = self._scene.bounds.top, self._scene.bounds.bottom
+
+        x_lower = math.floor(x_lower / spacing) * spacing
+        y_lower = math.floor(y_lower / spacing) * spacing
+
+        num_verticals = math.floor((x_upper - x_lower) / spacing)
+        num_horizontals = math.floor((y_upper - y_lower) / spacing)
+
+        xs = [x_lower + spacing * i for i in range(num_verticals + 1)]
+        ys = [y_lower + spacing * i for i in range(num_horizontals + 1)]
+
+        # Make the lines longer to make it look nicer
+        x_lower -= spacing / 2
+        y_lower -= spacing / 2
+        x_upper = max(x_upper, xs[-1] + spacing / 2)
+        y_upper = max(y_upper, ys[-1] + spacing / 2)
+
+        color = Color(0, 0, 0, 0.3)
+        style = PathStyle(color, 1)
+        important_style = PathStyle(Color(0, 0, 0, 0.85), 1)
+
+        # Index of the zero line, to figure out which lines to bold and label.
+        x_offset_index = xs.index(0) % label_every
+        y_offset_index = ys.index(0) % label_every
+
+        vertical_lines = [
+            Line(
+                (x, y_lower),
+                (x, y_upper),
+                important_style if i % label_every == x_offset_index else style,
+            )
+            for i, x in enumerate(xs)
+        ]
+        horizontal_lines = [
+            Line(
+                (x_lower, y),
+                (x_upper, y),
+                important_style if i % label_every == y_offset_index else style,
+            )
+            for i, y in enumerate(ys)
+        ]
+
+        labels = []
+        font_style = FontStyle(
+            family="Arial",
+            size=12,
+            color=Color(0, 0, 0, 0.85),
+        )
+
+        for i, x in enumerate(xs):
+            if i % label_every == x_offset_index:
+                labels.append(
+                    SimpleText(
+                        str(round(x)),
+                        font_style,
+                    ).move(x, y_lower - 5, corner=Corner.BOTTOM_MIDDLE)
+                )
+
+        for i, y in enumerate(ys):
+            if i % label_every == y_offset_index:
+                labels.append(
+                    SimpleText(
+                        str(round(y)),
+                        font_style,
+                    ).move(x_lower - 5, y, corner=Corner.MIDDLE_RIGHT)
+                )
+
+        super().__init__([scene] + vertical_lines + horizontal_lines + labels)
