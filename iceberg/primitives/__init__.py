@@ -6,6 +6,7 @@ from .shapes import (
     Path,
     CurvedCubicLine,
     PartialPath,
+    GridOverlay,
 )
 from .layout import (
     Transform,
