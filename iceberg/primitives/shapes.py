@@ -169,7 +169,9 @@ class PartialPath(Drawable, Animatable):
     ):
         super().__init__()
 
-        assert 0 <= start <= end <= 1, "Start and end must be between 0 and 1."
+        assert (
+            0 <= start <= end <= 1
+        ), f"Start and end must be between 0 and 1, got {start} and {end}."
 
         self._child_path = child_path
         self._start = start
@@ -231,6 +233,10 @@ class PartialPath(Drawable, Animatable):
     @property
     def animatables(self) -> AnimatableSequence:
         return [self._start, self._end]
+
+    @property
+    def total_length(self) -> float:
+        return self._total_length
 
     def copy_with_animatables(self, animatables: AnimatableSequence):
         start, end = animatables
