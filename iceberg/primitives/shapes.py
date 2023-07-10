@@ -1,4 +1,4 @@
-from typing import List, Sequence, Tuple, Union
+from typing import List, Optional, Sequence, Tuple, Union
 import skia
 
 from iceberg import Drawable, Bounds, Color, FontStyle, Corner, Colors
@@ -274,7 +274,13 @@ class CurvedCubicLine(Path):
 class GridOverlay(Compose):
     """Overlays a grid on top of a scene, for debugging and design."""
 
-    def __init__(self, scene: Drawable, spacing: float = 20, label_every: int = 5):
+    def __init__(
+        self,
+        scene: Drawable,
+        spacing: float = 20,
+        label_every: int = 5,
+        color: Color = Colors.BLACK,
+    ):
         x_lower, x_upper = scene.bounds.left, scene.bounds.right
         y_lower, y_upper = scene.bounds.top, scene.bounds.bottom
 
@@ -296,9 +302,8 @@ class GridOverlay(Compose):
         x_upper = max(x_upper, xs[-1] + spacing / 2)
         y_upper = max(y_upper, ys[-1] + spacing / 2)
 
-        color = Color(0, 0, 0, 0.3)
-        style = PathStyle(color, 1)
-        important_style = PathStyle(Color(0, 0, 0, 0.85), 1)
+        style = PathStyle(Color(color.r, color.g, color.b, 0.3), 1)
+        important_style = PathStyle(Color(color.r, color.g, color.b, 0.85), 1)
 
         # Index of the zero line, to figure out which lines to bold and label.
         x_offset_index = xs.index(0) % label_every
@@ -325,7 +330,7 @@ class GridOverlay(Compose):
         font_style = FontStyle(
             family="Arial",
             size=12,
-            color=Colors.BLACK,
+            color=color,
         )
 
         for i, x in enumerate(xs):
