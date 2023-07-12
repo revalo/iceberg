@@ -6,12 +6,11 @@ import numpy as np
 import skia
 
 from iceberg import PathStyle, Drawable, Bounds, Corner
-from iceberg.animation.animatable import AnimatableSequence
 from iceberg.primitives import Compose, Line, Path, PartialPath, Transform
-from .helpers import ArrowHead, ArrowHeadStyle, ArrowPath
+from .helpers import ArrowHeadStyle, ArrowPath
 
 
-class Arrow(Compose):
+class Arrow(ArrowPath):
     def __init__(
         self,
         start: Tuple[float, float],
@@ -39,153 +38,17 @@ class Arrow(Compose):
             partial_start: The fraction of the arrow to draw at the start.
             partial_end: The fraction of the arrow to draw at the end.
         """
-
-        self._midpoint = (np.array(start) + np.array(end)) / 2
-        self._start = np.array(start, dtype=np.float64)
-        self._end = np.array(end, dtype=np.float64)
-        self._path_style = line_path_style
-        self._head_length = head_length
-        self._angle = angle
-        self._arrow_head_style = arrow_head_style
-        self._arrow_head_start = arrow_head_start
-        self._arrow_head_end = arrow_head_end
-        self._partial_start = partial_start
-        self._partial_end = partial_end
-
-        # Compute the direction of the arrow.
-        self._direction = self._end - self._start
-        self._direction /= np.linalg.norm(self._direction)
-
-        # We put in a lot of effort to make sure that the arrow head actually =
-        # ends at the end of the line. If the arrow head has thickness, then
-        # it extends past the end of the line. We compute the length of the
-        # arrow head, and then shorten the line by that amount.
-
-        backup_length = 0
-
-        if arrow_head_end or arrow_head_start:
-            # Create a fake arrow head to measure its length.
-            fake_head = ArrowHead(
-                (0, 0),
-                (1, 0),
-                line_path_style,
-                angle,
-                head_length,
-                arrow_head_style,
-            )
-            backup_length = fake_head.bounds.right
-
-        # Modified start and end points.
-        # By default there is no modification.
-        self._line_start = self._start
-        self._line_end = self._end
-
-        # Back-up or advance the start and end points.
-        if arrow_head_end:
-            self._line_end -= self._direction * backup_length
-
-        if arrow_head_start:
-            self._line_start += self._direction * backup_length
-
-        items = []
-
-        # Draw the line.
-        line = PartialPath(
-            Line(self._line_start, self._line_end, line_path_style),
-            partial_start,
-            partial_end,
-            # We want to subdivide the line into 1 pixel increments
-            # for performance reasons because we know that the line
-            # is straight.
+        path = Line(start, end, line_path_style)
+        super().__init__(
+            path=path,
+            arrow_head_start=arrow_head_start,
+            arrow_head_end=arrow_head_end,
+            angle=angle,
+            head_length=head_length,
+            arrow_head_style=arrow_head_style,
+            partial_start=partial_start,
+            partial_end=partial_end,
             subdivide_increment=1,
-        )
-        items.append(line)
-
-        # Draw the arrow heads.
-        head_start = line.points[0]
-        head_end = line.points[-1]
-        head_start_tangent = line.tangents[0]
-        head_end_tangent = line.tangents[-1]
-
-        if arrow_head_end:
-            items.append(
-                ArrowHead(
-                    head_end,
-                    head_end_tangent,
-                    line_path_style,
-                    angle,
-                    head_length,
-                    arrow_head_style,
-                )
-            )
-
-        if arrow_head_start:
-            # Negate the tangent to get the direction of the arrow head.
-            x, y = head_start_tangent
-            head_start_tangent = (-x, -y)
-
-            items.append(
-                ArrowHead(
-                    head_start,
-                    head_start_tangent,
-                    line_path_style,
-                    angle,
-                    head_length,
-                    arrow_head_style,
-                )
-            )
-
-        super().__init__(items)
-
-    @property
-    def midpoint(self) -> np.ndarray:
-        """The midpoint of the arrow."""
-        return self._midpoint
-
-    @property
-    def start(self) -> np.ndarray:
-        """The start of the arrow."""
-        return self._start
-
-    @property
-    def end(self) -> np.ndarray:
-        """The end of the arrow."""
-        return self._end
-
-    @property
-    def animatables(self) -> AnimatableSequence:
-        return [
-            self._start,
-            self._end,
-            self._path_style,
-            self._head_length,
-            self._angle,
-            self._partial_start,
-            self._partial_end,
-        ]
-
-    def copy_with_animatables(self, animatables: AnimatableSequence):
-        (
-            start,
-            end,
-            path_style,
-            head_length,
-            angle,
-            partial_start,
-            partial_end,
-        ) = animatables
-
-        return Arrow(
-            start,
-            end,
-            path_style,
-            head_length,
-            angle,
-            self._arrow_head_style,
-            self._arrow_head_start,
-            self._arrow_head_end,
-            partial_start,
-            partial_end,
         )
 
 
@@ -194,12 +57,13 @@ class ArrowAlignDirection(Enum):
     BELOW = 1
 
 
-class LabelArrow(Compose):
+class LabelArrowPath(Compose):
     def __init__(
         self,
-        arrow: Arrow,
+        arrow: ArrowPath,
         child: Drawable,
         child_corner: int,
+        t: float,
         placement: ArrowAlignDirection = ArrowAlignDirection.ABOVE,
         distance: float = 0,
         rotated: bool = False,
@@ -210,18 +74,20 @@ class LabelArrow(Compose):
             arrow: The arrow to be labeled.
             child: The label to be placed alongside the arrow.
             child_corner: The corner of the child to align with. See `Corner` for details.
+            t: Where to place the label along the arrow (between 0 for start and 1 for end).
             placement: Whether to place the specified corner of the child above or below the arrow.
             distance: The distance between the arrow and the child's specified corner.
             rotated: Whether to rotate the child to match the arrow.
         """
 
-        # Find normal vector.
-        direction = (arrow.end - arrow.start).astype(np.float32)
-        direction /= np.linalg.norm(direction)
-        normal = np.array([-direction[1], direction[0]], dtype=np.float32)
-        normal /= np.linalg.norm(normal)
+        position, tangent = arrow.point_and_tangent_at(t)
+        position = np.array(position, dtype=np.float32)
 
-        angle = np.arctan2(direction[1], direction[0]) if rotated else 0
+        # Find normal vector.
+        # Note that tangent is already normalized.
+        normal = np.array([-tangent[1], tangent[0]], dtype=np.float32)
+
+        angle = np.arctan2(tangent[1], tangent[0]) if rotated else 0
 
         # Compute the displacement.
         displacement = distance * normal
@@ -230,7 +96,7 @@ class LabelArrow(Compose):
         if placement == ArrowAlignDirection.ABOVE:
             displacement *= -1
 
-        arrow_point = arrow.midpoint + displacement
+        arrow_point = position + displacement
 
         delta = arrow_point - child.bounds.corners[child_corner]
         dx, dy = delta
@@ -252,6 +118,38 @@ class LabelArrow(Compose):
         super().__init__([arrow, child_transformed])
 
 
+class LabelArrow(LabelArrowPath):
+    def __init__(
+        self,
+        arrow: Arrow,
+        child: Drawable,
+        child_corner: int,
+        placement: ArrowAlignDirection = ArrowAlignDirection.ABOVE,
+        distance: float = 0,
+        rotated: bool = False,
+    ):
+        """Combine an arrow alongside another drawable in a way that labels the arrow.
+
+        Args:
+            arrow: The arrow to be labeled.
+            child: The label to be placed alongside the arrow.
+            child_corner: The corner of the child to align with. See `Corner` for details.
+            placement: Whether to place the specified corner of the child above or below the arrow.
+            distance: The distance between the arrow and the child's specified corner.
+            rotated: Whether to rotate the child to match the arrow.
+        """
+
+        super().__init__(
+            arrow=arrow,
+            child=child,
+            child_corner=child_corner,
+            t=0.5,
+            placement=placement,
+            distance=distance,
+            rotated=rotated,
+        )
+
+
 class MultiArrow(ArrowPath):
     def __init__(
         self,
@@ -268,6 +166,7 @@ class MultiArrow(ArrowPath):
         partial_start: float = 0,
         partial_end: float = 1,
         subdivide_increment: float = 0.01,
+        interpolation: PartialPath.Interpolation = PartialPath.Interpolation.CUBIC,
     ):
         assert len(points) >= 2
 
@@ -304,6 +203,7 @@ class MultiArrow(ArrowPath):
             partial_start=partial_start,
             partial_end=partial_end,
             subdivide_increment=subdivide_increment,
+            interpolation=interpolation,
         )
 
     @property

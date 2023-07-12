@@ -138,6 +138,7 @@ class ArrowPath(Compose):
         partial_start: float = 0,
         partial_end: float = 1,
         subdivide_increment: float = 0.01,
+        interpolation: PartialPath.Interpolation = PartialPath.Interpolation.CUBIC,
     ):
         if arrow_path_style is None:
             arrow_path_style = copy(path._path_style)
@@ -152,6 +153,7 @@ class ArrowPath(Compose):
         self._partial_start = partial_start
         self._partial_end = partial_end
         self._subdivide_increment = subdivide_increment
+        self._interpolation = interpolation
 
         backup_t = 0
 
@@ -172,6 +174,7 @@ class ArrowPath(Compose):
                 partial_start,
                 partial_end,
                 subdivide_increment,
+                interpolation=interpolation,
             )
             backup_t = backup_length / fake_line.total_length
 
@@ -197,8 +200,10 @@ class ArrowPath(Compose):
             self._partial_start,
             self._partial_end,
             subdivide_increment,
+            interpolation=interpolation,
         )
         items.append(line)
+        self._line = line
 
         # Make the arrow head smaller if necessary, to ensure that (a) the two heads
         # don't collide, and (b) the arrow head doesn't extend past the end of the line.
@@ -249,17 +254,6 @@ class ArrowPath(Compose):
 
         super().__init__(items)
 
-    @property
-    def start(self) -> np.ndarray:
-        """The start of the arrow."""
-        return self._start
-
-    @property
-    def end(self) -> np.ndarray:
-        """The end of the arrow."""
-        return self._end
-
-    @property
     def animatables(self) -> AnimatableSequence:
         return [
             self._arrow_path_style,
@@ -289,4 +283,23 @@ class ArrowPath(Compose):
             partial_start,
             partial_end,
             self._subdivide_increment,
+            self._interpolation,
         )
+
+    @property
+    def tangents(self):
+        return self._line.tangents
+
+    @property
+    def points(self):
+        return self._line.points
+
+    @property
+    def midpoints(self):
+        return [
+            ((x1 + x2) / 2, (y1 + y2) / 2)
+            for (x1, y1), (x2, y2) in zip(self.points[:-1], self.points[1:])
+        ]
+
+    def point_and_tangent_at(self, t: float):
+        return self._line.point_and_tangent_at(t)

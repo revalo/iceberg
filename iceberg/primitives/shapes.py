@@ -283,6 +283,12 @@ class PartialPath(Drawable, Animatable):
             self._child_path, start, end, self._subdivide_increment, self._interpolation
         )
 
+    def point_and_tangent_at(
+        self, t: float
+    ) -> Tuple[Tuple[float, float], Tuple[float, float]]:
+        pos, tan = self._path_measure.getPosTan(self._total_length * t)
+        return tuple(pos), tuple(tan)
+
 
 @dataclass
 class Line(Path):
