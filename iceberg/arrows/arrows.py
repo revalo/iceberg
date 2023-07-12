@@ -7,6 +7,7 @@ import skia
 
 from iceberg import PathStyle, Drawable, Bounds, Corner
 from iceberg.primitives import Compose, Line, Path, PartialPath, Transform
+from iceberg.animation import Animatable
 from .helpers import ArrowHeadStyle, ArrowPath
 
 
@@ -21,6 +22,7 @@ class Arrow(ArrowPath):
         arrow_head_style: ArrowHeadStyle = ArrowHeadStyle.TRIANGLE,
         arrow_head_start: bool = False,
         arrow_head_end: bool = True,
+        arrow_path_style: Optional[PathStyle] = None,
         partial_start: float = 0,
         partial_end: float = 1,
     ):
@@ -38,17 +40,41 @@ class Arrow(ArrowPath):
             partial_start: The fraction of the arrow to draw at the start.
             partial_end: The fraction of the arrow to draw at the end.
         """
+        self._start = np.array(start)
+        self._end = np.array(end)
+        self._line_path_style = line_path_style
+
         path = Line(start, end, line_path_style)
         super().__init__(
             path=path,
             arrow_head_start=arrow_head_start,
             arrow_head_end=arrow_head_end,
+            arrow_path_style=arrow_path_style,
             angle=angle,
             head_length=head_length,
             arrow_head_style=arrow_head_style,
             partial_start=partial_start,
             partial_end=partial_end,
             subdivide_increment=1,
+            interpolation=PartialPath.Interpolation.LINEAR,
+        )
+
+    @property
+    def animatables(self):
+        return [self._start, self._end, self._line_path_style, *super().animatables]
+
+    def copy_with_animatables(self, animatables):
+        start, end, line_path_style, *rest = animatables
+        start = tuple(start)
+        end = tuple(end)
+        kwargs = super()._kwargs_from_animatables(rest)
+        del kwargs["subdivide_increment"]
+        del kwargs["interpolation"]
+        return Arrow(
+            start=start,
+            end=end,
+            line_path_style=line_path_style,
+            **kwargs,
         )
 
 
@@ -150,7 +176,7 @@ class LabelArrow(LabelArrowPath):
         )
 
 
-class MultiArrow(ArrowPath):
+class MultiArrow(ArrowPath, Animatable):
     def __init__(
         self,
         points: Sequence[Tuple[float, float]],
@@ -169,6 +195,10 @@ class MultiArrow(ArrowPath):
         interpolation: PartialPath.Interpolation = PartialPath.Interpolation.CUBIC,
     ):
         assert len(points) >= 2
+
+        self._line_path_style = line_path_style
+        self._smooth = smooth
+        self._corner_radius = corner_radius
 
         self._points = np.array(points)
         self._midpoints = (self.points[:-1] + self.points[1:]) / 2
@@ -223,8 +253,25 @@ class MultiArrow(ArrowPath):
 
     @property
     def end(self) -> np.ndarray:
-        """The end of the lined."""
+        """The end of the line."""
         return self.points[-1]
+
+    @property
+    def animatables(self):
+        return [self.points.reshape(-1), self._line_path_style, *super().animatables]
+
+    def copy_with_animatables(self, animatables):
+        points, line_path_style, *rest = animatables
+        points = points.reshape(-1, 2)
+        points = [tuple(point) for point in points]
+        kwargs = super()._kwargs_from_animatables(rest)
+        return MultiArrow(
+            points=points,
+            line_path_style=line_path_style,
+            smooth=self._smooth,
+            corner_radius=self._corner_radius,
+            **kwargs,
+        )
 
 
 class AutoArrow(MultiArrow):
@@ -302,8 +349,6 @@ class AutoArrow(MultiArrow):
         dy = end[1] - start[1]
 
         if not set(directions) <= (self._VERTICAL | self._HORIZONTAL):
-            print(set(directions))
-            print(self._VERTICAL | self._HORIZONTAL)
             raise ValueError("Directions must be a sequence of 'u', 'l', 'd', or 'r'.")
 
         x_movements = [self._HORIZONTAL_DICT[direction] for direction in directions]

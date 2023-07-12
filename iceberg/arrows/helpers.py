@@ -6,7 +6,7 @@ import numpy as np
 import skia
 
 from iceberg import PathStyle
-from iceberg.animation.animatable import AnimatableSequence
+from iceberg.animation.animatable import AnimatableSequence, Animatable
 from iceberg.primitives import Compose, Path, PartialPath
 
 
@@ -254,16 +254,21 @@ class ArrowPath(Compose):
 
         super().__init__(items)
 
+    @property
     def animatables(self) -> AnimatableSequence:
-        return [
+        animatables = [
             self._arrow_path_style,
             self._angle,
             self._head_length,
             self._partial_start,
             self._partial_end,
         ]
+        if isinstance(self._path, Animatable):
+            animatables.append(self._path)
 
-    def copy_with_animatables(self, animatables: AnimatableSequence):
+        return animatables
+
+    def _kwargs_from_animatables(self, animatables: AnimatableSequence):
         (
             arrow_path_style,
             angle,
@@ -272,19 +277,26 @@ class ArrowPath(Compose):
             partial_end,
         ) = animatables
 
-        return ArrowPath(
-            self._path,
-            self._arrow_head_start,
-            self._arrow_head_end,
-            arrow_path_style,
-            angle,
-            head_length,
-            self._arrow_head_style,
-            partial_start,
-            partial_end,
-            self._subdivide_increment,
-            self._interpolation,
-        )
+        return {
+            "arrow_head_start": self._arrow_head_start,
+            "arrow_head_end": self._arrow_head_end,
+            "arrow_path_style": arrow_path_style,
+            "angle": angle,
+            "head_length": head_length,
+            "arrow_head_style": self._arrow_head_style,
+            "partial_start": partial_start,
+            "partial_end": partial_end,
+            "subdivide_increment": self._subdivide_increment,
+            "interpolation": self._interpolation,
+        }
+
+    def copy_with_animatables(self, animatables: AnimatableSequence):
+        if len(animatables) == 6:
+            path = animatables[-1]
+            animatables = animatables[:-1]
+        else:
+            path = self._path
+        return ArrowPath(path=path, **self._kwargs_from_animatables(animatables))
 
     @property
     def tangents(self):
