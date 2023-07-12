@@ -2,4 +2,11 @@
 """
 
 from .helpers import ArrowHeadStyle, ArrowPath
-from .arrows import Arrow, ArrowAlignDirection, LabelArrow, MultiArrow, AutoArrow
+from .arrows import (
+    Arrow,
+    ArrowAlignDirection,
+    LabelArrow,
+    MultiArrow,
+    AutoArrow,
+    LabelArrowPath,
+)
