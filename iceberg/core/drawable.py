@@ -1,4 +1,4 @@
-from typing import Union, Tuple, Sequence, Callable
+from typing import Optional, Union, Tuple, Sequence, Callable
 
 from abc import ABC, abstractmethod, abstractproperty
 from iceberg.core import Bounds, Corner
@@ -95,9 +95,23 @@ class Drawable(ABC):
         cx, cy = self.bounds.corners[corner]
         return self.move(-cx, -cy)
 
-    def move(self, x: float, y: float):
-        """Move the drawable by the specified amount."""
+    def move(self, x: float, y: float, corner: Optional[Corner] = None):
+        """Move the drawable by the specified amount.
+
+        Args:
+            x: The amount to move in the x direction.
+            y: The amount to move in the y direction.
+            corner: If specified, then the specified corner will be moved by the
+                specified amount, relative to the current position of the *top-left*
+                corner. In particular, if the top-left corner is currently at (0, 0),
+                then the specified corner will be moved to (x, y).
+        """
         from iceberg.primitives.layout import Transform
+
+        if corner is not None:
+            cx, cy = self.bounds.corners[corner]
+            x -= cx
+            y -= cy
 
         return Transform(
             child=self,
