@@ -162,12 +162,17 @@ class Path(Drawable, ABC):
 
 
 class PartialPath(Drawable, Animatable):
+    class Interpolation(Enum):
+        LINEAR = 0
+        CUBIC = 1
+
     def __init__(
         self,
         child_path: Path,
         start: float = 0,
         end: float = 1,
         subdivide_increment: float = 0.01,
+        interpolation: Interpolation = Interpolation.CUBIC,
     ):
         super().__init__()
 
@@ -178,6 +183,8 @@ class PartialPath(Drawable, Animatable):
         self._child_path = child_path
         self._start = start
         self._end = end
+        self._subdivide_increment = subdivide_increment
+        self._interpolation = interpolation
 
         self._path_measure = skia.PathMeasure(self._child_path.skia_path, False)
         self._total_length = self._path_measure.getLength()
@@ -210,8 +217,38 @@ class PartialPath(Drawable, Animatable):
         self._partial_path = skia.Path()
         self._partial_path.moveTo(*self._points[0])
 
-        for point in self._points[1:]:
-            self._partial_path.lineTo(*point)
+        if interpolation == self.Interpolation.LINEAR:
+            for point in self._points[1:]:
+                self._partial_path.lineTo(*point)
+        elif interpolation == self.Interpolation.CUBIC:
+            segment_length = self._total_length * subdivide_increment
+
+            for point, tangent, next_point, next_tangent in zip(
+                self._points[:-1],
+                self._tangents[:-1],
+                self._points[1:],
+                self._tangents[1:],
+            ):
+                # The tangents are unit vectors, but we would like actual time
+                # derivatives for the conversion below. That's an underspecified
+                # problem (the original path may not even have a notion of time.
+                # But by scaling with the segment length we at least get
+                # a reasonable choice (in particular, this makes the shape of the
+                # interpolation invariant to scaling the entire path).
+                tangent = (tangent[0] * segment_length, tangent[1] * segment_length)
+                next_tangent = (
+                    next_tangent[0] * segment_length,
+                    next_tangent[1] * segment_length,
+                )
+                # Compute control points (i.e. convert from Hermite to Bezier curve):
+                p1 = (point[0] + tangent[0] / 3, point[1] + tangent[1] / 3)
+                p2 = (
+                    next_point[0] - next_tangent[0] / 3,
+                    next_point[1] - next_tangent[1] / 3,
+                )
+                self._partial_path.cubicTo(*p1, *p2, *next_point)
+        else:
+            raise ValueError(f"Unknown interpolation {interpolation}.")
 
     def draw(self, canvas: skia.Canvas):
         canvas.drawPath(self._partial_path, self._child_path._path_style.skia_paint)
@@ -242,7 +279,9 @@ class PartialPath(Drawable, Animatable):
 
     def copy_with_animatables(self, animatables: AnimatableSequence):
         start, end = animatables
-        return PartialPath(self._child_path, start, end)
+        return PartialPath(
+            self._child_path, start, end, self._subdivide_increment, self._interpolation
+        )
 
 
 @dataclass
