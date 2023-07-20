@@ -1,12 +1,14 @@
+import itertools
 from typing import List, Optional, Sequence, Tuple, Union
+import numpy as np
 import skia
 
 from iceberg import Drawable, Bounds, Color, FontStyle, Corner, Colors
-from iceberg.animation import Animatable
+from iceberg.animation import Animatable, auto_animatable
 from iceberg.animation.animatable import AnimatableSequence
 from iceberg.core import Bounds
 from iceberg.core.drawable import Drawable
-from iceberg.core.properties import PathStyle
+from iceberg.core.properties import PathStyle, Interpolation, SplineType
 from iceberg.geometry import get_transform, apply_transform
 from .layout import Compose
 from .text import SimpleText
@@ -23,8 +25,9 @@ class BorderPosition(Enum):
     OUTSIDE = "outside"
 
 
+@auto_animatable
 @dataclass
-class Rectangle(Drawable, Animatable):
+class Rectangle(Drawable):
     rectangle: Bounds
     border_color: Color = None
     fill_color: Color = None
@@ -101,30 +104,12 @@ class Rectangle(Drawable, Animatable):
         if self._border_paint:
             canvas.drawRoundRect(self._border_skia_rect, rx, ry, self._border_paint)
 
-    @property
-    def animatables(self) -> AnimatableSequence:
-        rx, ry = self.border_radius_tuple
-        return [
-            self.rectangle,
-            self.border_color,
-            self.fill_color,
-            self.border_thickness,
-            rx,
-            ry,
-        ]
+    def _transform_export_animatable_dict(self, animatable_dict):
+        border_radius = animatable_dict["border_radius"]
+        if isinstance(border_radius, (int, float)):
+            animatable_dict["border_radius"] = (border_radius, border_radius)
 
-    def copy_with_animatables(self, animatables: AnimatableSequence):
-        rectangle, border_color, fill_color, border_thickness, rx, ry = animatables
-
-        return self.__class__(
-            rectangle=rectangle,
-            border_color=border_color,
-            fill_color=fill_color,
-            border_thickness=border_thickness,
-            anti_alias=self.anti_alias,
-            border_position=self.border_position,
-            border_radius=(rx, ry),
-        )
+        return animatable_dict
 
 
 @dataclass
@@ -160,12 +145,42 @@ class Path(Drawable, ABC):
     def draw(self, canvas):
         canvas.drawPath(self._path, self._path_style.skia_paint)
 
+    def arrow(
+        self,
+        arrow_head_start: bool = False,
+        arrow_head_end: bool = True,
+        arrow_path_style: Optional[PathStyle] = None,
+        angle: float = 30,
+        head_length: float = 20,
+        arrow_head_style: "ArrowHeadStyle" = None,
+        partial_start: float = 0,
+        partial_end: float = 1,
+        subdivide_increment: float = 0.01,
+        interpolation: Interpolation = Interpolation.CUBIC,
+    ) -> "ArrowPath":
+        # Import here to avoid circular imports.
+        from iceberg.arrows.helpers import ArrowHeadStyle, ArrowPath
 
-class PartialPath(Drawable, Animatable):
-    class Interpolation(Enum):
-        LINEAR = 0
-        CUBIC = 1
+        if arrow_head_style is None:
+            arrow_head_style = ArrowHeadStyle.TRIANGLE
 
+        return ArrowPath(
+            self,
+            arrow_head_start,
+            arrow_head_end,
+            arrow_path_style,
+            angle,
+            head_length,
+            arrow_head_style,
+            partial_start,
+            partial_end,
+            subdivide_increment,
+            interpolation,
+        )
+
+
+@auto_animatable
+class PartialPath(Drawable):
     def __init__(
         self,
         child_path: Path,
@@ -217,10 +232,10 @@ class PartialPath(Drawable, Animatable):
         self._partial_path = skia.Path()
         self._partial_path.moveTo(*self._points[0])
 
-        if interpolation == self.Interpolation.LINEAR:
+        if interpolation == Interpolation.LINEAR:
             for point in self._points[1:]:
                 self._partial_path.lineTo(*point)
-        elif interpolation == self.Interpolation.CUBIC:
+        elif interpolation == Interpolation.CUBIC:
             segment_length = self._total_length * subdivide_increment
 
             for point, tangent, next_point, next_tangent in zip(
@@ -270,18 +285,8 @@ class PartialPath(Drawable, Animatable):
         return self._child_path.bounds
 
     @property
-    def animatables(self) -> AnimatableSequence:
-        return [self._start, self._end]
-
-    @property
     def total_length(self) -> float:
         return self._total_length
-
-    def copy_with_animatables(self, animatables: AnimatableSequence):
-        start, end = animatables
-        return PartialPath(
-            self._child_path, start, end, self._subdivide_increment, self._interpolation
-        )
 
     def point_and_tangent_at(
         self, t: float
@@ -290,6 +295,7 @@ class PartialPath(Drawable, Animatable):
         return tuple(pos), tuple(tan)
 
 
+@auto_animatable
 @dataclass
 class Line(Path):
     start: Tuple[float, float]
@@ -304,22 +310,198 @@ class Line(Path):
         super().__init__(path, self.path_style)
 
 
-@dataclass
-class CurvedCubicLine(Path):
-    points: List[Tuple[float, float]]
-    path_style: PathStyle
+@auto_animatable
+class GeneralLine(Path):
+    def __init__(
+        self,
+        points: Sequence[Tuple[float, float]],
+        path_style: PathStyle,
+        spline: SplineType = SplineType.LINEAR,
+        corner_radius: float = 0,
+    ):
+        assert len(points) >= 2
 
-    def __post_init__(self):
-        assert len(self.points) >= 3, "A cubic line requires at least 3 points."
+        self._path_style = path_style
+        self._corner_radius = corner_radius
+        self._spline = spline
+
+        self._points = np.array(points)
+        self._midpoints = (self.points[:-1] + self.points[1:]) / 2
 
         path = skia.Path()
         path.moveTo(*self.points[0])
 
-        # Take points in groups of 3 and draw a cubic line.
-        for i in range(0, len(self.points) - 2, 2):
-            path.cubicTo(*self.points[i], *self.points[i + 1], *self.points[i + 2])
+        if corner_radius != 0:
+            if spline != SplineType.LINEAR:
+                raise ValueError(
+                    f"Corner radius can only be used with linear splines, got {spline}."
+                )
+            for point, next_point in zip(points[1:-1], points[2:]):
+                path.arcTo(point, next_point, corner_radius)
+            path.lineTo(*points[-1])
+        elif spline == SplineType.LINEAR:
+            for point in points[1:]:
+                path.lineTo(*point)
+        elif spline == SplineType.QUADRATIC:
+            # Take points in groups of 2 and draw a quadratic line.
+            for i in range(1, len(self.points) - 1, 2):
+                path.quadTo(*self.points[i], *self.points[i + 1])
+        elif spline == SplineType.CUBIC:
+            # Take points in groups of 3 and draw a cubic line.
+            for i in range(1, len(self.points) - 2, 3):
+                path.cubicTo(*self.points[i], *self.points[i + 1], *self.points[i + 2])
+        else:
+            raise ValueError(f"Unknown spline type {spline}.")
 
-        super().__init__(path, self.path_style)
+        super().__init__(path, path_style)
+
+    @property
+    def points(self) -> np.ndarray:
+        """The corner points of the line, shape (n, 2)."""
+        return self._points
+
+    @property
+    def midpoints(self) -> np.ndarray:
+        """The midpoints of the line segments."""
+        return self._midpoints
+
+    @property
+    def start(self) -> np.ndarray:
+        """The start of the line."""
+        return self.points[0]
+
+    @property
+    def end(self) -> np.ndarray:
+        """The end of the line."""
+        return self.points[-1]
+
+
+class AutoLine(GeneralLine):
+    UP = "u"
+    LEFT = "l"
+    DOWN = "d"
+    RIGHT = "r"
+
+    _VERTICAL = {UP, DOWN}
+    _HORIZONTAL = {LEFT, RIGHT}
+
+    _VERTICAL_DICT = {
+        UP: -1,
+        LEFT: 0,
+        DOWN: 1,
+        RIGHT: 0,
+    }
+
+    _HORIZONTAL_DICT = {
+        UP: 0,
+        LEFT: -1,
+        DOWN: 0,
+        RIGHT: 1,
+    }
+
+    def __init__(
+        self,
+        start: Union[Tuple[float, float], Drawable, Bounds],
+        end: Union[Tuple[float, float], Drawable, Bounds],
+        directions: str,
+        path_style: PathStyle,
+        x_padding: float = 0,
+        y_padding: Optional[float] = None,
+        context: Optional[Drawable] = None,
+        spline: SplineType = SplineType.LINEAR,
+        corner_radius: float = 0,
+    ):
+        if y_padding is None:
+            y_padding = x_padding
+
+        if context is not None:
+            with context:
+                if isinstance(start, Drawable):
+                    start = start.relative_bounds
+                if isinstance(end, Drawable):
+                    end = end.relative_bounds
+        else:
+            if isinstance(start, Drawable):
+                start = start.bounds
+            if isinstance(end, Drawable):
+                end = end.bounds
+
+        if isinstance(start, Bounds):
+            if directions[0] == self.UP:
+                start = start.corners[Corner.TOP_MIDDLE]
+            elif directions[0] == self.LEFT:
+                start = start.corners[Corner.MIDDLE_LEFT]
+            elif directions[0] == self.DOWN:
+                start = start.corners[Corner.BOTTOM_MIDDLE]
+            elif directions[0] == self.RIGHT:
+                start = start.corners[Corner.MIDDLE_RIGHT]
+        if isinstance(end, Bounds):
+            if directions[-1] == self.UP:
+                end = end.corners[Corner.BOTTOM_MIDDLE]
+            elif directions[-1] == self.LEFT:
+                end = end.corners[Corner.MIDDLE_RIGHT]
+            elif directions[-1] == self.DOWN:
+                end = end.corners[Corner.TOP_MIDDLE]
+            elif directions[-1] == self.RIGHT:
+                end = end.corners[Corner.MIDDLE_LEFT]
+
+        assert isinstance(start, tuple)
+        assert isinstance(end, tuple)
+
+        dx = end[0] - start[0]
+        dy = end[1] - start[1]
+
+        if not set(directions) <= (self._VERTICAL | self._HORIZONTAL):
+            raise ValueError("Directions must be a sequence of 'u', 'l', 'd', or 'r'.")
+
+        x_movements = [self._HORIZONTAL_DICT[direction] for direction in directions]
+        y_movements = [self._VERTICAL_DICT[direction] for direction in directions]
+
+        x_deltas = self._parse_1d_directions(x_movements, dx, x_padding)
+        y_deltas = self._parse_1d_directions(y_movements, dy, y_padding)
+
+        x_positions = [start[0] + delta for delta in x_deltas]
+        y_positions = [start[1] + delta for delta in y_deltas]
+
+        points = list(zip(x_positions, y_positions))
+
+        assert points[-1] == end, f"{points[-1]} != {end}"
+
+        super().__init__(points, path_style, spline, corner_radius)
+
+    def _parse_1d_directions(self, directions: List[int], delta: float, pad: float):
+        assert set(directions) <= {1, 0, -1}
+
+        non_zero_directions = [d for d in directions if d != 0]
+        groups = [list(group) for key, group in itertools.groupby(non_zero_directions)]
+
+        maximum = max(0, delta) + pad
+        minimum = min(0, delta) - pad
+
+        key_points = [0]
+        for i, group in enumerate(groups):
+            current = key_points[-1]
+            if i == len(groups) - 1:
+                target = delta
+            elif group[0] == 1:
+                target = maximum
+            else:
+                target = minimum
+
+            key_points.extend(np.linspace(current, target, len(group) + 1)[1:])
+
+        # Now we need to take the zeros into account
+        result = [key_points.pop(0)]
+        for d in directions:
+            if d == 0:
+                result.append(result[-1])
+            else:
+                result.append(key_points.pop(0))
+
+        assert len(key_points) == 0
+        assert result[-1] == delta
+
+        return result
 
 
 class GridOverlay(Compose):

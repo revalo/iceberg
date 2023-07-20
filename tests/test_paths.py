@@ -1,5 +1,5 @@
-from iceberg import Bounds, Colors, PathStyle
-from iceberg.primitives import Blank, Line, Compose, CurvedCubicLine, PartialPath
+from iceberg import Bounds, Colors, PathStyle, SplineType
+from iceberg.primitives import Blank, Line, Compose, PartialPath, GeneralLine
 from .scene_tester import check_render
 
 
@@ -22,10 +22,12 @@ def test_dashed():
 
 def test_cubic():
     blank = Blank(Bounds(size=(512, 512)), Colors.WHITE)
-    line = CurvedCubicLine(
+    line = GeneralLine(
         [
             (10, 10),
+            (10, 10),
             (256, 10),
+            (256, 256),
             (256, 256),
             (256, 500),
             (500, 500),
@@ -37,6 +39,7 @@ def test_cubic():
             dash_intervals=[20.0, 10.0],
             dash_phase=0.0,
         ),
+        spline=SplineType.CUBIC,
     ).scale(0.5)
     scene = blank.add_centered(line)
     check_render(scene, "cubic.png")
@@ -44,10 +47,12 @@ def test_cubic():
 
 def test_partial():
     blank = Blank(Bounds(size=(512, 512)), Colors.WHITE)
-    line = CurvedCubicLine(
+    line = GeneralLine(
         [
             (10, 10),
+            (10, 10),
             (256, 10),
+            (256, 256),
             (256, 256),
             (256, 500),
             (500, 500),
@@ -59,6 +64,7 @@ def test_partial():
             dash_intervals=[20.0, 10.0],
             dash_phase=0.0,
         ),
+        spline=SplineType.CUBIC,
     )
     partial_line = PartialPath(line, 0, 0.8)
     scene = blank.add_centered(partial_line)

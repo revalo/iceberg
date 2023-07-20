@@ -5,8 +5,8 @@ import itertools
 import numpy as np
 import skia
 
-from iceberg import PathStyle, Drawable, Bounds, Corner
-from iceberg.primitives import Compose, Line, Path, PartialPath, Transform
+from iceberg import PathStyle, Drawable, Bounds, Corner, SplineType, Interpolation
+from iceberg.primitives import Compose, Line, GeneralLine, Transform, AutoLine
 from iceberg.animation import Animatable
 from .helpers import ArrowHeadStyle, ArrowPath
 
@@ -56,25 +56,7 @@ class Arrow(ArrowPath):
             partial_start=partial_start,
             partial_end=partial_end,
             subdivide_increment=1,
-            interpolation=PartialPath.Interpolation.LINEAR,
-        )
-
-    @property
-    def animatables(self):
-        return [self._start, self._end, self._line_path_style, *super().animatables]
-
-    def copy_with_animatables(self, animatables):
-        start, end, line_path_style, *rest = animatables
-        start = tuple(start)
-        end = tuple(end)
-        kwargs = super()._kwargs_from_animatables(rest)
-        del kwargs["subdivide_increment"]
-        del kwargs["interpolation"]
-        return Arrow(
-            start=start,
-            end=end,
-            line_path_style=line_path_style,
-            **kwargs,
+            interpolation=Interpolation.LINEAR,
         )
 
 
@@ -176,54 +158,26 @@ class LabelArrow(LabelArrowPath):
         )
 
 
-class MultiArrow(ArrowPath, Animatable):
+class MultiArrow(ArrowPath):
     def __init__(
         self,
         points: Sequence[Tuple[float, float]],
         line_path_style: PathStyle,
+        spline: SplineType = SplineType.LINEAR,
+        corner_radius: float = 0,
         arrow_path_style: Optional[PathStyle] = None,
         head_length: float = 20,
         angle: float = 30,
         arrow_head_style: ArrowHeadStyle = ArrowHeadStyle.TRIANGLE,
         arrow_head_start: bool = False,
         arrow_head_end: bool = False,
-        corner_radius: float = 0,
-        smooth: bool = False,
         partial_start: float = 0,
         partial_end: float = 1,
         subdivide_increment: float = 0.01,
-        interpolation: PartialPath.Interpolation = PartialPath.Interpolation.CUBIC,
+        interpolation: Interpolation = Interpolation.CUBIC,
     ):
-        assert len(points) >= 2
-
-        self._line_path_style = line_path_style
-        self._smooth = smooth
-        self._corner_radius = corner_radius
-
-        self._points = np.array(points)
-        self._midpoints = (self.points[:-1] + self.points[1:]) / 2
-
-        start = points[0]
-        end = points[-1]
-
-        path = skia.Path()
-        path.moveTo(start)
-
-        if smooth:
-            assert corner_radius == 0
-            for direction_point, target_point in zip(points[1:-1], self.midpoints[1:]):
-                path.quadTo(*direction_point, *target_point)
-            path.lineTo(*end)
-        elif corner_radius == 0:
-            for point in points[1:]:
-                path.lineTo(*point)
-        else:
-            for point, next_point in zip(points[1:-1], points[2:]):
-                path.arcTo(point, next_point, corner_radius)
-            path.lineTo(*end)
-
         super().__init__(
-            Path(path, line_path_style),
+            GeneralLine(points, line_path_style, spline, corner_radius),
             arrow_head_start=arrow_head_start,
             arrow_head_end=arrow_head_end,
             arrow_path_style=arrow_path_style,
@@ -236,67 +190,8 @@ class MultiArrow(ArrowPath, Animatable):
             interpolation=interpolation,
         )
 
-    @property
-    def points(self) -> np.ndarray:
-        """The corner points of the line, shape (n, 2)."""
-        return self._points
 
-    @property
-    def midpoints(self) -> np.ndarray:
-        """The midpoints of the line segments."""
-        return self._midpoints
-
-    @property
-    def start(self) -> np.ndarray:
-        """The start of the line."""
-        return self.points[0]
-
-    @property
-    def end(self) -> np.ndarray:
-        """The end of the line."""
-        return self.points[-1]
-
-    @property
-    def animatables(self):
-        return [self.points.reshape(-1), self._line_path_style, *super().animatables]
-
-    def copy_with_animatables(self, animatables):
-        points, line_path_style, *rest = animatables
-        points = points.reshape(-1, 2)
-        points = [tuple(point) for point in points]
-        kwargs = super()._kwargs_from_animatables(rest)
-        return MultiArrow(
-            points=points,
-            line_path_style=line_path_style,
-            smooth=self._smooth,
-            corner_radius=self._corner_radius,
-            **kwargs,
-        )
-
-
-class AutoArrow(MultiArrow):
-    UP = "u"
-    LEFT = "l"
-    DOWN = "d"
-    RIGHT = "r"
-
-    _VERTICAL = {UP, DOWN}
-    _HORIZONTAL = {LEFT, RIGHT}
-
-    _VERTICAL_DICT = {
-        UP: -1,
-        LEFT: 0,
-        DOWN: 1,
-        RIGHT: 0,
-    }
-
-    _HORIZONTAL_DICT = {
-        UP: 0,
-        LEFT: -1,
-        DOWN: 0,
-        RIGHT: 1,
-    }
-
+class AutoArrow(ArrowPath):
     def __init__(
         self,
         start: Union[Tuple[float, float], Drawable, Bounds],
@@ -306,96 +201,39 @@ class AutoArrow(MultiArrow):
         x_padding: float = 0,
         y_padding: Optional[float] = None,
         context: Optional[Drawable] = None,
-        **kwargs,
+        spline: SplineType = SplineType.LINEAR,
+        corner_radius: float = 0,
+        arrow_head_start: bool = False,
+        arrow_head_end: bool = False,
+        arrow_path_style: Optional[PathStyle] = None,
+        angle: float = 30,
+        head_length: float = 20,
+        arrow_head_style: ArrowHeadStyle = ArrowHeadStyle.TRIANGLE,
+        partial_start: float = 0,
+        partial_end: float = 1,
+        subdivide_increment: float = 0.01,
+        interpolation: Interpolation = Interpolation.CUBIC,
     ):
-        if y_padding is None:
-            y_padding = x_padding
-
-        if context is not None:
-            with context:
-                if isinstance(start, Drawable):
-                    start = start.relative_bounds
-                if isinstance(end, Drawable):
-                    end = end.relative_bounds
-        else:
-            if isinstance(start, Drawable):
-                start = start.bounds
-            if isinstance(end, Drawable):
-                end = end.bounds
-
-        if isinstance(start, Bounds):
-            if directions[0] == self.UP:
-                start = start.corners[Corner.TOP_MIDDLE]
-            elif directions[0] == self.LEFT:
-                start = start.corners[Corner.MIDDLE_LEFT]
-            elif directions[0] == self.DOWN:
-                start = start.corners[Corner.BOTTOM_MIDDLE]
-            elif directions[0] == self.RIGHT:
-                start = start.corners[Corner.MIDDLE_RIGHT]
-        if isinstance(end, Bounds):
-            if directions[-1] == self.UP:
-                end = end.corners[Corner.BOTTOM_MIDDLE]
-            elif directions[-1] == self.LEFT:
-                end = end.corners[Corner.MIDDLE_RIGHT]
-            elif directions[-1] == self.DOWN:
-                end = end.corners[Corner.TOP_MIDDLE]
-            elif directions[-1] == self.RIGHT:
-                end = end.corners[Corner.MIDDLE_LEFT]
-
-        assert isinstance(start, tuple)
-        assert isinstance(end, tuple)
-
-        dx = end[0] - start[0]
-        dy = end[1] - start[1]
-
-        if not set(directions) <= (self._VERTICAL | self._HORIZONTAL):
-            raise ValueError("Directions must be a sequence of 'u', 'l', 'd', or 'r'.")
-
-        x_movements = [self._HORIZONTAL_DICT[direction] for direction in directions]
-        y_movements = [self._VERTICAL_DICT[direction] for direction in directions]
-
-        x_deltas = self._parse_1d_directions(x_movements, dx, x_padding)
-        y_deltas = self._parse_1d_directions(y_movements, dy, y_padding)
-
-        x_positions = [start[0] + delta for delta in x_deltas]
-        y_positions = [start[1] + delta for delta in y_deltas]
-
-        points = list(zip(x_positions, y_positions))
-
-        assert points[-1] == end, f"{points[-1]} != {end}"
-
-        super().__init__(points, path_style, **kwargs)
-
-    def _parse_1d_directions(self, directions: List[int], delta: float, pad: float):
-        assert set(directions) <= {1, 0, -1}
-
-        non_zero_directions = [d for d in directions if d != 0]
-        groups = [list(group) for key, group in itertools.groupby(non_zero_directions)]
-
-        maximum = max(0, delta) + pad
-        minimum = min(0, delta) - pad
-
-        key_points = [0]
-        for i, group in enumerate(groups):
-            current = key_points[-1]
-            if i == len(groups) - 1:
-                target = delta
-            elif group[0] == 1:
-                target = maximum
-            else:
-                target = minimum
-
-            key_points.extend(np.linspace(current, target, len(group) + 1)[1:])
-
-        # Now we need to take the zeros into account
-        result = [key_points.pop(0)]
-        for d in directions:
-            if d == 0:
-                result.append(result[-1])
-            else:
-                result.append(key_points.pop(0))
-
-        assert len(key_points) == 0
-        assert result[-1] == delta
-
-        return result
+        super().__init__(
+            AutoLine(
+                start,
+                end,
+                directions,
+                path_style,
+                x_padding,
+                y_padding,
+                context,
+                spline,
+                corner_radius,
+            ),
+            arrow_head_start=arrow_head_start,
+            arrow_head_end=arrow_head_end,
+            arrow_path_style=arrow_path_style,
+            angle=angle,
+            head_length=head_length,
+            arrow_head_style=arrow_head_style,
+            partial_start=partial_start,
+            partial_end=partial_end,
+            subdivide_increment=subdivide_increment,
+            interpolation=interpolation,
+        )

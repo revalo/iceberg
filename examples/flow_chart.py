@@ -1,18 +1,23 @@
+import numpy as np
 from iceberg import (
+    Renderer,
     Bounds,
     Colors,
     FontStyle,
     PathStyle,
     Corner,
     Drawable,
+    SplineType,
 )
 from iceberg.primitives import (
     Rectangle,
     Compose,
     Blank,
     SimpleText,
+    PartialPath,
+    MathTex,
 )
-from iceberg.arrows import MultiArrow, AutoArrow
+from iceberg.arrows import MultiArrow, AutoArrow, LabelArrowPath
 from iceberg.animation import tween
 from iceberg.animation.scene import Scene
 
@@ -65,14 +70,18 @@ class Scene1(Scene):
             head_length=12,
             corner_radius=20,
             partial_end=tween(0, 1, progress),
-            subdivide_increment=0.001,
+            subdivide_increment=0.01,
         )
+        label1 = MathTex("\int_0^\infty e^{-x^2} \,dx", scale=1.5)
+
+        path = LabelArrowPath(path, label1, Corner.BOTTOM_MIDDLE, t=0.65, distance=10)
 
         with boxes:
             path2 = MultiArrow(
                 [
                     box_a.relative_bounds.corners[Corner.BOTTOM_MIDDLE],
-                    (-70, 200),
+                    # (-70, 200),
+                    tween(np.array([-70, 200]), np.array([100, 200]), progress),
                     (100, 140),
                     box_b.relative_bounds.corners[Corner.MIDDLE_LEFT],
                 ],
@@ -82,11 +91,24 @@ class Scene1(Scene):
                 arrow_head_end=True,
                 partial_end=tween(0, 1, progress),
                 head_length=12,
-                smooth=True,
+                spline=SplineType.CUBIC,
+                subdivide_increment=0.1,
+            )
+            label2 = SimpleText(
+                text="Lorem ipsum",
+                font_style=FontStyle(
+                    family=_FONT_FAMILY,
+                    size=18,
+                    color=Colors.BLACK,
+                ),
+            )
+
+            path2 = LabelArrowPath(
+                path2, label2, Corner.BOTTOM_MIDDLE, t=0.75, distance=10, rotated=True
             )
 
         scene = Compose((boxes, path, path2))
-        blank = Blank(Bounds(size=(1000, 1000)), background=Colors.WHITE)
+        blank = Blank(Bounds(size=(400, 400)), background=Colors.WHITE)
         scene = blank.add_centered(scene)
 
         return scene
@@ -96,3 +118,6 @@ if __name__ == "__main__":
     scene = Scene1()
     final = scene + scene.freeze(0.1) + scene.reverse()
     final.render("test.gif", fps=60)
+    renderer = Renderer()
+    renderer.render(scene.make_frame(1).scale(4))
+    renderer.save_rendered_image("test.png")

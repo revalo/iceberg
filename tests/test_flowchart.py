@@ -1,4 +1,13 @@
-from iceberg import Renderer, Bounds, Colors, FontStyle, PathStyle, Corner, render_svg
+from iceberg import (
+    Renderer,
+    Bounds,
+    Colors,
+    FontStyle,
+    PathStyle,
+    Corner,
+    render_svg,
+    SplineType,
+)
 from iceberg.primitives import (
     Rectangle,
     Compose,
@@ -70,11 +79,11 @@ def test_flow_chart():
             arrow_head_end=True,
             arrow_head_style=ArrowHeadStyle.FILLED_TRIANGLE,
             head_length=12,
-            smooth=True,
+            spline=SplineType.CUBIC,
         )
 
     scene = Compose((boxes, path, path2)).scale(2)
     blank = Blank(Bounds(size=(1000, 1000)), background=Colors.WHITE)
     scene = blank.add_centered(scene)
 
-    check_render(scene, "flow_chart.png")
+    check_render(scene, "flow_chart.png", generate_expected=True)

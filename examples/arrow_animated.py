@@ -6,6 +6,7 @@ from iceberg import (
     Drawable,
     Color,
     Corner,
+    SplineType,
 )
 from iceberg.primitives import (
     Blank,
@@ -20,7 +21,7 @@ from iceberg.primitives import (
 from iceberg.arrows import MultiArrow, Arrow, ArrowHeadStyle, ArrowPath
 from iceberg.animation import tween
 from iceberg.animation.scene import Playbook, Animated, Frozen, Scene
-from iceberg.primitives.shapes import CurvedCubicLine, PartialPath
+from iceberg.primitives.shapes import GeneralLine
 
 
 class TangentArrow(Compose):
@@ -100,8 +101,8 @@ if __name__ == "__main__":
         (67, 25),
         (100, 0),
     ]
-    curve1 = CurvedCubicLine(points_1, path_style)
-    curve2 = CurvedCubicLine(points_2, path_style)
+    curve1 = GeneralLine(points_1, path_style, spline=SplineType.CUBIC)
+    curve2 = GeneralLine(points_2, path_style, spline=SplineType.CUBIC)
     arrow_1 = ArrowPath(
         curve1,
         arrow_head_end=True,

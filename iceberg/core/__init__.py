@@ -6,6 +6,8 @@ from .properties import (
     PathStyle,
     FontStyle,
     StrokeCap,
+    Interpolation,
+    SplineType,
 )
 from .drawable import Drawable
 from .renderer import Renderer, render_svg
