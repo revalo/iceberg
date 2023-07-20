@@ -11,4 +11,6 @@ from iceberg.core import (
     Corner,
     StrokeCap,
     render_svg,
+    Interpolation,
+    SplineType,
 )

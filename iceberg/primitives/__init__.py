@@ -4,7 +4,8 @@ from .shapes import (
     Line,
     BorderPosition,
     Path,
-    CurvedCubicLine,
+    GeneralLine,
+    AutoLine,
     PartialPath,
     GridOverlay,
 )

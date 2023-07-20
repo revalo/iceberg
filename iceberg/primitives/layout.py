@@ -2,7 +2,7 @@ from typing import List, Sequence, Tuple, Union
 import skia
 
 from iceberg import Drawable, Bounds, Color, Colors
-from iceberg.animation import Animatable
+from iceberg.animation import Animatable, auto_animatable
 from iceberg.animation.animatable import AnimatableSequence
 from iceberg.core.drawable import Drawable
 from iceberg.geometry import get_transform, apply_transform
@@ -58,7 +58,8 @@ class Blank(Drawable):
         canvas.drawRect(self._bounds.to_skia(), self._paint)
 
 
-class Transform(Drawable, Animatable):
+@auto_animatable
+class Transform(Drawable):
     """A drawable that transforms its child."""
 
     def __init__(
@@ -155,40 +156,6 @@ class Transform(Drawable, Animatable):
         self._child.draw(canvas)
         canvas.restore()
 
-    @property
-    def animatables(self) -> AnimatableSequence:
-        position = np.array(self._position)
-        scale = np.array(self._scale)
-        anchor = np.array(self._anchor)
-
-        rv = [
-            position,
-            scale,
-            anchor,
-            self._rotation,
-        ]
-
-        if isinstance(self._child, Animatable):
-            rv.append(self._child)
-
-        return rv
-
-    def copy_with_animatables(self, animatables: AnimatableSequence):
-        if len(animatables) == 4:
-            position, scale, anchor, rotation = animatables
-            child = self._child
-        else:
-            position, scale, anchor, rotation, child = animatables
-
-        return Transform(
-            child=child,
-            position=tuple(position),
-            scale=tuple(scale),
-            anchor=tuple(anchor),
-            rotation=rotation,
-            rotation_in_degrees=self._rotation_in_degrees,
-        )
-
 
 class Padding(Transform):
     """A drawable that pads its child."""
@@ -212,19 +179,7 @@ class Padding(Transform):
 
         self._child = child
 
-        if isinstance(padding, tuple):
-            if len(padding) == 2:
-                padding = (padding[0], padding[1], padding[0], padding[1])
-            elif len(padding) == 4:
-                pass
-        elif isinstance(padding, (int, float)):
-            padding = (padding, padding, padding, padding)
-        else:
-            raise ValueError(
-                "Invalid padding value. Padding must be a float or a tuple."
-            )
-
-        self._padding = padding
+        self._padding = self._parse_padding(padding)
         self._child_bounds = self._child.bounds
 
         pl, pt, pr, pb = self._padding
@@ -246,21 +201,26 @@ class Padding(Transform):
             position=(0, 0),
         )
 
+    def _parse_padding(self, padding):
+        if isinstance(padding, tuple):
+            if len(padding) == 2:
+                return (padding[0], padding[1], padding[0], padding[1])
+            elif len(padding) == 4:
+                return padding
+        elif isinstance(padding, (int, float)):
+            return (padding, padding, padding, padding)
+        else:
+            raise ValueError(
+                "Invalid padding value. Padding must be a float or a tuple."
+            )
+
     @property
     def bounds(self) -> Bounds:
         return self._padded_bounds
 
-    @property
-    def animatables(self) -> AnimatableSequence:
-        return [self._pl, self._pt, self._pr, self._pb, self._child]
-
-    def copy_with_animatables(self, animatables: AnimatableSequence):
-        pl, pt, pr, pb, child = animatables
-
-        return Padding(
-            child=child,
-            padding=(pl, pt, pr, pb),
-        )
+    def _transform_export_animatable_dict(self, animatable_dict):
+        animatable_dict["padding"] = self._parse_padding(animatable_dict["padding"])
+        return animatable_dict
 
 
 class Compose(Drawable, Animatable):
