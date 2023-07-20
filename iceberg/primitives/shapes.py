@@ -149,6 +149,7 @@ class PartialPath(Drawable):
     class Interpolation(Enum):
         LINEAR = 0
         CUBIC = 1
+
     def __init__(
         self,
         child_path: Path,
@@ -249,9 +250,6 @@ class PartialPath(Drawable):
     @property
     def bounds(self) -> Bounds:
         return self._child_path.bounds
-
-    @property
-
 
 
 @auto_animatable
