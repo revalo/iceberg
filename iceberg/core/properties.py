@@ -7,7 +7,7 @@ import skia
 import numpy as np
 
 from iceberg.geometry import apply_transform
-from iceberg.animation.animatable import Animatable
+from iceberg.animation import Animatable, auto_animatable
 
 
 class Corner(object):
@@ -24,7 +24,8 @@ class Corner(object):
     CENTER = 8
 
 
-class Bounds(Animatable):
+@auto_animatable
+class Bounds:
     """Represents a bounding box."""
 
     def __init__(
@@ -77,14 +78,6 @@ class Bounds(Animatable):
         self._bottom = bottom
 
         self._compute_corners()
-
-    @property
-    def animatables(self):
-        return [np.array([self.left, self.top, self.right, self.bottom])]
-
-    def copy_with_animatables(self, animatables):
-        scalars = animatables[0]
-        return Bounds(*scalars)
 
     def transform(self, transform: np.ndarray):
         """Transform the bounds by the specified transform matrix.
@@ -246,6 +239,8 @@ class Bounds(Animatable):
 
 
 class Color(Animatable):
+    # Can't use auto_animatable here because that won't work for the @classmethods.
+    # TODO(ejnnr): could add another decorator specifically for the classmethods.
     def __init__(self, r: float, g: float, b: float, a: float = 1.0) -> None:
         """Create a color object.
 
@@ -418,7 +413,8 @@ class StrokeCap(Enum):
     SQUARE = skia.Paint.kSquare_Cap
 
 
-class PathStyle(Animatable):
+@auto_animatable
+class PathStyle:
     """A style for drawing paths."""
 
     def __init__(
@@ -462,17 +458,6 @@ class PathStyle(Animatable):
             )
             if dashed
             else None,
-        )
-
-    @property
-    def animatables(self):
-        return [self.color, self.thickness]
-
-    def copy_with_animatables(self, animatables):
-        color, thickness = animatables
-
-        return PathStyle(
-            color, thickness, self._anti_alias, self._stroke, self._stroke_cap
         )
 
     @property

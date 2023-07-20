@@ -2,7 +2,7 @@ from typing import List, Optional, Sequence, Tuple, Union
 import skia
 
 from iceberg import Drawable, Bounds, Color, FontStyle, Corner, Colors
-from iceberg.animation import Animatable
+from iceberg.animation import Animatable, auto_animatable
 from iceberg.animation.animatable import AnimatableSequence
 from iceberg.core import Bounds
 from iceberg.core.drawable import Drawable
@@ -23,8 +23,9 @@ class BorderPosition(Enum):
     OUTSIDE = "outside"
 
 
+@auto_animatable
 @dataclass
-class Rectangle(Drawable, Animatable):
+class Rectangle(Drawable):
     rectangle: Bounds
     border_color: Color = None
     fill_color: Color = None
@@ -101,30 +102,12 @@ class Rectangle(Drawable, Animatable):
         if self._border_paint:
             canvas.drawRoundRect(self._border_skia_rect, rx, ry, self._border_paint)
 
-    @property
-    def animatables(self) -> AnimatableSequence:
-        rx, ry = self.border_radius_tuple
-        return [
-            self.rectangle,
-            self.border_color,
-            self.fill_color,
-            self.border_thickness,
-            rx,
-            ry,
-        ]
+    def _transform_export_animatable_dict(self, animatable_dict):
+        border_radius = animatable_dict["border_radius"]
+        if isinstance(border_radius, (int, float)):
+            animatable_dict["border_radius"] = (border_radius, border_radius)
 
-    def copy_with_animatables(self, animatables: AnimatableSequence):
-        rectangle, border_color, fill_color, border_thickness, rx, ry = animatables
-
-        return self.__class__(
-            rectangle=rectangle,
-            border_color=border_color,
-            fill_color=fill_color,
-            border_thickness=border_thickness,
-            anti_alias=self.anti_alias,
-            border_position=self.border_position,
-            border_radius=(rx, ry),
-        )
+        return animatable_dict
 
 
 @dataclass
@@ -161,11 +144,11 @@ class Path(Drawable, ABC):
         canvas.drawPath(self._path, self._path_style.skia_paint)
 
 
-class PartialPath(Drawable, Animatable):
+@auto_animatable
+class PartialPath(Drawable):
     class Interpolation(Enum):
         LINEAR = 0
         CUBIC = 1
-
     def __init__(
         self,
         child_path: Path,
@@ -268,16 +251,10 @@ class PartialPath(Drawable, Animatable):
         return self._child_path.bounds
 
     @property
-    def animatables(self) -> AnimatableSequence:
-        return [self._start, self._end]
-
-    def copy_with_animatables(self, animatables: AnimatableSequence):
-        start, end = animatables
-        return PartialPath(
-            self._child_path, start, end, self._subdivide_increment, self._interpolation
-        )
 
 
+
+@auto_animatable
 @dataclass
 class Line(Path):
     start: Tuple[float, float]
