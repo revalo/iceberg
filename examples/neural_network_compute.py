@@ -6,48 +6,28 @@ from typing import Tuple, Sequence, Union
 from absl import app
 from absl import flags
 
-from iceberg import (
-    Renderer,
-    Color,
-    Bounds,
-    Drawable,
-    Colors,
-    Corner,
-    PathStyle,
-)
-from iceberg.animation.ease import EaseType
-from iceberg.animation.scene import Animated, Playbook
-from iceberg.primitives import (
-    Compose,
-    Ellipse,
-    Line,
-    Blank,
-    Arrange,
-    Rectangle,
-)
-from iceberg.primitives.layout import Transform
-from iceberg.primitives.shapes import PartialPath
+import iceberg as ice
 
 FLAGS = flags.FLAGS
 
 
-class NeuralNetwork(Compose):
+class NeuralNetwork(ice.Compose):
     def __init__(
         self,
         layer_node_counts: Tuple[int, ...],
         node_radius: float = 30,
         node_vertical_gap: float = 30,
         layer_gap: float = 150,
-        node_border_color: Color = Colors.WHITE,
-        node_fill_color: Color = None,
+        node_border_color: ice.Color = ice.Colors.WHITE,
+        node_fill_color: ice.Color = None,
         node_border_thickness: float = 3,
-        line_path_style: PathStyle = PathStyle(Colors.WHITE, thickness=3),
+        line_path_style: ice.PathStyle = ice.PathStyle(ice.Colors.WHITE, thickness=3),
     ):
         # [layer_index, node_index]
         self._layer_nodes = [
             [
-                Rectangle(
-                    Bounds(
+                ice.Rectangle(
+                    ice.Bounds(
                         top=0,
                         left=0,
                         bottom=node_radius * 2,
@@ -71,16 +51,16 @@ class NeuralNetwork(Compose):
 
     def _initialize_based_on_nodes(self):
         # Arrange the circles.
-        nodes_arranged = Arrange(
+        nodes_arranged = ice.Arrange(
             [
-                Arrange(
+                ice.Arrange(
                     circles,
-                    Arrange.Direction.VERTICAL,
+                    ice.Arrange.Direction.VERTICAL,
                     gap=self._node_vertical_gap,
                 )
                 for circles in self.layer_nodes
             ],
-            Arrange.Direction.HORIZONTAL,
+            ice.Arrange.Direction.HORIZONTAL,
             gap=self._layer_gap,
         )
 
@@ -96,13 +76,13 @@ class NeuralNetwork(Compose):
                 self._layer_lines[-1].append([])
                 for circle_a in layer_a:
                     start = nodes_arranged.child_bounds(circle_a).corners[
-                        Corner.MIDDLE_RIGHT
+                        ice.Corner.MIDDLE_RIGHT
                     ]
                     end = nodes_arranged.child_bounds(circle_b).corners[
-                        Corner.MIDDLE_LEFT
+                        ice.Corner.MIDDLE_LEFT
                     ]
 
-                    line = Line(start, end, self._line_path_style)
+                    line = ice.Line(start, end, self._line_path_style)
                     self._lines.append(line)
                     self._layer_lines[-1][-1].append(line)
 
@@ -114,18 +94,20 @@ class NeuralNetwork(Compose):
         super().__init__(children)
 
     @property
-    def layer_nodes(self) -> Sequence[Sequence[Union[Drawable, Ellipse]]]:
+    def layer_nodes(self) -> Sequence[Sequence[Union[ice.Drawable, ice.Ellipse]]]:
         return self._layer_nodes
 
 
-class Play(Playbook):
+class Play(ice.Playbook):
     def timeline(self):
-        _GREY = Color.from_hex("#151e25")
-        _LIGHT_GREY = Color.from_hex("#585f63")
-        _LINE_GREY = Color.from_hex("#2c3134")
-        _LASER_COLOR = Color.from_hex("#959fcc")
+        _GREY = ice.Color.from_hex("#151e25")
+        _LIGHT_GREY = ice.Color.from_hex("#585f63")
+        _LINE_GREY = ice.Color.from_hex("#2c3134")
+        _LASER_COLOR = ice.Color.from_hex("#959fcc")
 
-        background = Blank(Bounds(size=(1920, 1080)), Color.from_hex("#0d1117"))
+        background = ice.Blank(
+            ice.Bounds(size=(1920, 1080)), ice.Color.from_hex("#0d1117")
+        )
         network = NeuralNetwork(
             (3, 4, 4, 3),
             node_radius=70,
@@ -134,7 +116,7 @@ class Play(Playbook):
             node_fill_color=_GREY,
             node_border_color=_LIGHT_GREY,
             node_border_thickness=5,
-            line_path_style=PathStyle(_LINE_GREY, thickness=3),
+            line_path_style=ice.PathStyle(_LINE_GREY, thickness=3),
         )
 
         for layer in network._layer_lines:
@@ -149,19 +131,22 @@ class Play(Playbook):
                 animated_lasers = []
                 for node_index, node in enumerate(layer):
                     for line_index, line in enumerate(node):
-                        laser = Line(
+                        laser = ice.Line(
                             line.start,
                             line.end,
-                            PathStyle(_LASER_COLOR, thickness=3),
+                            ice.PathStyle(_LASER_COLOR, thickness=3),
                         )
-                        laser_animated = Animated(
-                            [PartialPath(laser, *starts), PartialPath(laser, *ends)],
+                        laser_animated = ice.Animated(
+                            [
+                                ice.PartialPath(laser, *starts),
+                                ice.PartialPath(laser, *ends),
+                            ],
                             0.5,
                             start_time=0.1 * node_index + 0.2 * line_index,
-                            ease_types=EaseType.EASE_OUT_CUBIC,
+                            ease_types=ice.EaseType.EASE_OUT_CUBIC,
                         )
                         animated_lasers.append(laser_animated)
-                animated_network = Compose([network, *animated_lasers])
+                animated_network = ice.Compose([network, *animated_lasers])
                 scene = background.add_centered(animated_network).scale(0.5)
                 self.play(scene)
 

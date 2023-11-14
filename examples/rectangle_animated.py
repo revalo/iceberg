@@ -1,24 +1,12 @@
-from iceberg import (
-    Bounds,
-    Colors,
-    Drawable,
-)
-from iceberg.primitives import (
-    Rectangle,
-    Compose,
-    Blank,
-)
-from iceberg.animation import tween
-from iceberg.animation.scene import Scene
-from iceberg.arrows import Arrow, LabelArrow
+import iceberg as ice
 
 
-class Scene1(Scene):
+class Scene1(ice.Scene):
     def __init__(self):
         super().__init__(duration=1.0, make_frame=self.make_frame)
 
-    def make_frame(self, t: float) -> Drawable:
-        blank = Blank(Bounds(size=(1920, 1080)), Colors.WHITE)
+    def make_frame(self, t: float) -> ice.Drawable:
+        blank = ice.Blank(ice.Bounds(size=(1920, 1080)), ice.Colors.WHITE)
 
         _SIZE = 500
         _DISPLACEMENT = 600
@@ -26,21 +14,21 @@ class Scene1(Scene):
         start_x = blank.bounds.width / 2 - _SIZE / 2 - _DISPLACEMENT
         end_x = blank.bounds.width / 2 - _SIZE / 2 + _DISPLACEMENT
 
-        rect = tween(
-            Rectangle(
-                Bounds(size=(_SIZE, _SIZE)),
-                fill_color=Colors.BLUE,
+        rect = ice.tween(
+            ice.Rectangle(
+                ice.Bounds(size=(_SIZE, _SIZE)),
+                fill_color=ice.Colors.BLUE,
                 border_radius=0,
             ).move(start_x, y),
-            Rectangle(
-                Bounds(size=(_SIZE, _SIZE)),
-                fill_color=Colors.RED,
+            ice.Rectangle(
+                ice.Bounds(size=(_SIZE, _SIZE)),
+                fill_color=ice.Colors.RED,
                 border_radius=1000,
             ).move(end_x, y),
             t / self.duration,
         )
 
-        return Compose([blank, rect])
+        return ice.Compose([blank, rect])
 
 
 if __name__ == "__main__":
