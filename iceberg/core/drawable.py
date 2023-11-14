@@ -1,7 +1,8 @@
-from typing import Union, Tuple, Sequence, Callable
+from pathlib import Path
+from typing import Optional, Union, Tuple, Sequence, Callable
 
 from abc import ABC, abstractmethod, abstractproperty
-from iceberg.core import Bounds, Corner
+from iceberg.core import Bounds, Corner, Color
 from iceberg.utils import direction_equal
 import numpy as np
 import skia
@@ -11,6 +12,8 @@ _scene_context_stack = []
 
 
 class ChildNotFoundError(ValueError):
+    """Raised when a child is not found in a drawable tree."""
+
     pass
 
 
@@ -308,3 +311,36 @@ class Drawable(ABC):
 
     def __exit__(self, exc_type, exc_value, traceback):
         assert _scene_context_stack.pop() is self
+
+    def render(
+        self,
+        filename: Union[str, Path] = None,
+        background_color: Color = None,
+        renderer=None,
+    ) -> Optional[np.ndarray]:
+        """Render the drawable to an image. If filename is specified, save the image to that file.
+        Otherwise, return the image as a numpy array.
+
+        Args:
+            filename: The filename to save the image to. If None, the image is not saved, instead the image is returned.
+            background_color: The background color to use. If None, the background will be transparent.
+            renderer: The renderer to use. If None, a new renderer will be created.
+
+        Returns:
+            The rendered image as a numpy array if filename is None, otherwise None.
+        """
+
+        from iceberg import Renderer, render_svg
+
+        if filename is not None and filename.endswith(".svg"):
+            return render_svg(self, filename, background_color)
+
+        if renderer is None:
+            renderer = Renderer()
+
+        renderer.render(self, background_color)
+
+        if filename is None:
+            return renderer.get_rendered_image()
+
+        renderer.save_rendered_image(filename)

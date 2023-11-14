@@ -7,6 +7,7 @@ from absl import logging
 import os
 import re
 import shutil
+from iceberg.animation.animatable import AnimatableSequence
 
 from iceberg.primitives.layout import Transform
 
@@ -14,6 +15,7 @@ from iceberg.utils import temp_filename, temp_directory
 from iceberg import Drawable, Bounds, Color
 from iceberg.core import Bounds
 from iceberg.primitives.svg import SVG
+from iceberg.animation import Animatable
 
 from dataclasses import dataclass
 
@@ -166,5 +168,23 @@ class MathTex(Tex):
         color: Color = Color(0, 0, 0, 1),
         scale: float = 1.0,
     ) -> None:
+        self._environment = environment
+        self._raw_tex = tex
         tex = f"\\begin{{{environment}}}\n{tex}\n\\end{{{environment}}}"
         super().__init__(tex, preamble, compiler, scale, color)
+
+    @property
+    def animatables(self) -> AnimatableSequence:
+        return [self.svg_scale, self.color]
+
+    def copy_with_animatables(self, animatables: AnimatableSequence):
+        svg_scale, color = animatables
+
+        return MathTex(
+            self._raw_tex,
+            self.preamble,
+            self._environment,
+            self.compiler,
+            color,
+            svg_scale,
+        )
