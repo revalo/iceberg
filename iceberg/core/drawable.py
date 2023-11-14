@@ -358,3 +358,11 @@ class Drawable(ABC):
             return renderer.get_rendered_image()
 
         renderer.save_rendered_image(filename)
+
+    def _repr_png_(self):
+        """Render the drawable as a PNG image in a Jupyter notebook."""
+        from PIL import Image
+
+        rendered_pixels = self.render()
+        pil_image = Image.fromarray(rendered_pixels)
+        return pil_image._repr_image("PNG", compress_level=1)

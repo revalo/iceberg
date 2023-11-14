@@ -219,6 +219,20 @@ class Bounds(Animatable):
 
         return cls(left=left, right=right, top=top, bottom=bottom)
 
+    @classmethod
+    def from_size(cls, width: float, height: float) -> "Bounds":
+        """Create a bounds object from a size.
+
+        Args:
+            width: The width of the bounds.
+            height: The height of the bounds.
+
+        Returns:
+            The bounds object.
+        """
+
+        return cls(left=0, right=width, top=0, bottom=height)
+
     def _compute_corners(self) -> Tuple[Tuple[float, float], ...]:
         """Compute the corners of the bounds.
 
