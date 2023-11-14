@@ -2,12 +2,15 @@ from typing import Callable, Sequence, Union
 
 from iceberg import Drawable, Renderer
 from iceberg.animation import Animatable, tween, EaseType
-import imageio
+from PIL import Image
+import av
 import tqdm
 
 from iceberg.core import Bounds
 from iceberg.core.drawable import Drawable
 from abc import ABC, abstractmethod
+from absl import logging
+import numpy as np
 
 
 class Animated(Drawable):
@@ -246,6 +249,18 @@ class Scene(object):
             fps: The frames per second to render at.
             progress_bar: Whether to show a progress bar while rendering.
         """
+        _IS_GIF = False
+
+        if filename.endswith(".gif"):
+            _IS_GIF = True
+            possible_fps = [25, 33.3, 50, 100]
+
+            if fps not in possible_fps:
+                logging.warning(
+                    f"FPS {fps} is not a standard GIF FPS, rounding to nearest."
+                )
+
+            fps = min(possible_fps, key=lambda x: abs(x - fps))
 
         total_frames = int(fps * self.duration)
 
@@ -254,19 +269,55 @@ class Scene(object):
 
         bounds = None
 
-        with imageio.get_writer(filename, mode="I", fps=fps) as writer:
-            for frame_index in tqdm.trange(total_frames, disable=not progress_bar):
-                t = frame_index / fps
-                frame_drawable = self.make_frame(t)
+        pil_images = []
+        container = None
+        stream = None
 
-                if bounds is None:
-                    bounds = frame_drawable.bounds
+        if not _IS_GIF:
+            container = av.open(filename, mode="w")
+            stream = container.add_stream("libx264", rate=fps)
 
-                frame_drawable = frame_drawable.crop(bounds)
+        for frame_index in tqdm.trange(total_frames, disable=not progress_bar):
+            t = frame_index / fps
+            frame_drawable = self.make_frame(t)
 
-                renderer.render(frame_drawable)
-                frame_pixels = renderer.get_rendered_image()
-                writer.append_data(frame_pixels)
+            if bounds is None:
+                bounds = frame_drawable.bounds.round()
+
+                if not _IS_GIF:
+                    stream.width = bounds.width
+                    stream.height = bounds.height
+                    # stream.pix_fmt = "yuv420p"
+
+            frame_drawable = frame_drawable.crop(bounds)
+
+            renderer.render(frame_drawable)
+            frame_pixels = renderer.get_rendered_image()
+
+            if not _IS_GIF:
+                frame_pixels = np.round(frame_pixels[:, :, :3]).astype(np.uint8)
+                frame = av.VideoFrame.from_ndarray(frame_pixels, format="rgb24")
+                for packet in stream.encode(frame):
+                    container.mux(packet)
+
+            if _IS_GIF:
+                pil_images.append(Image.fromarray(frame_pixels))
+
+        if not _IS_GIF:
+            # Flush stream
+            for packet in stream.encode():
+                container.mux(packet)
+            container.close()
+
+        if _IS_GIF:
+            assert len(pil_images) > 1, "No frames were rendered."
+            pil_images[0].save(
+                filename,
+                save_all=True,
+                append_images=pil_images[1:],
+                duration=1000 // fps,
+                loop=0,
+            )
 
 
 class Playbook(ABC):

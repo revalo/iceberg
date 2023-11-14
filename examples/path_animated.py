@@ -97,4 +97,4 @@ class Play(Playbook):
 if __name__ == "__main__":
     scene = Play().combined_scene
     scene = scene + scene.reverse()
-    scene.render("test.gif")
+    scene.render("test.mp4")

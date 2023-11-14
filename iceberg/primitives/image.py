@@ -54,7 +54,9 @@ class Image(Drawable):
                 image = image * 255
             image = image.astype(np.uint8)
 
-            self._skia_image = skia.Image.fromarray(image)
+            self._skia_image = skia.Image.fromarray(
+                image, colorType=skia.ColorType.kRGBA_8888_ColorType
+            )
 
         self._bounds = Bounds(
             left=0,

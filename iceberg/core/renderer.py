@@ -45,7 +45,7 @@ def _canvas_draw_commands(canvas, drawable: Drawable, background_color: Color = 
     if background_color is not None:
         canvas.clear(background_color.to_skia())
     else:
-        canvas.clear(skia.Color4f(0, 0, 0, 0))
+        canvas.clear(skia.Color4f(1, 0, 0, 1))
 
     canvas.save()
     canvas.translate(-drawable.bounds.left, -drawable.bounds.top)

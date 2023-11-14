@@ -157,6 +157,20 @@ class Bounds(Animatable):
             bottom=self.bottom - dy,
         )
 
+    def round(self) -> "Bounds":
+        """Round the bounds to integers.
+
+        Returns:
+            The rounded bounds.
+        """
+
+        return Bounds(
+            left=int(self.left),
+            right=int(self.right),
+            top=int(self.top),
+            bottom=int(self.bottom),
+        )
+
     def to_skia(self) -> skia.Rect:
         """Get the bounds as a skia.Rect."""
 
