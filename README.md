@@ -41,22 +41,21 @@ A composable Neural Network diagramming class written in iceberg. Full example i
 <img src="images/nn.gif" width="500">
 
 ```python
+import icerberg as ice
+
 network = NeuralNetwork(
     # Number of nodes in each layer!
     [3, 4, 4, 2],
-    node_border_color=Colors.BLACK,
-    line_path_style=PathStyle(Colors.BLACK, thickness=3),
+    node_border_color=ice.Colors.BLACK,
+    line_path_style=ice.PathStyle(ice.Colors.BLACK, thickness=3),
 )
 node = network.layer_nodes[1][0]
-node.border_color = Colors.RED
+node.border_color = ice.Colors.RED
 node.border_thickness = 5
 
-canvas = Blank(Bounds(size=(1080, 720)), background=Colors.WHITE)
+canvas = ice.Blank(ice.Bounds(size=(1080, 720)), background=ice.Colors.WHITE)
 scene = canvas.add_centered(network)
-
-renderer = Renderer()
-renderer.render(scene)
-renderer.save_rendered_image("test.png")
+scene.render("test.png")
 
 ```
 
@@ -69,21 +68,23 @@ Iceberg supports Tex and Arrangements. Full example in `examples/connect.py`.
 </p>
 
 ```python
-left_ellipse = Ellipse(
-    Bounds(size=(_CIRCLE_WIDTH, _CIRCLE_WIDTH)),
-    border_color=Color.from_hex("#d63031"),
+import iceberg as ice
+
+left_ellipse = ice.Ellipse(
+    ice.Bounds(size=(_CIRCLE_WIDTH, _CIRCLE_WIDTH)),
+    border_color=ice.Color.from_hex("#d63031"),
     border_thickness=_BORDER_THICKNESS,
-    fill_color=Color.from_hex("#ff7675"),
+    fill_color=ice.Color.from_hex("#ff7675"),
 ).pad(_CIRCLE_PAD)
 
-right_ellipse = Ellipse(
-    Bounds(size=(_CIRCLE_WIDTH, _CIRCLE_WIDTH)),
-    border_color=Color.from_hex("#0984e3"),
+right_ellipse = ice.Ellipse(
+    ice.Bounds(size=(_CIRCLE_WIDTH, _CIRCLE_WIDTH)),
+    border_color=ice.Color.from_hex("#0984e3"),
     border_thickness=_BORDER_THICKNESS,
-    fill_color=Color.from_hex("#74b9ff"),
+    fill_color=ice.Color.from_hex("#74b9ff"),
 ).pad(_CIRCLE_PAD)
 
-ellipses = Arrange(
+ellipses = ice.Arrange(
     [left_ellipse, right_ellipse],
     gap=500,
 )
@@ -91,38 +92,38 @@ ellipses = Arrange(
 with ellipses:
     # Within this context, we can use `relative_bounds` to get the bounds of the
     # `left_ellipse` and `right_ellipse` relative to the `ellipses` object.
-    arrow = Arrow(
+    arrow = ice.Arrow(
         left_ellipse.relative_bounds.corners[Corner.MIDDLE_RIGHT],
         right_ellipse.relative_bounds.corners[Corner.MIDDLE_LEFT],
-        line_path_style=PathStyle(
-            color=Colors.BLACK,
+        line_path_style=ice.PathStyle(
+            color=ice.Colors.BLACK,
             thickness=3,
         ),
     )
 
-arrow_label = MathTex("f(x) = x^2", scale=4)
-arrow = LabelArrow(
+arrow_label = ice.MathTex("f(x) = x^2", scale=4)
+arrow = ice.LabelArrow(
     arrow,
     arrow_label,
-    Corner.BOTTOM_MIDDLE,
+    ice.Corner.BOTTOM_MIDDLE,
     distance=20,
 )
-connection = Compose([ellipses, arrow])
+connection = ice.Compose([ellipses, arrow])
 
-text_block = Text(
+text_block = ice.Text(
     "This is some really long text, and it's going to wrap around at some point, because it's so long and I spent a lot of time on it.",
-    font_style=FontStyle(
+    font_style=ice.FontStyle(
         family=_FONT_FAMILY,
         size=28,
-        color=Colors.BLACK,
+        color=ice.Colors.BLACK,
     ),
     width=connection.bounds.width,
 )
 
-scene = Arrange(
+scene = ice.Arrange(
     [connection, text_block],
     gap=10,
-    arrange_direction=Arrange.Direction.VERTICAL,
+    arrange_direction=ice.Arrange.Direction.VERTICAL,
 )
 ```
 
@@ -162,39 +163,39 @@ pip install -U iceberg-dsl
 Full example in `examples/quickstart.py`.
 
 ```python
-from iceberg import Renderer, Bounds, Colors, FontStyle
-from iceberg.primitives import Rectangle, Blank, SimpleText, Directions
+import iceberg as ice
 
-# Blank is a large empty rectangle.
-canvas = Blank(Bounds(size=(1080, 720)))
+# What font?
+_FONT_FAMILY = "Arial"
+
+# Create a blank canvas.
+canvas = ice.Blank(ice.Bounds(size=(1080, 720)))
 
 # Create a rectangle.
-rectangle = Rectangle(
-    Bounds(size=(500, 100)),
-    Colors.WHITE,
+rectangle = ice.Rectangle(
+    ice.Bounds(size=(500, 100)),
+    ice.Colors.WHITE,
     border_thickness=3,
 )
 
-# Create a text.
-text = Text(
+# Create some text.
+text = ice.SimpleText(
     text="Hello, World!",
-    font_style=FontStyle(
-        family="Arial",
+    font_style=ice.FontStyle(
+        family=_FONT_FAMILY,
         size=28,
-        color=Colors.WHITE,
+        color=ice.Colors.WHITE,
     ),
 )
 
-# Place the text below the rectangle.
-rectangle_and_text = rectangle.next_to(text, Directions.DOWN * 10)
+# Combine the rectangle and text into a _new_ object that has
+# the text placed 10 pixels under the rectangle.
+rectangle_and_text = rectangle.next_to(text, ice.Directions.DOWN * 10)
 
-# Center the rectangle and text combination to the canvas.
+# Place the rectangle and text in the center of the canvas.
 scene = canvas.add_centered(rectangle_and_text)
+scene.render("test.png")
 
-# Render the scene and save it to a file.
-renderer = Renderer()
-renderer.render(scene)
-renderer.save_rendered_image("test.png")
 ```
 
 Should produce:
