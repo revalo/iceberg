@@ -301,7 +301,7 @@ class Scene(object):
                     container.mux(packet)
 
             if _IS_GIF:
-                pil_images.append(Image.fromarray(frame_pixels))
+                pil_images.append(Image.fromarray(frame_pixels, mode="RGBA"))
 
         if not _IS_GIF:
             # Flush stream
@@ -317,6 +317,7 @@ class Scene(object):
                 append_images=pil_images[1:],
                 duration=1000 // fps,
                 loop=0,
+                disposal=2,
             )
 
 
