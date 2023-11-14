@@ -86,6 +86,21 @@ class Drawable(ABC):
         # Self is not a child of any context, so raise an error.
         raise ChildNotFoundError()
 
+    def background(self, background_color: Color) -> "Drawable":
+        """Add a background to the drawable.
+
+        Args:
+            background_color: The color of the background.
+
+        Returns:
+            The new drawable with the background.
+        """
+
+        from iceberg.primitives.layout import Blank, Compose
+
+        background = Blank(self.bounds, background_color)
+        return Compose([background, self])
+
     def anchor(self, corner: int):
         """Anchor the drawable to the specified corner.
 
