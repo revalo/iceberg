@@ -1,11 +1,15 @@
 from pathlib import Path
-from typing import Optional, Union, Tuple, Sequence, Callable
+from typing import Any, Dict, Optional, Union, Tuple, Sequence, Callable
+import typing
+import typing_extensions as tpe
 
 from abc import ABC, abstractmethod, abstractproperty
+from dataclasses import dataclass
 from iceberg.core import Bounds, Corner, Color
 from iceberg.utils import direction_equal
 import numpy as np
 import skia
+import dataclasses
 
 # Global variable to store the stack of scene contexts.
 _scene_context_stack = []
@@ -17,7 +21,17 @@ class ChildNotFoundError(ValueError):
     pass
 
 
-class Drawable(ABC):
+def drawable_field(*, kw_only: bool = False, default: Optional[Any] = ...) -> Any:
+    ...
+
+
+@tpe.dataclass_transform(field_specifiers=(drawable_field,))  # type: ignore[literal-required]
+class DrawableBase:
+    if typing.TYPE_CHECKING:
+        __dataclass_fields__: Dict[str, dataclasses.Field]
+
+
+class Drawable(ABC, DrawableBase):
     """Abstract base class for all drawable objects.
 
     Each drawable object must know its bounds, and be able to draw itself on a Skia canvas.
@@ -28,10 +42,29 @@ class Drawable(ABC):
     the details of drawing them on a canvas with skia.
     """
 
-    def __init__(self) -> None:
-        super().__init__()
+    def setup(self):
+        """Setup the drawable.
 
+        This method is called after the drawable is initialized.
+        """
+
+        pass
+
+    def __post_init__(self) -> None:
         self._time = 0
+
+        self.setup()
+
+    @classmethod
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        """Automatically initializes all subclasses as custom dataclasses."""
+        super().__init_subclass__(**kwargs)
+
+        dataclass(
+            cls,
+            kw_only=True,
+            **kwargs,
+        )  # pytype: disable=wrong-keyword-args
 
     @abstractproperty
     def bounds(self) -> Bounds:
@@ -98,8 +131,8 @@ class Drawable(ABC):
 
         from iceberg.primitives.layout import Blank, Compose
 
-        background = Blank(self.bounds, background_color)
-        return Compose([background, self])
+        background = Blank(rectangle=self.bounds, background_color=background_color)
+        return Compose(_children=[background, self])
 
     def anchor(self, corner: int):
         """Anchor the drawable to the specified corner.
@@ -381,3 +414,23 @@ class Drawable(ABC):
         rendered_pixels = self.render()
         pil_image = Image.fromarray(rendered_pixels)
         return pil_image._repr_image("PNG", compress_level=1)
+
+
+class DrawableWithChild(Drawable, ABC):
+    def __post_init__(self) -> None:
+        self._scene = None
+        return super().__post_init__()
+
+    def set_scene(self, scene: "Drawable"):
+        self._scene = scene
+
+    @property
+    def children(self) -> Sequence[Drawable]:
+        return [self._scene]
+
+    @property
+    def bounds(self) -> Bounds:
+        return self._scene.bounds
+
+    def draw(self, canvas: skia.Canvas):
+        self._scene.draw(canvas)

@@ -23,8 +23,7 @@ class BorderPosition(Enum):
     OUTSIDE = "outside"
 
 
-@dataclass
-class Rectangle(Drawable, Animatable):
+class Rectangle(Drawable):
     rectangle: Bounds
     border_color: Color = None
     fill_color: Color = None
@@ -33,7 +32,7 @@ class Rectangle(Drawable, Animatable):
     border_position: BorderPosition = BorderPosition.CENTER
     border_radius: Union[float, Tuple[float, float]] = 0.0
 
-    def __post_init__(
+    def setup(
         self,
     ) -> None:
         self._border_paint = (
@@ -91,8 +90,6 @@ class Rectangle(Drawable, Animatable):
         return rx, ry
 
     def draw(self, canvas):
-        self.__post_init__()
-
         rx, ry = self.border_radius_tuple
 
         if self._fill_paint:
@@ -101,33 +98,7 @@ class Rectangle(Drawable, Animatable):
         if self._border_paint:
             canvas.drawRoundRect(self._border_skia_rect, rx, ry, self._border_paint)
 
-    @property
-    def animatables(self) -> AnimatableSequence:
-        rx, ry = self.border_radius_tuple
-        return [
-            self.rectangle,
-            self.border_color,
-            self.fill_color,
-            self.border_thickness,
-            rx,
-            ry,
-        ]
 
-    def copy_with_animatables(self, animatables: AnimatableSequence):
-        rectangle, border_color, fill_color, border_thickness, rx, ry = animatables
-
-        return self.__class__(
-            rectangle=rectangle,
-            border_color=border_color,
-            fill_color=fill_color,
-            border_thickness=border_thickness,
-            anti_alias=self.anti_alias,
-            border_position=self.border_position,
-            border_radius=(rx, ry),
-        )
-
-
-@dataclass
 class Ellipse(Rectangle):
     def draw(self, canvas):
         self.__post_init__()

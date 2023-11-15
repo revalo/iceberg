@@ -2,6 +2,7 @@ __version__ = "0.0.7"
 
 from iceberg.core import (
     Drawable,
+    DrawableWithChild,
     Bounds,
     Color,
     Colors,

@@ -12,7 +12,7 @@ from iceberg.animation.animatable import AnimatableSequence
 from iceberg.primitives.layout import Transform
 
 from iceberg.utils import temp_filename, temp_directory
-from iceberg import Drawable, Bounds, Color
+from iceberg import DrawableWithChild, Bounds, Color
 from iceberg.core import Bounds
 from iceberg.primitives.svg import SVG
 from iceberg.animation import Animatable
@@ -144,18 +144,17 @@ _DEFAULT_PREAMBLE = r"""
 """
 
 
-@dataclass
-class Tex(Transform):
+class Tex(DrawableWithChild):
     tex: str
     preamble: str = _DEFAULT_PREAMBLE
     compiler: str = "latex"
     svg_scale: float = 1.0
     color: Color = Color(0, 0, 0, 1)
 
-    def __post_init__(self) -> None:
+    def setup(self) -> None:
         svg_filename = tex_content_to_svg_file(self.tex, self.preamble, self.compiler)
         self._svg = SVG(svg_filename, color=self.color)
-        super().__init__(self._svg, scale=(self.svg_scale, self.svg_scale))
+        self.set_scene(Transform(self._svg, scale=(self.svg_scale, self.svg_scale)))
 
 
 class MathTex(Tex):

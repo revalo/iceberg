@@ -10,9 +10,9 @@ class Scene1(ice.Scene):
 
         _SIZE = 500
         _DISPLACEMENT = 600
-        y = blank.bounds.height / 2 - _SIZE / 2
-        start_x = blank.bounds.width / 2 - _SIZE / 2 - _DISPLACEMENT
-        end_x = blank.bounds.width / 2 - _SIZE / 2 + _DISPLACEMENT
+        y = blank.rectangle.height / 2 - _SIZE / 2
+        start_x = blank.rectangle.width / 2 - _SIZE / 2 - _DISPLACEMENT
+        end_x = blank.rectangle.width / 2 - _SIZE / 2 + _DISPLACEMENT
 
         rect = ice.tween(
             ice.Rectangle(

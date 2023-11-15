@@ -7,5 +7,5 @@ from .properties import (
     FontStyle,
     StrokeCap,
 )
-from .drawable import Drawable
+from .drawable import Drawable, DrawableWithChild
 from .renderer import Renderer, render_svg
