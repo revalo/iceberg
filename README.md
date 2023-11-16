@@ -45,13 +45,10 @@ import icerberg as ice
 
 network = NeuralNetwork(
     # Number of nodes in each layer!
-    [3, 4, 4, 2],
+    layer_node_counts=[3, 4, 4, 2],
     node_border_color=ice.Colors.BLACK,
     line_path_style=ice.PathStyle(ice.Colors.BLACK, thickness=3),
 )
-node = network.layer_nodes[1][0]
-node.border_color = ice.Colors.RED
-node.border_thickness = 5
 
 canvas = ice.Blank(ice.Bounds(size=(1080, 720)), background=ice.Colors.WHITE)
 scene = canvas.add_centered(network)
@@ -71,14 +68,14 @@ Iceberg supports Tex and Arrangements. Full example in `examples/connect.py`.
 import iceberg as ice
 
 left_ellipse = ice.Ellipse(
-    ice.Bounds(size=(_CIRCLE_WIDTH, _CIRCLE_WIDTH)),
+    rectangle=ice.Bounds(size=(_CIRCLE_WIDTH, _CIRCLE_WIDTH)),
     border_color=ice.Color.from_hex("#d63031"),
     border_thickness=_BORDER_THICKNESS,
     fill_color=ice.Color.from_hex("#ff7675"),
 ).pad(_CIRCLE_PAD)
 
 right_ellipse = ice.Ellipse(
-    ice.Bounds(size=(_CIRCLE_WIDTH, _CIRCLE_WIDTH)),
+    rectangle=ice.Bounds(size=(_CIRCLE_WIDTH, _CIRCLE_WIDTH)),
     border_color=ice.Color.from_hex("#0984e3"),
     border_thickness=_BORDER_THICKNESS,
     fill_color=ice.Color.from_hex("#74b9ff"),
@@ -101,7 +98,7 @@ with ellipses:
         ),
     )
 
-arrow_label = ice.MathTex("f(x) = x^2", svg_scale=4)
+arrow_label = ice.MathTex("f(x) = x^2").scale(4)
 arrow = ice.LabelArrow(
     arrow,
     arrow_label,
@@ -195,7 +192,6 @@ rectangle_and_text = rectangle.next_to(text, ice.Directions.DOWN * 10)
 # Place the rectangle and text in the center of the canvas.
 scene = canvas.add_centered(rectangle_and_text)
 scene.render("test.png")
-
 ```
 
 Should produce:
