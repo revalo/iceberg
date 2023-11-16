@@ -11,18 +11,17 @@ import iceberg as ice
 FLAGS = flags.FLAGS
 
 
-class NeuralNetwork(ice.Compose):
-    def __init__(
-        self,
-        layer_node_counts: Tuple[int, ...],
-        node_radius: float = 30,
-        node_vertical_gap: float = 30,
-        layer_gap: float = 150,
-        node_border_color: ice.Color = ice.Colors.WHITE,
-        node_fill_color: ice.Color = None,
-        node_border_thickness: float = 3,
-        line_path_style: ice.PathStyle = ice.PathStyle(ice.Colors.WHITE, thickness=3),
-    ):
+class NeuralNetwork(ice.DrawableWithChild):
+    layer_node_counts: Tuple[int, ...]
+    node_radius: float = 30
+    node_vertical_gap: float = 30
+    layer_gap: float = 150
+    node_border_color: ice.Color = ice.Colors.WHITE
+    node_fill_color: ice.Color = None
+    node_border_thickness: float = 3
+    line_path_style: ice.PathStyle = ice.PathStyle(ice.Colors.WHITE, thickness=3)
+
+    def setup(self):
         # [layer_index, node_index]
         self._layer_nodes = [
             [
@@ -30,22 +29,22 @@ class NeuralNetwork(ice.Compose):
                     ice.Bounds(
                         top=0,
                         left=0,
-                        bottom=node_radius * 2,
-                        right=node_radius * 2,
+                        bottom=self.node_radius * 2,
+                        right=self.node_radius * 2,
                     ),
-                    node_border_color,
-                    node_fill_color,
-                    node_border_thickness,
+                    self.node_border_color,
+                    self.node_fill_color,
+                    self.node_border_thickness,
                     border_radius=20,
                 )
                 for _ in range(layer_node_count)
             ]
-            for layer_node_count in layer_node_counts
+            for layer_node_count in self.layer_node_counts
         ]
 
-        self._node_vertical_gap = node_vertical_gap
-        self._layer_gap = layer_gap
-        self._line_path_style = line_path_style
+        self._node_vertical_gap = self.node_vertical_gap
+        self._layer_gap = self.layer_gap
+        self._line_path_style = self.line_path_style
 
         self._initialize_based_on_nodes()
 
@@ -55,12 +54,12 @@ class NeuralNetwork(ice.Compose):
             [
                 ice.Arrange(
                     circles,
-                    ice.Arrange.Direction.VERTICAL,
+                    arrange_direction=ice.Arrange.Direction.VERTICAL,
                     gap=self._node_vertical_gap,
                 )
                 for circles in self.layer_nodes
             ],
-            ice.Arrange.Direction.HORIZONTAL,
+            arrange_direction=ice.Arrange.Direction.HORIZONTAL,
             gap=self._layer_gap,
         )
 
@@ -91,7 +90,7 @@ class NeuralNetwork(ice.Compose):
         children = self._lines.copy()
         children.append(nodes_arranged)
 
-        super().__init__(children)
+        self.set_child(ice.Compose(children))
 
     @property
     def layer_nodes(self) -> Sequence[Sequence[Union[ice.Drawable, ice.Ellipse]]]:
@@ -109,7 +108,7 @@ class Play(ice.Playbook):
             ice.Bounds(size=(1920, 1080)), ice.Color.from_hex("#0d1117")
         )
         network = NeuralNetwork(
-            (3, 4, 4, 3),
+            layer_node_counts=(3, 4, 4, 3),
             node_radius=70,
             layer_gap=300,
             node_vertical_gap=50,

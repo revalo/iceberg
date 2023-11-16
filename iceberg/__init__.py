@@ -1,7 +1,8 @@
-__version__ = "0.0.7"
+__version__ = "0.1.0"
 
 from iceberg.core import (
     Drawable,
+    DrawableWithChild,
     Bounds,
     Color,
     Colors,
@@ -11,6 +12,9 @@ from iceberg.core import (
     Corner,
     StrokeCap,
     render_svg,
+    AnimatableProperty,
+    drawable_field,
+    dont_animate,
 )
 
 from iceberg.primitives import (
@@ -49,5 +53,5 @@ from iceberg.arrows import (
     LabelArrow,
 )
 
-from iceberg.animation import tween, EaseType, Animatable
-from iceberg.animation.scene import Playbook, Animated, Frozen, Scene
+from iceberg.animation import tween, EaseType
+from iceberg.animation.scene import Playbook, Animated, Scene, Frozen

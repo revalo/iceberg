@@ -1,37 +1,36 @@
-from iceberg import Bounds, Colors, PathStyle
-from iceberg.primitives import Blank, Line, Compose, CurvedCubicLine, PartialPath
+import iceberg as ice
 from .scene_tester import check_render
 
 
 def test_dashed():
-    blank = Blank(Bounds(size=(512, 512)), Colors.WHITE)
-    line = Line(
+    blank = ice.Blank(ice.Bounds(size=(512, 512)), ice.Colors.WHITE)
+    line = ice.Line(
         (10, 10),
         (500, 500),
-        PathStyle(
-            Colors.BLUE,
+        ice.PathStyle(
+            ice.Colors.BLUE,
             thickness=5,
             dashed=True,
             dash_intervals=[20.0, 10.0],
             dash_phase=0.0,
         ),
     )
-    scene = Compose([blank, line])
+    scene = ice.Compose([blank, line])
     check_render(scene, "dashed.png")
 
 
 def test_cubic():
-    blank = Blank(Bounds(size=(512, 512)), Colors.WHITE)
-    line = CurvedCubicLine(
-        [
+    blank = ice.Blank(ice.Bounds(size=(512, 512)), ice.Colors.WHITE)
+    line = ice.CurvedCubicLine(
+        points=[
             (10, 10),
             (256, 10),
             (256, 256),
             (256, 500),
             (500, 500),
         ],
-        PathStyle(
-            Colors.BLUE,
+        path_style=ice.PathStyle(
+            ice.Colors.BLUE,
             thickness=5,
             dashed=True,
             dash_intervals=[20.0, 10.0],
@@ -43,23 +42,23 @@ def test_cubic():
 
 
 def test_partial():
-    blank = Blank(Bounds(size=(512, 512)), Colors.WHITE)
-    line = CurvedCubicLine(
-        [
+    blank = ice.Blank(ice.Bounds(size=(512, 512)), ice.Colors.WHITE)
+    line = ice.CurvedCubicLine(
+        points=[
             (10, 10),
             (256, 10),
             (256, 256),
             (256, 500),
             (500, 500),
         ],
-        PathStyle(
-            Colors.BLUE,
+        path_style=ice.PathStyle(
+            ice.Colors.BLUE,
             thickness=5,
             dashed=True,
             dash_intervals=[20.0, 10.0],
             dash_phase=0.0,
         ),
     )
-    partial_line = PartialPath(line, 0, 0.8)
+    partial_line = ice.PartialPath(line, 0, 0.8)
     scene = blank.add_centered(partial_line)
     check_render(scene, "partial_path.png")

@@ -1,12 +1,9 @@
 from typing import List, Sequence, Tuple, Union
 import skia
 
-from iceberg import Drawable, Bounds, Color, Colors
-from iceberg.animation import Animatable
-from iceberg.animation.animatable import AnimatableSequence
-from iceberg.core.drawable import Drawable
+from iceberg import Drawable, Bounds, Color, Colors, DrawableWithChild, dont_animate
 from iceberg.geometry import get_transform, apply_transform
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from abc import ABC, abstractmethod, abstractproperty
 from enum import Enum
 import numpy as np
@@ -27,81 +24,122 @@ class Directions:
 
 
 class Blank(Drawable):
-    """A drawable that is an expansive blank space."""
+    rectangle: Bounds
+    background_color: Color = Colors.BLACK
 
-    def __init__(self, bounds: Bounds, background: Color = Colors.BLACK) -> None:
-        """Initialize a blank drawable.
+    def __init__(self, bounds: Bounds, background_color: Color = Colors.BLACK):
+        """A drawable that is an expansive blank space.
 
         Args:
-            bounds: The bounds of the drawable.
-            background: The background color of the drawable.
+            bounds: The bounds of the blank space.
+            background_color: The background color of the blank space.
         """
 
-        super().__init__()
+        self.init_from_fields(rectangle=bounds, background_color=background_color)
 
-        self._bounds = bounds
-        self._background = background
-
+    def setup(self) -> None:
         self._paint = skia.Paint(
             Style=skia.Paint.kFill_Style,
             AntiAlias=True,
-            Color4f=self._background.to_skia(),
+            Color4f=self.background_color.to_skia(),
         )
-
-        super().__init__()
 
     @property
     def bounds(self) -> Bounds:
-        return self._bounds
+        return self.rectangle
 
     def draw(self, canvas: skia.Canvas) -> None:
-        canvas.drawRect(self._bounds.to_skia(), self._paint)
+        canvas.drawRect(self.rectangle.to_skia(), self._paint)
 
-
-class Transform(Drawable, Animatable):
-    """A drawable that transforms its child."""
-
-    def __init__(
-        self,
-        child: Drawable,
-        position: Tuple[float, float] = (0, 0),
-        scale: Tuple[float, float] = (1, 1),
-        anchor: Tuple[float, float] = (0, 0),
-        rotation: float = 0.0,
-        rotation_in_degrees: bool = True,
+    @classmethod
+    def from_size(
+        cls, width: float, height: float, background_color: Color = Colors.BLACK
     ):
-        """Initialize a transform drawable.
+        return cls(Bounds.from_size(width, height), background_color)
+
+
+class Compose(Drawable):
+    components: Tuple[Drawable, ...]
+
+    def __init__(self, *children: Union[Drawable, Sequence[Drawable]]):
+        """A drawable that composes its children.
 
         Args:
-            child: The child drawable to transform.
-            position: The position of the child drawable.
-            scale: The scale of the child drawable.
-            anchor: The anchor of the child drawable.
-            rotation: The rotation of the child drawable.
-            rotation_in_degrees: Whether the rotation is in degrees.
+            children: The children to compose.
         """
 
-        super().__init__()
+        flattened_children = []
 
-        self._child = child
-        self._position = position
-        self._scale = scale
-        self._anchor = anchor
-        self._rotation = rotation
-        self._rotation_in_degrees = rotation_in_degrees
+        for child in children:
+            if isinstance(child, Drawable):
+                flattened_children.append(child)
+            else:
+                flattened_children.extend(child)
 
-        self._child_bounds = self._child.bounds
+        self.init_from_fields(components=tuple(flattened_children))
+
+    def setup(self):
+        self._composed_bounds = Bounds.empty()
+
+        if len(self.components):
+            # Compute the bounds of the composed children.
+            left = min([child.bounds.left for child in self.children])
+            top = min([child.bounds.top for child in self.children])
+            right = max([child.bounds.right for child in self.children])
+            bottom = max([child.bounds.bottom for child in self.children])
+
+            self._composed_bounds = Bounds(
+                left=left,
+                top=top,
+                right=right,
+                bottom=bottom,
+            )
+
+    @property
+    def children(self) -> Sequence[Drawable]:
+        return self.components
+
+    @property
+    def bounds(self) -> Bounds:
+        return self._composed_bounds
+
+    def draw(self, canvas: skia.Canvas):
+        for child in self.components:
+            child.draw(canvas)
+
+
+class Transform(Drawable):
+    """A drawable that transforms its child.
+
+    Args:
+        child: The child drawable to transform.
+        position: The position of the child drawable.
+        scale: The scale of the child drawable.
+        anchor: The anchor of the child drawable.
+        rotation: The rotation of the child drawable.
+        rotation_in_degrees: Whether the rotation is in degrees.
+    """
+
+    child: Drawable
+    position: Tuple[float, float] = (0, 0)
+    scale: Tuple[float, float] = (1, 1)
+    anchor: Tuple[float, float] = (0, 0)
+    rotation: float = 0.0
+    rotation_in_degrees: bool = True
+
+    def setup(self) -> None:
+        self._child_bounds = self.child.bounds
 
         # Compute the bounds of the transformed child.
         left, top = self._child_bounds.left, self._child_bounds.top
         right, bottom = self._child_bounds.right, self._child_bounds.bottom
 
         self._transform = get_transform(
-            position=self._position,
-            scale=self._scale,
-            anchor=self._anchor,
-            rotation=rotation,
-            in_degrees=rotation_in_degrees,
+            position=self.position,
+            scale=self.scale,
+            anchor=self.anchor,
+            rotation=self.rotation,
+            in_degrees=self.rotation_in_degrees,
         )
         self._skia_matrix = skia.Matrix(self._transform)
 
@@ -133,7 +171,7 @@ class Transform(Drawable, Animatable):
     def children(self) -> Sequence[Drawable]:
         """Return the children of the drawable."""
 
-        return [self._child]
+        return [self.child]
 
     @property
     def transform(self) -> np.ndarray:
@@ -142,75 +180,35 @@ class Transform(Drawable, Animatable):
         return self._transform
 
     @property
-    def child(self) -> np.ndarray:
-        return self._child
-
-    @property
     def bounds(self) -> Bounds:
         return self._transformed_bounds
 
     def draw(self, canvas: skia.Canvas):
         canvas.save()
         canvas.concat(self._skia_matrix)
-        self._child.draw(canvas)
+        self.child.draw(canvas)
         canvas.restore()
 
-    @property
-    def animatables(self) -> AnimatableSequence:
-        position = np.array(self._position)
-        scale = np.array(self._scale)
-        anchor = np.array(self._anchor)
 
-        rv = [
-            position,
-            scale,
-            anchor,
-            self._rotation,
-        ]
+class Padding(DrawableWithChild):
+    """A drawable that pads its child.
 
-        if isinstance(self._child, Animatable):
-            rv.append(self._child)
+    Padding can be specified as:
+    - A single float, which is applied to all sides.
+    - A tuple of two floats, which are applied to the left/right and top/bottom.
+    - A tuple of four floats, which are applied to the left, top, right, and bottom.
 
-        return rv
+    Args:
+        child: The child drawable to pad.
+        padding: The padding to apply to the child drawable.
+    """
 
-    def copy_with_animatables(self, animatables: AnimatableSequence):
-        if len(animatables) == 4:
-            position, scale, anchor, rotation = animatables
-            child = self._child
-        else:
-            position, scale, anchor, rotation, child = animatables
+    child: Drawable
+    padding: Union[Tuple[float, float, float, float], Tuple[float, float], float]
 
-        return Transform(
-            child=child,
-            position=tuple(position),
-            scale=tuple(scale),
-            anchor=tuple(anchor),
-            rotation=rotation,
-            rotation_in_degrees=self._rotation_in_degrees,
-        )
-
-
-class Padding(Transform):
-    """A drawable that pads its child."""
-
-    def __init__(
-        self,
-        child: Drawable,
-        padding: Union[Tuple[float, float, float, float], Tuple[float, float], float],
-    ):
-        """Initialize a padding drawable.
-
-        Padding can be specified as:
-            - A single float, which is applied to all sides.
-            - A tuple of two floats, which are applied to the left/right and top/bottom.
-            - A tuple of four floats, which are applied to the left, top, right, and bottom.
-
-        Args:
-            child: The child drawable to pad.
-            padding: The padding to apply to the child drawable.
-        """
-
-        self._child = child
+    def setup(self):
+        """Initialize a padding drawable."""
+        padding = self.padding
 
         if isinstance(padding, tuple):
             if len(padding) == 2:
@@ -224,10 +222,9 @@ class Padding(Transform):
                 "Invalid padding value. Padding must be a float or a tuple."
             )
 
-        self._padding = padding
-        self._child_bounds = self._child.bounds
+        self._child_bounds = self.child.bounds
 
-        pl, pt, pr, pb = self._padding
+        pl, pt, pr, pb = padding
 
         self._pl = pl
         self._pt = pt
@@ -241,93 +238,21 @@ class Padding(Transform):
             bottom=self._child_bounds.bottom + pb,
         )
 
-        super().__init__(
-            child=child,
-            position=(0, 0),
-        )
+        self.set_child(self.child)
 
     @property
     def bounds(self) -> Bounds:
         return self._padded_bounds
 
-    @property
-    def animatables(self) -> AnimatableSequence:
-        return [self._pl, self._pt, self._pr, self._pb, self._child]
-
-    def copy_with_animatables(self, animatables: AnimatableSequence):
-        pl, pt, pr, pb, child = animatables
-
-        return Padding(
-            child=child,
-            padding=(pl, pt, pr, pb),
-        )
-
-
-class Compose(Drawable, Animatable):
-    """A drawable that composes its children."""
-
-    def __init__(self, children: Tuple[Drawable, ...]):
-        """Initialize a compose drawable.
-
-        Args:
-            children: The children to compose.
-        """
-
-        self._children = children
-        self._composed_bounds = Bounds.empty()
-
-        if len(self._children):
-            # Compute the bounds of the composed children.
-            left = min([child.bounds.left for child in self._children])
-            top = min([child.bounds.top for child in self._children])
-            right = max([child.bounds.right for child in self._children])
-            bottom = max([child.bounds.bottom for child in self._children])
-
-            self._composed_bounds = Bounds(
-                left=left,
-                top=top,
-                right=right,
-                bottom=bottom,
-            )
-
-        self._animatables = []
-        self._animatables_indices = []
-
-        for i, child in enumerate(self._children):
-            if isinstance(child, Animatable):
-                self._animatables.append(child)
-                self._animatables_indices.append(i)
-
-    @property
-    def children(self) -> Sequence[Drawable]:
-        return self._children
-
-    @property
-    def bounds(self) -> Bounds:
-        return self._composed_bounds
-
-    def draw(self, canvas: skia.Canvas):
-        for child in self._children:
-            child.draw(canvas)
-
-    @property
-    def animatables(self) -> AnimatableSequence:
-        return self._animatables
-
-    def copy_with_animatables(self, animatables: AnimatableSequence):
-        children = list(self.children)
-        for i, animatable in zip(self._animatables_indices, animatables):
-            children[i] = animatable
-        return Compose(tuple(children))
-
 
 class Anchor(Compose):
-    """A drawable that composes it's children without expanding the
-    borders.
-    """
+    anchor_index: int = 0
 
-    def __init__(self, children: Tuple[Drawable, ...], anchor_index: int = 0):
-        """Initialize an anchor drawable.
+    def __init__(
+        self, *children: Union[Drawable, Sequence[Drawable]], anchor_index: int = 0
+    ):
+        """A drawable that composes it's children without expanding the
+        borders.
 
         This drawable will compose its children without expanding the borders.
 
@@ -337,20 +262,35 @@ class Anchor(Compose):
                 the child that will be used to compute the bounds of the drawable.
         """
 
-        self._anchor_index = anchor_index
+        flattened_children = []
 
-        super().__init__(children)
+        for child in children:
+            if isinstance(child, Drawable):
+                flattened_children.append(child)
+            else:
+                flattened_children.extend(child)
+
+        self.init_from_fields(
+            components=tuple(flattened_children),
+            anchor_index=anchor_index,
+        )
 
     @property
     def anchor(self) -> Drawable:
-        return self._children[self._anchor_index]
+        return self.components[self.anchor_index]
 
     @property
     def bounds(self) -> Bounds:
         return self.anchor.bounds
 
 
-class Align(Compose):
+class Align(DrawableWithChild):
+    anchor: Drawable
+    child: Drawable
+    anchor_corner: int = dont_animate()
+    child_corner: int = dont_animate()
+    direction: np.ndarray = field(default_factory=lambda: Directions.ORIGIN)
+
     def __init__(
         self,
         anchor: Drawable,
@@ -383,29 +323,38 @@ class Align(Compose):
             direction: The direction to move the child drawable in.
         """
 
-        anchor_corner = anchor.bounds.corners[anchor_corner]
-        child_corner = child.bounds.corners[child_corner]
+        self.init_from_fields(
+            anchor=anchor,
+            child=child,
+            anchor_corner=anchor_corner,
+            child_corner=child_corner,
+            direction=direction,
+        )
+
+    def setup(self):
+        anchor_corner = self.anchor.bounds.corners[self.anchor_corner]
+        child_corner = self.child.bounds.corners[self.child_corner]
 
         dx = anchor_corner[0] - child_corner[0]
         dy = anchor_corner[1] - child_corner[1]
 
-        dx += direction[0]
-        dy += direction[1]
+        dx += self.direction[0]
+        dy += self.direction[1]
 
         child_transformed = Transform(
-            child=child,
+            child=self.child,
             position=(dx, dy),
         )
 
-        super().__init__(
-            children=[
-                anchor,
-                child_transformed,
-            ]
-        )
+        self.set_child(Compose(self.anchor, child_transformed))
 
 
-class PointAlign(Compose):
+class PointAlign(DrawableWithChild):
+    anchor: Tuple[float, float]
+    child: Drawable
+    child_corner: int = dont_animate()
+    direction: np.ndarray = field(default_factory=lambda: Directions.ORIGIN)
+
     def __init__(
         self,
         anchor: Tuple[float, float],
@@ -425,34 +374,42 @@ class PointAlign(Compose):
             direction: The direction to move the child drawable in.
         """
 
-        child_corner = child.bounds.corners[child_corner]
+        self.init_from_fields(
+            anchor=anchor,
+            child=child,
+            child_corner=child_corner,
+            direction=direction,
+        )
 
-        dx = anchor[0] - child_corner[0]
-        dy = anchor[1] - child_corner[1]
+    def setup(self):
+        child_corner = self.child.bounds.corners[self.child_corner]
 
-        dx += direction[0]
-        dy += direction[1]
+        dx = self.anchor[0] - child_corner[0]
+        dy = self.anchor[1] - child_corner[1]
+
+        dx += self.direction[0]
+        dy += self.direction[1]
 
         child_transformed = Transform(
-            child=child,
+            child=self.child,
             position=(dx, dy),
         )
 
-        super().__init__(
-            children=[
-                child_transformed,
-            ]
-        )
+        self.set_child(child_transformed)
 
 
-class Arrange(Compose):
+class Arrange(DrawableWithChild):
     class Direction(Enum):
         HORIZONTAL = 0
         VERTICAL = 1
 
+    components: Sequence[Drawable]
+    arrange_direction: Direction = Direction.HORIZONTAL
+    gap: float = 1
+
     def __init__(
         self,
-        children: List[Drawable],
+        *children: Union[Drawable, Sequence[Drawable]],
         arrange_direction: Direction = Direction.HORIZONTAL,
         gap: float = 1,
     ):
@@ -466,42 +423,61 @@ class Arrange(Compose):
             gap: The gap between the children.
         """
 
+        flattened_children = []
+
+        for child in children:
+            if isinstance(child, Drawable):
+                flattened_children.append(child)
+            else:
+                flattened_children.extend(child)
+
+        self.init_from_fields(
+            components=tuple(flattened_children),
+            arrange_direction=arrange_direction,
+            gap=gap,
+        )
+
+    def setup(self):
         next_to_direction = (
             Directions.RIGHT
-            if arrange_direction == Arrange.Direction.HORIZONTAL
+            if self.arrange_direction == Arrange.Direction.HORIZONTAL
             else Directions.DOWN
         )
-        arrangement = children[0]
-        for next_child in children[1:]:
-            if gap == 0:
+        arrangement = self.components[0]
+        for next_child in self.components[1:]:
+            if self.gap == 0:
                 arrangement = arrangement.next_to(
                     next_child, next_to_direction, no_gap=True
                 )
             else:
-                arrangement = arrangement.next_to(next_child, next_to_direction * gap)
+                arrangement = arrangement.next_to(
+                    next_child, next_to_direction * self.gap
+                )
 
-        super().__init__([arrangement])
+        self.set_child(arrangement)
 
 
-class Grid(Compose):
-    def __init__(self, children_matrix: List[List[Drawable]], gap=0):
-        """Initialize a grid drawable.
+class Grid(DrawableWithChild):
+    """A drawable that arranges its children in a grid.
 
-        This drawable will arrange the children in a grid.
+    Args:
+        children_matrix: The matrix of children to arrange.
+        gap: The gap between the children.
+    """
 
-        Args:
-            children_matrix: The matrix of children to arrange.
-            gap: The gap between the children.
-        """
+    children_matrix: List[List[Drawable]]
+    gap: float = 0
 
-        self._children_matrix = children_matrix
-        self._nrows = len(children_matrix)
-        self._ncols = len(children_matrix[0])
-        self._gap_by_2 = gap / 2
+    def setup(self):
+        self._children_matrix = self.children_matrix
+        self._nrows = len(self._children_matrix)
+        self._ncols = len(self._children_matrix[0])
+        self._gap_by_2 = self.gap / 2
 
         def _conditional_padding(x, y):
             pl = 0 if x == 0 else self._gap_by_2
-            pt = 0 if y == 0 else self._gap_by_2
+            # pt = 0 if y == 0 else self._gap_by_2
+            pt = 0
             pr = 0 if x == self._ncols - 1 else self._gap_by_2
             pb = 0 if y == self._nrows - 1 else self._gap_by_2
             return pl, pt, pr, pb
@@ -521,4 +497,4 @@ class Grid(Compose):
             current_y += child.bounds.height
             current_x = 0
 
-        super().__init__(children=tuple(self._padded_children))
+        self.set_child(Compose(self._padded_children))

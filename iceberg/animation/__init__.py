@@ -1,2 +1,1 @@
-from .animatable import Animatable
-from .tween import EaseType, tween, tween
+from .tween import EaseType, tween

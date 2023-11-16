@@ -7,24 +7,18 @@ from absl import logging
 import os
 import re
 import shutil
-from iceberg.animation.animatable import AnimatableSequence
 
-from iceberg.primitives.layout import Transform
 
 from iceberg.utils import temp_filename, temp_directory
-from iceberg import Drawable, Bounds, Color
-from iceberg.core import Bounds
+from iceberg import DrawableWithChild, Color
 from iceberg.primitives.svg import SVG
-from iceberg.animation import Animatable
-
-from dataclasses import dataclass
 
 
 class LatexError(Exception):
     pass
 
 
-def create_tex_svg(full_tex: str, svg_file: str, compiler: str):
+def _create_tex_svg(full_tex: str, svg_file: str, compiler: str):
     if compiler == "latex":
         program = "latex"
         dvi_ext = ".dvi"
@@ -116,7 +110,7 @@ def tex_content_to_svg_file(
 
     svg_file = os.path.join(temp_directory(), temp_filename(tex=full_tex) + ".svg")
     if not os.path.exists(svg_file):
-        create_tex_svg(full_tex, svg_file, compiler)
+        _create_tex_svg(full_tex, svg_file, compiler)
     return svg_file
 
 
@@ -144,21 +138,48 @@ _DEFAULT_PREAMBLE = r"""
 """
 
 
-@dataclass
-class Tex(Transform):
+class Tex(DrawableWithChild):
+    """A LaTeX object, which renders LaTeX using dvisvgm.
+
+    Args:
+        tex: The LaTeX code to render.
+        preamble: The LaTeX preamble to use.
+        compiler: The LaTeX compiler to use.
+        svg_scale: The scale of the SVG.
+        color: The color of the SVG.
+    """
+
     tex: str
     preamble: str = _DEFAULT_PREAMBLE
     compiler: str = "latex"
     svg_scale: float = 1.0
     color: Color = Color(0, 0, 0, 1)
 
-    def __post_init__(self) -> None:
+    def setup(self) -> None:
         svg_filename = tex_content_to_svg_file(self.tex, self.preamble, self.compiler)
-        self._svg = SVG(svg_filename, color=self.color)
-        super().__init__(self._svg, scale=(self.svg_scale, self.svg_scale))
+        self._svg = SVG(svg_filename=svg_filename, color=self.color)
+        self.set_child(self._svg.scale(self.svg_scale))
 
 
-class MathTex(Tex):
+class MathTex(DrawableWithChild):
+    """A LaTeX math formula using the align* environment by default.
+
+    Args:
+        tex: The LaTeX code to render in math mode.
+        preamble: The LaTeX preamble to use.
+        environment: The LaTeX environment to use. Defaults to "align*".
+        compiler: The LaTeX compiler to use.
+        svg_scale: The scale of the SVG.
+        color: The color of the SVG.
+    """
+
+    tex: str
+    preamble: str = _DEFAULT_PREAMBLE
+    environment: str = "align*"
+    compiler: str = "latex"
+    color: Color = Color(0, 0, 0, 1)
+    svg_scale: float = 1.0
+
     def __init__(
         self,
         tex: str,
@@ -166,25 +187,28 @@ class MathTex(Tex):
         environment: str = "align*",
         compiler: str = "latex",
         color: Color = Color(0, 0, 0, 1),
-        scale: float = 1.0,
-    ) -> None:
-        self._environment = environment
-        self._raw_tex = tex
-        tex = f"\\begin{{{environment}}}\n{tex}\n\\end{{{environment}}}"
-        super().__init__(tex, preamble, compiler, scale, color)
+        svg_scale: float = 1.0,
+    ):
+        self.init_from_fields(
+            tex=tex,
+            preamble=preamble,
+            environment=environment,
+            compiler=compiler,
+            color=color,
+            svg_scale=svg_scale,
+        )
 
-    @property
-    def animatables(self) -> AnimatableSequence:
-        return [self.svg_scale, self.color]
+    def setup(self) -> None:
+        self._environment = self.environment
+        self._raw_tex = self.tex
+        tex = f"\\begin{{{self.environment}}}\n{self.tex}\n\\end{{{self.environment}}}"
 
-    def copy_with_animatables(self, animatables: AnimatableSequence):
-        svg_scale, color = animatables
-
-        return MathTex(
-            self._raw_tex,
-            self.preamble,
-            self._environment,
-            self.compiler,
-            color,
-            svg_scale,
+        self.set_child(
+            Tex(
+                tex=tex,
+                preamble=self.preamble,
+                compiler=self.compiler,
+                svg_scale=self.svg_scale,
+                color=self.color,
+            )
         )

@@ -7,30 +7,38 @@ import numpy as np
 
 
 class Image(Drawable):
-    def __init__(self, filename: str = None, image: np.ndarray = None) -> None:
-        """Initialize the Image drawable.
+    """Initialize the Image drawable.
 
-        Can either load an image from a file or use a pre-loaded image.
+    Can either load an image from a file or use a pre-loaded image.
 
-        Args:
-            filename: The filename of the image file to load.
-            image: The image to use. If not specified, the image will be loaded from the filename.
-                The image must be a numpy array with shape one of
-                  - (height, width) or (height, width, 1) for grayscale
-                  - (height, width, 3) for RGB
-                  - (height, width, 4) for RGBA
-                Values can be either integers from 0 to 255 or floats between 0 and 1.
+    Args:
+        filename: The filename of the image file to load.
+        image: The image to use. If not specified, the image will be loaded from the filename.
+            The image must be a numpy array with shape one of
+                - (height, width) or (height, width, 1) for grayscale
+                - (height, width, 3) for RGB
+                - (height, width, 4) for RGBA
+            Values can be either integers from 0 to 255 or floats between 0 and 1.
 
-        Raises:
-            ValueError: If neither filename nor image is specified.
-            FileNotFoundError: If the filename does not exist.
-        """
+    Raises:
+        ValueError: If neither filename nor image is specified.
+        FileNotFoundError: If the filename does not exist.
+    """
 
-        if filename is None and image is None:
+    filename: str = None
+    image: np.ndarray = None
+
+    def __init__(self, filename: str = None, image: np.ndarray = None):
+        self.init_from_fields(filename=filename, image=image)
+
+    def setup(self) -> None:
+        if self.filename is None and self.image is None:
             raise ValueError("Must specify either filename or image.")
 
-        if filename is not None:
-            self._skia_image = skia.Image.open(filename)
+        image = self.image
+
+        if self.filename is not None:
+            self._skia_image = skia.Image.open(self.filename)
         else:
             assert image.ndim in {
                 2,
@@ -64,8 +72,6 @@ class Image(Drawable):
             right=self._skia_image.width(),
             bottom=self._skia_image.height(),
         )
-
-        super().__init__()
 
     @property
     def bounds(self) -> Bounds:
