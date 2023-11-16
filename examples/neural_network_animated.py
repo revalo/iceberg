@@ -12,7 +12,7 @@ class Scene1(ice.Scene):
         node_vertical_gap = ice.tween(20, 50, progress)
 
         network = NeuralNetwork(
-            [3, 4, 4, 2],
+            layer_node_counts=[3, 4, 4, 2],
             node_border_color=ice.Colors.BLACK,
             line_path_style=ice.PathStyle(ice.Colors.BLACK, thickness=3),
             layer_gap=layer_gap,
@@ -21,8 +21,11 @@ class Scene1(ice.Scene):
         node = network.layer_nodes[1][0]
         node.border_color = ice.Colors.RED
         node.border_thickness = 5
+        node.setup()
 
-        canvas = ice.Blank(ice.Bounds(size=(1080, 720)), background=ice.Colors.WHITE)
+        canvas = ice.Blank(
+            ice.Bounds(size=(1080, 720)), background_color=ice.Colors.WHITE
+        )
         scene = canvas.add_centered(network)
 
         return scene
