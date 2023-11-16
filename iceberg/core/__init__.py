@@ -8,5 +8,5 @@ from .properties import (
     StrokeCap,
     AnimatableProperty,
 )
-from .drawable import Drawable, DrawableWithChild
+from .drawable import Drawable, DrawableWithChild, drawable_field, dont_animate
 from .renderer import Renderer, render_svg

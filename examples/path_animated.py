@@ -22,8 +22,6 @@ class Play(ice.Playbook):
             path_style=path_style,
         )
 
-        from iceberg.animation.tween import _interpolate
-
         animated_line = ice.Animated(
             [
                 ice.PartialPath(line, 0, 0.01),

@@ -1,7 +1,7 @@
 from typing import List, Sequence, Tuple, Union
 import skia
 
-from iceberg import Drawable, Bounds, Color, Colors, DrawableWithChild
+from iceberg import Drawable, Bounds, Color, Colors, DrawableWithChild, dont_animate
 from iceberg.geometry import get_transform, apply_transform
 from dataclasses import dataclass, field
 from abc import ABC, abstractmethod, abstractproperty
@@ -287,8 +287,8 @@ class Anchor(Compose):
 class Align(DrawableWithChild):
     anchor: Drawable
     child: Drawable
-    anchor_corner: int
-    child_corner: int
+    anchor_corner: int = dont_animate()
+    child_corner: int = dont_animate()
     direction: np.ndarray = field(default_factory=lambda: Directions.ORIGIN)
 
     def __init__(
@@ -352,7 +352,7 @@ class Align(DrawableWithChild):
 class PointAlign(DrawableWithChild):
     anchor: Tuple[float, float]
     child: Drawable
-    child_corner: int
+    child_corner: int = dont_animate()
     direction: np.ndarray = field(default_factory=lambda: Directions.ORIGIN)
 
     def __init__(

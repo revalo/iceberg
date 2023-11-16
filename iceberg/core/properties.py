@@ -487,6 +487,9 @@ class PathStyle(AnimatableProperty):
         self._anti_alias = anti_alias
         self._stroke = stroke
         self._stroke_cap = stroke_cap
+        self._dashed = dashed
+        self._dash_intervals = dash_intervals
+        self._dash_phase = dash_phase
 
         self._skia_paint = skia.Paint(
             Style=skia.Paint.kStroke_Style if stroke else skia.Paint.kFill_Style,
@@ -509,6 +512,9 @@ class PathStyle(AnimatableProperty):
             start.anti_alias,
             start._stroke,
             start._stroke_cap,
+            start._dashed,
+            start._dash_intervals,
+            start._dash_phase,
         )
 
     @property

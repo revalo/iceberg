@@ -1,4 +1,4 @@
-__version__ = "0.0.7"
+__version__ = "0.1.0"
 
 from iceberg.core import (
     Drawable,
@@ -13,6 +13,8 @@ from iceberg.core import (
     StrokeCap,
     render_svg,
     AnimatableProperty,
+    drawable_field,
+    dont_animate,
 )
 
 from iceberg.primitives import (

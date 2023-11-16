@@ -6,7 +6,7 @@ import types
 import functools
 
 from abc import ABC, abstractmethod, abstractproperty
-from dataclasses import dataclass, field
+from dataclasses import dataclass, MISSING
 from iceberg.core import Bounds, Corner, Color
 from iceberg.utils import direction_equal
 import numpy as np
@@ -39,11 +39,70 @@ class ChildNotFoundError(ValueError):
     pass
 
 
-def drawable_field(*, kw_only: bool = False, default: Optional[Any] = ...) -> Any:
+def drawable_field(
+    *,
+    default=MISSING,
+    default_factory=MISSING,
+    init=True,
+    repr=True,
+    hash=None,
+    compare=True,
+    kw_only=MISSING,
+    dont_animate: bool = False,
+    interpolator: Optional[Callable[[Any, Any, float], Any]] = None,
+):
+    """A field of a dataclass that is a drawable object.
+
+    This is a special field that is used to transform a dataclass into a drawable object.
+    """
+
+    metadata = {}
+
+    if dont_animate:
+        metadata["iceberg_dont_animate"] = True
+
+    if interpolator is not None:
+        metadata["iceberg_interpolator"] = interpolator
+
+    return dataclasses.field(
+        default=default,
+        default_factory=default_factory,
+        init=init,
+        repr=repr,
+        hash=hash,
+        compare=compare,
+        metadata=metadata,
+        kw_only=kw_only,
+    )
+
+
+def dont_animate(
+    *,
+    default=MISSING,
+    default_factory=MISSING,
+    init=True,
+    repr=True,
+    hash=None,
+    compare=True,
+    kw_only=MISSING,
+):
+    return drawable_field(
+        default=default,
+        default_factory=default_factory,
+        init=init,
+        repr=repr,
+        hash=hash,
+        compare=compare,
+        kw_only=kw_only,
+        dont_animate=True,
+    )
+
+
+def _drawable_field(*, kw_only: bool = False, default: Optional[Any] = ...) -> Any:
     ...
 
 
-@tpe.dataclass_transform(field_specifiers=(drawable_field,))  # type: ignore[literal-required]
+@tpe.dataclass_transform(field_specifiers=(_drawable_field,))  # type: ignore[literal-required]
 class DrawableBase:
     if typing.TYPE_CHECKING:
         __dataclass_fields__: Dict[str, dataclasses.Field]
