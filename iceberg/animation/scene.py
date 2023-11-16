@@ -151,7 +151,6 @@ def _get_drawable_duration(drawable: Drawable) -> float:
     Returns:
         The duration of the drawable.
     """
-
     duration = 0
     current_animated: Sequence[Animated] = drawable.find_all(
         lambda d: isinstance(d, Animated)
@@ -334,6 +333,23 @@ class Scene(object):
                 disposal=2,
             )
 
+    def ipython_display(self, fps: int = 60, loop: bool = True) -> None:
+        from IPython.display import Video, display
+
+        html_attributes = ["controls"]
+
+        if loop:
+            html_attributes.append("loop")
+
+        self.render("__temp__.mp4", fps=fps)
+        display(
+            Video(
+                filename="__temp__.mp4",
+                embed=True,
+                html_attributes=" ".join(html_attributes),
+            )
+        )
+
 
 class Playbook(ABC):
     """A playbook is an easy way to create linear animations.
@@ -421,3 +437,8 @@ class Playbook(ABC):
     def timeline(self):
         """The timeline method is where the user should add scenes to the playbook."""
         pass
+
+    def ipython_display(self, fps: int = 60, loop: bool = True) -> None:
+        """Displays the animation in IPython."""
+
+        self.combined_scene.ipython_display(fps=fps, loop=loop)

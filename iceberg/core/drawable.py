@@ -421,9 +421,8 @@ class Drawable(ABC, DrawableBase):
             children.append(self)
 
         for child in self.children:
-            if condition(child):
-                children.append(child)
             children.extend(child.find_all(condition))
+
         return children
 
     def __enter__(self):
