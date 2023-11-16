@@ -332,22 +332,32 @@ class Scene(object):
                 disposal=2,
             )
 
-    def ipython_display(self, fps: int = 60, loop: bool = True) -> None:
-        from IPython.display import Video, display
+    def ipython_display(
+        self, fps: int = 60, loop: bool = True, display_format: str = "mp4"
+    ) -> None:
+        from IPython.display import Video, display, HTML
+        import base64
 
-        html_attributes = ["controls"]
+        if display_format == "mp4":
+            html_attributes = ["controls"]
 
-        if loop:
-            html_attributes.append("loop")
+            if loop:
+                html_attributes.append("loop")
 
-        self.render("__temp__.mp4", fps=fps)
-        display(
-            Video(
-                filename="__temp__.mp4",
-                embed=True,
-                html_attributes=" ".join(html_attributes),
+            self.render("__temp__.mp4", fps=fps)
+            display(
+                Video(
+                    filename="__temp__.mp4",
+                    embed=True,
+                    html_attributes=" ".join(html_attributes),
+                )
             )
-        )
+        elif display_format == "gif":
+            self.render("__temp__.gif", fps=fps)
+
+            with open("__temp__.gif", "rb") as f:
+                b64 = base64.b64encode(f.read()).decode("ascii")
+            display(HTML(f'<img src="data:image/gif;base64,{b64}" />'))
 
 
 class Playbook(ABC):
@@ -437,7 +447,11 @@ class Playbook(ABC):
         """The timeline method is where the user should add scenes to the playbook."""
         pass
 
-    def ipython_display(self, fps: int = 60, loop: bool = True) -> None:
+    def ipython_display(
+        self, fps: int = 60, loop: bool = True, display_format: str = "mp4"
+    ) -> None:
         """Displays the animation in IPython."""
 
-        self.combined_scene.ipython_display(fps=fps, loop=loop)
+        self.combined_scene.ipython_display(
+            fps=fps, loop=loop, display_format=display_format
+        )
