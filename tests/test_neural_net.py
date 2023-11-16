@@ -1,73 +1,58 @@
 from typing import Tuple, Sequence, Union
 
-from iceberg import (
-    Color,
-    Bounds,
-    Drawable,
-    Colors,
-    Corner,
-    PathStyle,
-)
-from iceberg.primitives import (
-    Compose,
-    Ellipse,
-    Line,
-    Blank,
-    Arrange,
-)
+import iceberg as ice
 
 from .scene_tester import check_render
 
 
-class NeuralNetwork(Compose):
-    def __init__(
-        self,
-        layer_node_counts: Tuple[int, ...],
-        node_radius: float = 30,
-        node_vertical_gap: float = 30,
-        layer_gap: float = 150,
-        node_border_color: Color = Colors.WHITE,
-        node_fill_color: Color = None,
-        node_border_thickness: float = 3,
-        line_path_style: PathStyle = PathStyle(Colors.WHITE, thickness=3),
-    ):
+class NeuralNetwork(ice.DrawableWithChild):
+    layer_node_counts: Tuple[int, ...]
+    node_radius: float = 30
+    node_vertical_gap: float = 30
+    layer_gap: float = 150
+    node_border_color: ice.Color = ice.Colors.WHITE
+    node_fill_color: ice.Color = None
+    node_border_thickness: float = 3
+    line_path_style: ice.PathStyle = ice.PathStyle(ice.Colors.WHITE, thickness=3)
+
+    def setup(self):
         # [layer_index, node_index]
         self._layer_nodes = [
             [
-                Ellipse(
-                    Bounds(
+                ice.Ellipse(
+                    rectangle=ice.Bounds(
                         top=0,
                         left=0,
-                        bottom=node_radius * 2,
-                        right=node_radius * 2,
+                        bottom=self.node_radius * 2,
+                        right=self.node_radius * 2,
                     ),
-                    node_border_color,
-                    node_fill_color,
-                    node_border_thickness,
+                    border_color=self.node_border_color,
+                    fill_color=self.node_fill_color,
+                    border_thickness=self.node_border_thickness,
                 )
                 for _ in range(layer_node_count)
             ]
-            for layer_node_count in layer_node_counts
+            for layer_node_count in self.layer_node_counts
         ]
 
-        self._node_vertical_gap = node_vertical_gap
-        self._layer_gap = layer_gap
-        self._line_path_style = line_path_style
+        self._node_vertical_gap = self.node_vertical_gap
+        self._layer_gap = self.layer_gap
+        self._line_path_style = self.line_path_style
 
         self._initialize_based_on_nodes()
 
     def _initialize_based_on_nodes(self):
         # Arrange the circles.
-        nodes_arranged = Arrange(
+        nodes_arranged = ice.Arrange(
             [
-                Arrange(
+                ice.Arrange(
                     circles,
-                    Arrange.Direction.VERTICAL,
+                    arrange_direction=ice.Arrange.Direction.VERTICAL,
                     gap=self._node_vertical_gap,
                 )
                 for circles in self.layer_nodes
             ],
-            Arrange.Direction.HORIZONTAL,
+            arrange_direction=ice.Arrange.Direction.HORIZONTAL,
             gap=self._layer_gap,
         )
 
@@ -77,13 +62,13 @@ class NeuralNetwork(Compose):
             for circle_a in layer_a:
                 for circle_b in layer_b:
                     start = nodes_arranged.child_bounds(circle_a).corners[
-                        Corner.MIDDLE_RIGHT
+                        ice.Corner.MIDDLE_RIGHT
                     ]
                     end = nodes_arranged.child_bounds(circle_b).corners[
-                        Corner.MIDDLE_LEFT
+                        ice.Corner.MIDDLE_LEFT
                     ]
 
-                    line = Line(start, end, self._line_path_style)
+                    line = ice.Line(start, end, self._line_path_style)
                     self._lines.append(line)
 
         # All the children in this composition.
@@ -91,24 +76,25 @@ class NeuralNetwork(Compose):
         children = self._lines
         children.append(nodes_arranged)
 
-        super().__init__(children)
+        self.set_child(ice.Compose(children))
 
     @property
-    def layer_nodes(self) -> Sequence[Sequence[Union[Drawable, Ellipse]]]:
+    def layer_nodes(self) -> Sequence[Sequence[Union[ice.Drawable, ice.Ellipse]]]:
         return self._layer_nodes
 
 
 def test_neural_net():
     network = NeuralNetwork(
-        [3, 4, 4, 2],
-        node_border_color=Colors.BLACK,
-        line_path_style=PathStyle(Colors.BLACK, thickness=3),
+        layer_node_counts=[3, 4, 4, 2],
+        node_border_color=ice.Colors.BLACK,
+        line_path_style=ice.PathStyle(ice.Colors.BLACK, thickness=3),
     )
     node = network.layer_nodes[1][0]
-    node.border_color = Colors.RED
+    node.border_color = ice.Colors.RED
     node.border_thickness = 5
+    node.setup()
 
-    canvas = Blank(Bounds(size=(1080, 720)), background=Colors.WHITE)
+    canvas = ice.Blank(ice.Bounds(size=(1080, 720)), background_color=ice.Colors.WHITE)
     scene = canvas.add_centered(network)
 
     check_render(scene, "neural_net.png")

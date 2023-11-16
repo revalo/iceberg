@@ -8,12 +8,11 @@ from dataclasses import dataclass
 from enum import Enum
 
 
-@dataclass
 class SimpleText(Drawable):
     text: str
     font_style: FontStyle
 
-    def __post_init__(self) -> None:
+    def setup(self) -> None:
         self._skia_font = self.font_style.get_skia_font()
         self._skia_paint = self.font_style.get_skia_paint()
         self._height = self._skia_font.getSize()
@@ -27,8 +26,6 @@ class SimpleText(Drawable):
             bottom=self._spacing,
         )
 
-        super().__init__()
-
     @property
     def bounds(self) -> Bounds:
         return self._bounds
@@ -37,7 +34,6 @@ class SimpleText(Drawable):
         canvas.drawString(self.text, 0, self._height, self._skia_font, self._skia_paint)
 
 
-@dataclass
 class Text(Drawable):
     class Align(Enum):
         LEFT = 0
@@ -50,7 +46,23 @@ class Text(Drawable):
     width: float = None
     line_spacing: float = 0.9
 
-    def __post_init__(self) -> None:
+    def __init__(
+        self,
+        text: str,
+        font_style: FontStyle,
+        align: Align = Align.LEFT,
+        width: float = None,
+        line_spacing: float = 0.9,
+    ):
+        self.init_from_fields(
+            text=text,
+            font_style=font_style,
+            align=align,
+            width=width,
+            line_spacing=line_spacing,
+        )
+
+    def setup(self) -> None:
         self._skia_font = self.font_style.get_skia_font()
         self._skia_paint = self.font_style.get_skia_paint()
         self._line_height = self.font_style.size
@@ -103,8 +115,6 @@ class Text(Drawable):
         self._height = (
             self._spacing + (len(self._lines) - 1) * self._spacing * self.line_spacing
         )
-
-        super().__init__()
 
     @property
     def bounds(self) -> Bounds:

@@ -148,16 +148,23 @@ class Tex(DrawableWithChild):
     tex: str
     preamble: str = _DEFAULT_PREAMBLE
     compiler: str = "latex"
-    svg_scale: float = 1.0
+    scale: float = 1.0
     color: Color = Color(0, 0, 0, 1)
 
     def setup(self) -> None:
         svg_filename = tex_content_to_svg_file(self.tex, self.preamble, self.compiler)
-        self._svg = SVG(svg_filename, color=self.color)
-        self.set_scene(Transform(self._svg, scale=(self.svg_scale, self.svg_scale)))
+        self._svg = SVG(svg_filename=svg_filename, color=self.color)
+        self.set_child(self._svg.scale(self.scale))
 
 
-class MathTex(Tex):
+class MathTex(DrawableWithChild):
+    tex: str
+    preamble: str = _DEFAULT_PREAMBLE
+    environment: str = "align*"
+    compiler: str = "latex"
+    color: Color = Color(0, 0, 0, 1)
+    scale: float = 1.0
+
     def __init__(
         self,
         tex: str,
@@ -166,24 +173,27 @@ class MathTex(Tex):
         compiler: str = "latex",
         color: Color = Color(0, 0, 0, 1),
         scale: float = 1.0,
-    ) -> None:
-        self._environment = environment
-        self._raw_tex = tex
-        tex = f"\\begin{{{environment}}}\n{tex}\n\\end{{{environment}}}"
-        super().__init__(tex, preamble, compiler, scale, color)
+    ):
+        self.init_from_fields(
+            tex=tex,
+            preamble=preamble,
+            environment=environment,
+            compiler=compiler,
+            color=color,
+            scale=scale,
+        )
 
-    @property
-    def animatables(self) -> AnimatableSequence:
-        return [self.svg_scale, self.color]
+    def setup(self) -> None:
+        self._environment = self.environment
+        self._raw_tex = self.tex
+        tex = f"\\begin{{{self.environment}}}\n{self.tex}\n\\end{{{self.environment}}}"
 
-    def copy_with_animatables(self, animatables: AnimatableSequence):
-        svg_scale, color = animatables
-
-        return MathTex(
-            self._raw_tex,
-            self.preamble,
-            self._environment,
-            self.compiler,
-            color,
-            svg_scale,
+        self.set_child(
+            Tex(
+                tex=tex,
+                preamble=self.preamble,
+                compiler=self.compiler,
+                scale=self.scale,
+                color=self.color,
+            )
         )

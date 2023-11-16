@@ -5,7 +5,10 @@ from iceberg.core import Bounds
 
 
 class SVG(Drawable):
-    def __init__(self, svg_filename: str, color: Color = None) -> None:
+    svg_filename: str
+    color: Color = None
+
+    def setup(self):
         """Initialize the SVG drawable.
 
         Args:
@@ -13,14 +16,14 @@ class SVG(Drawable):
             color: The color to use for the SVG. If not specified, the SVG will be drawn as-is.
         """
 
-        self._svg_filename = svg_filename
-        self._color = color
+        self._svg_filename = self.svg_filename
+        self._color = self.color
         self._paint = None
 
         if self._color is not None:
             self._paint = skia.Paint(
                 ColorFilter=skia.ColorFilters.Blend(
-                    color.to_blend_int(), skia.BlendMode.kSrcIn
+                    self.color.to_blend_int(), skia.BlendMode.kSrcIn
                 )
             )
 

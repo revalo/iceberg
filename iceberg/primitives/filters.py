@@ -1,20 +1,26 @@
 from typing import Sequence
 import skia
 
-from iceberg import Drawable, Bounds, Color
+from iceberg import Drawable, Bounds
 from iceberg.core import Bounds
-from iceberg.core.drawable import Drawable
+from iceberg.core.drawable import Drawable, DrawableWithChild
 
 
 class Filter(Drawable):
-    def __init__(self, child: Drawable, paint: skia.Paint = None) -> None:
-        self._paint = paint
-        self._child = child
+    child: Drawable
+    paint: skia.Paint = None
+
+    def __init__(self, child: Drawable, paint: skia.Paint = None):
+        self.init_from_fields(child=child, paint=paint)
+
+    def setup(self) -> None:
+        self._paint = self.paint
+        self._child = self.child
         picture_recorder = skia.PictureRecorder()
         fake_canvas = picture_recorder.beginRecording(
-            child.bounds.width, child.bounds.height
+            self.child.bounds.width, self.child.bounds.height
         )
-        child.draw(fake_canvas)
+        self.child.draw(fake_canvas)
         self._skia_picture = picture_recorder.finishRecordingAsPicture()
 
         super().__init__()
@@ -31,13 +37,19 @@ class Filter(Drawable):
         canvas.drawPicture(self._skia_picture, paint=self._paint)
 
 
-class Blur(Filter):
-    def __init__(self, child: Drawable, sigma: float) -> None:
-        paint = skia.Paint(ImageFilter=skia.ImageFilters.Blur(sigma, sigma))
-        super().__init__(child=child, paint=paint)
+class Blur(DrawableWithChild):
+    child: Drawable
+    sigma: float
+
+    def setup(self):
+        paint = skia.Paint(ImageFilter=skia.ImageFilters.Blur(self.sigma, self.sigma))
+        self.set_child(Filter(self.child, paint))
 
 
-class Opacity(Filter):
-    def __init__(self, child: Drawable, opacity: float) -> None:
-        paint = skia.Paint(Color4f=skia.Color4f(0, 0, 0, opacity))
-        super().__init__(child=child, paint=paint)
+class Opacity(DrawableWithChild):
+    child: Drawable
+    opacity: float
+
+    def setup(self):
+        paint = skia.Paint(Color4f=skia.Color4f(0, 0, 0, self.opacity))
+        self.set_child(Filter(self.child, paint))

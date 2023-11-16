@@ -1,7 +1,15 @@
 from typing import List, Optional, Sequence, Tuple, Union
 import skia
 
-from iceberg import Drawable, Bounds, Color, FontStyle, Corner, Colors
+from iceberg import (
+    Drawable,
+    Bounds,
+    Color,
+    FontStyle,
+    Corner,
+    Colors,
+    DrawableWithChild,
+)
 from iceberg.animation import Animatable
 from iceberg.animation.animatable import AnimatableSequence
 from iceberg.core import Bounds
@@ -31,6 +39,26 @@ class Rectangle(Drawable):
     anti_alias: bool = True
     border_position: BorderPosition = BorderPosition.CENTER
     border_radius: Union[float, Tuple[float, float]] = 0.0
+
+    def __init__(
+        self,
+        rectangle: Bounds,
+        border_color: Color = None,
+        fill_color: Color = None,
+        border_thickness: float = 1.0,
+        anti_alias: bool = True,
+        border_position: BorderPosition = BorderPosition.CENTER,
+        border_radius: Union[float, Tuple[float, float]] = 0.0,
+    ):
+        self.init_from_fields(
+            rectangle=rectangle,
+            border_color=border_color,
+            fill_color=fill_color,
+            border_thickness=border_thickness,
+            anti_alias=anti_alias,
+            border_position=border_position,
+            border_radius=border_radius,
+        )
 
     def setup(
         self,
@@ -101,8 +129,6 @@ class Rectangle(Drawable):
 
 class Ellipse(Rectangle):
     def draw(self, canvas):
-        self.__post_init__()
-
         if self._fill_paint:
             canvas.drawOval(self._skia_rect, self._fill_paint)
 
@@ -111,31 +137,42 @@ class Ellipse(Rectangle):
 
 
 class Path(Drawable, ABC):
-    def __init__(self, skia_path: skia.Path, path_style: PathStyle):
-        super().__init__()
-
-        self._path = skia_path
+    def set_path(self, skia_path: skia.Path, path_style: PathStyle):
+        self._skia_path = skia_path
         self._path_style = path_style
+
         self._fill_path = skia.Path()
-        self._path_style.skia_paint.getFillPath(self._path, self._fill_path)
+        self._path_style.skia_paint.getFillPath(self._skia_path, self._fill_path)
         self._bounds = Bounds.from_skia(self._fill_path.computeTightBounds())
+
+    @classmethod
+    def from_skia(cls, skia_path: skia.Path, path_style: PathStyle):
+        path = cls()
+        path.set_path(skia_path, path_style)
+        return path
+
+    @property
+    def skia_path(self) -> skia.Path:
+        return self._skia_path
 
     @property
     def bounds(self) -> Bounds:
         return self._bounds
 
-    @property
-    def skia_path(self) -> skia.Path:
-        return self._path
-
     def draw(self, canvas):
-        canvas.drawPath(self._path, self._path_style.skia_paint)
+        canvas.drawPath(self._skia_path, self._path_style.skia_paint)
 
 
-class PartialPath(Drawable, Animatable):
+class PartialPath(Drawable):
     class Interpolation(Enum):
         LINEAR = 0
         CUBIC = 1
+
+    child_path: Path
+    start: float = 0
+    end: float = 1
+    subdivide_increment: float = 0.01
+    interpolation: Interpolation = Interpolation.CUBIC
 
     def __init__(
         self,
@@ -145,15 +182,24 @@ class PartialPath(Drawable, Animatable):
         subdivide_increment: float = 0.01,
         interpolation: Interpolation = Interpolation.CUBIC,
     ):
-        super().__init__()
+        self.init_from_fields(
+            child_path=child_path,
+            start=start,
+            end=end,
+            subdivide_increment=subdivide_increment,
+            interpolation=interpolation,
+        )
 
-        assert 0 <= start <= end <= 1, "Start and end must be between 0 and 1."
+    def setup(self):
+        assert (
+            0 <= self.start <= self.end <= 1
+        ), "Start and end must be between 0 and 1."
 
-        self._child_path = child_path
-        self._start = start
-        self._end = end
-        self._subdivide_increment = subdivide_increment
-        self._interpolation = interpolation
+        self._child_path = self.child_path
+        self._start = self.start
+        self._end = self.end
+        self._subdivide_increment = self.subdivide_increment
+        self._interpolation = self.interpolation
 
         self._path_measure = skia.PathMeasure(self._child_path.skia_path, False)
         self._total_length = self._path_measure.getLength()
@@ -162,9 +208,9 @@ class PartialPath(Drawable, Animatable):
         self._tangents = []
 
         # Subdivide the path and store the points and tangents.
-        current_t = start
+        current_t = self.start
 
-        while current_t < end:
+        while current_t < self.end:
             current_distance = self._total_length * current_t
 
             point, tangent = self._path_measure.getPosTan(current_distance)
@@ -172,10 +218,10 @@ class PartialPath(Drawable, Animatable):
             self._points.append(point)
             self._tangents.append(tangent)
 
-            current_t += subdivide_increment
+            current_t += self.subdivide_increment
 
         # Add the end point.
-        point, tangent = self._path_measure.getPosTan(self._total_length * end)
+        point, tangent = self._path_measure.getPosTan(self._total_length * self.end)
 
         self._points.append(point)
         self._tangents.append(tangent)
@@ -186,11 +232,11 @@ class PartialPath(Drawable, Animatable):
         self._partial_path = skia.Path()
         self._partial_path.moveTo(*self._points[0])
 
-        if interpolation == self.Interpolation.LINEAR:
+        if self.interpolation == self.Interpolation.LINEAR:
             for point in self._points[1:]:
                 self._partial_path.lineTo(*point)
-        elif interpolation == self.Interpolation.CUBIC:
-            segment_length = self._total_length * subdivide_increment
+        elif self.interpolation == self.Interpolation.CUBIC:
+            segment_length = self._total_length * self.subdivide_increment
 
             for point, tangent, next_point, next_tangent in zip(
                 self._points[:-1],
@@ -217,7 +263,7 @@ class PartialPath(Drawable, Animatable):
                 )
                 self._partial_path.cubicTo(*p1, *p2, *next_point)
         else:
-            raise ValueError(f"Unknown interpolation {interpolation}.")
+            raise ValueError(f"Unknown interpolation {self.interpolation}.")
 
     def draw(self, canvas: skia.Canvas):
         canvas.drawPath(self._partial_path, self._child_path._path_style.skia_paint)
@@ -249,26 +295,32 @@ class PartialPath(Drawable, Animatable):
         )
 
 
-@dataclass
 class Line(Path):
     start: Tuple[float, float]
     end: Tuple[float, float]
     path_style: PathStyle
 
-    def __post_init__(self):
+    def __init__(
+        self,
+        start: Tuple[float, float],
+        end: Tuple[float, float],
+        path_style: PathStyle,
+    ):
+        self.init_from_fields(start=start, end=end, path_style=path_style)
+
+    def setup(self):
         path = skia.Path()
         path.moveTo(*self.start)
         path.lineTo(*self.end)
 
-        super().__init__(path, self.path_style)
+        self.set_path(path, self.path_style)
 
 
-@dataclass
 class CurvedCubicLine(Path):
     points: List[Tuple[float, float]]
     path_style: PathStyle
 
-    def __post_init__(self):
+    def setup(self):
         assert len(self.points) >= 3, "A cubic line requires at least 3 points."
 
         path = skia.Path()
@@ -278,52 +330,53 @@ class CurvedCubicLine(Path):
         for i in range(0, len(self.points) - 2, 2):
             path.cubicTo(*self.points[i], *self.points[i + 1], *self.points[i + 2])
 
-        super().__init__(path, self.path_style)
+        self.set_path(path, self.path_style)
 
 
-class GridOverlay(Compose):
+class GridOverlay(DrawableWithChild):
     """Overlays a grid on top of a scene, for debugging and design."""
 
-    def __init__(
-        self,
-        scene: Drawable,
-        spacing: float = 20,
-        label_every: int = 5,
-        color: Color = Colors.BLACK,
-    ):
-        x_lower, x_upper = scene.bounds.left, scene.bounds.right
-        y_lower, y_upper = scene.bounds.top, scene.bounds.bottom
+    scene: Drawable
+    spacing: float = 20
+    label_every: int = 5
+    color: Color = Colors.BLACK
+
+    def setup(self):
+        x_lower, x_upper = self.scene.bounds.left, self.scene.bounds.right
+        y_lower, y_upper = self.scene.bounds.top, self.scene.bounds.bottom
 
         # Round the lower bounds to the previous multiple of the spacing.
-        x_lower = math.floor(x_lower / spacing) * spacing
-        y_lower = math.floor(y_lower / spacing) * spacing
+        x_lower = math.floor(x_lower / self.spacing) * self.spacing
+        y_lower = math.floor(y_lower / self.spacing) * self.spacing
 
         # Number of horizontal and vertical lines
-        num_verticals = math.floor((x_upper - x_lower) / spacing)
-        num_horizontals = math.floor((y_upper - y_lower) / spacing)
+        num_verticals = math.floor((x_upper - x_lower) / self.spacing)
+        num_horizontals = math.floor((y_upper - y_lower) / self.spacing)
 
         # Line positions
-        xs = [x_lower + spacing * i for i in range(num_verticals + 1)]
-        ys = [y_lower + spacing * i for i in range(num_horizontals + 1)]
+        xs = [x_lower + self.spacing * i for i in range(num_verticals + 1)]
+        ys = [y_lower + self.spacing * i for i in range(num_horizontals + 1)]
 
         # Extend the lines a bit to make the grid look nicer
-        x_lower -= spacing / 2
-        y_lower -= spacing / 2
-        x_upper = max(x_upper, xs[-1] + spacing / 2)
-        y_upper = max(y_upper, ys[-1] + spacing / 2)
+        x_lower -= self.spacing / 2
+        y_lower -= self.spacing / 2
+        x_upper = max(x_upper, xs[-1] + self.spacing / 2)
+        y_upper = max(y_upper, ys[-1] + self.spacing / 2)
 
-        style = PathStyle(Color(color.r, color.g, color.b, 0.3), 1)
-        important_style = PathStyle(Color(color.r, color.g, color.b, 0.85), 1)
+        style = PathStyle(Color(self.color.r, self.color.g, self.color.b, 0.3), 1)
+        important_style = PathStyle(
+            Color(self.color.r, self.color.g, self.color.b, 0.85), 1
+        )
 
         # Index of the zero line, to figure out which lines to bold and label.
-        x_offset_index = xs.index(0) % label_every
-        y_offset_index = ys.index(0) % label_every
+        x_offset_index = xs.index(0) % self.label_every
+        y_offset_index = ys.index(0) % self.label_every
 
         vertical_lines = [
             Line(
                 (x, y_lower),
                 (x, y_upper),
-                important_style if i % label_every == x_offset_index else style,
+                important_style if i % self.label_every == x_offset_index else style,
             )
             for i, x in enumerate(xs)
         ]
@@ -331,7 +384,7 @@ class GridOverlay(Compose):
             Line(
                 (x_lower, y),
                 (x_upper, y),
-                important_style if i % label_every == y_offset_index else style,
+                important_style if i % self.label_every == y_offset_index else style,
             )
             for i, y in enumerate(ys)
         ]
@@ -340,11 +393,11 @@ class GridOverlay(Compose):
         font_style = FontStyle(
             family="Arial",
             size=12,
-            color=color,
+            color=self.color,
         )
 
         for i, x in enumerate(xs):
-            if i % label_every == x_offset_index:
+            if i % self.label_every == x_offset_index:
                 labels.append(
                     SimpleText(
                         str(round(x)),
@@ -353,7 +406,7 @@ class GridOverlay(Compose):
                 )
 
         for i, y in enumerate(ys):
-            if i % label_every == y_offset_index:
+            if i % self.label_every == y_offset_index:
                 labels.append(
                     SimpleText(
                         str(round(y)),
@@ -361,4 +414,6 @@ class GridOverlay(Compose):
                     ).move(x_lower - 5, y, corner=Corner.MIDDLE_RIGHT)
                 )
 
-        super().__init__([scene] + vertical_lines + horizontal_lines + labels)
+        self.set_child(
+            Compose([self.scene] + vertical_lines + horizontal_lines + labels)
+        )
