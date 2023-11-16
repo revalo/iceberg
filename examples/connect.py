@@ -37,7 +37,7 @@ if __name__ == "__main__":
             ),
         )
 
-    arrow_label = ice.MathTex("f(x) = x^2", scale=4)
+    arrow_label = ice.MathTex("f(x) = x^2", svg_scale=4)
     arrow = ice.LabelArrow(
         arrow=arrow,
         child=arrow_label,

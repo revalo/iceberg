@@ -1,6 +1,6 @@
 from typing import Callable, Sequence, Union
 
-from iceberg import Drawable, Renderer
+from iceberg import Drawable, Renderer, DrawableWithChild
 from iceberg.animation import tween, EaseType
 from PIL import Image
 import av
@@ -160,40 +160,39 @@ def _get_drawable_duration(drawable: Drawable) -> float:
     return duration
 
 
-# class Frozen(Drawable):
-#     def __init__(self, child: Drawable, t: float = None) -> None:
-#         """Get a frozen drawable at time t. If t is None, then the drawable is frozen at the
-#         end of its animation.
+class Frozen(DrawableWithChild):
+    child: Drawable
+    t: float = None
 
-#         Args:
-#             child: The drawable to freeze.
-#             t: The time to freeze the drawable at.
-#         """
+    def setup(self):
+        """Get a frozen drawable at time t. If t is None, then the drawable is frozen at the
+        end of its animation.
 
-#         if t is None:
-#             t = _get_drawable_duration(child)
+        Args:
+            child: The drawable to freeze.
+            t: The time to freeze the drawable at.
+        """
 
-#         self._child = child
-#         self._t = t
+        self.__t = self.t
+        if self.__t is None:
+            self.__t = _get_drawable_duration(self.child)
 
-#         super().__init__()
+    def _time_freeze(self):
+        self.child.set_time(self.__t)
 
-#     def _time_freeze(self):
-#         self._child.set_time(self._t)
+    @property
+    def bounds(self) -> Bounds:
+        self._time_freeze()
+        return self.child.bounds
 
-#     @property
-#     def bounds(self) -> Bounds:
-#         self._time_freeze()
-#         return self._child.bounds
+    @property
+    def children(self) -> Sequence[Drawable]:
+        self._time_freeze()
+        return self.child.children
 
-#     @property
-#     def children(self) -> Sequence[Drawable]:
-#         self._time_freeze()
-#         return self._child.children
-
-#     def draw(self, canvas):
-#         self._time_freeze()
-#         self._child.draw(canvas)
+    def draw(self, canvas):
+        self._time_freeze()
+        self.child.draw(canvas)
 
 
 class Scene(object):

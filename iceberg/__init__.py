@@ -52,4 +52,4 @@ from iceberg.arrows import (
 )
 
 from iceberg.animation import tween, EaseType
-from iceberg.animation.scene import Playbook, Animated, Scene
+from iceberg.animation.scene import Playbook, Animated, Scene, Frozen

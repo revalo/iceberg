@@ -382,7 +382,7 @@ class PointAlign(DrawableWithChild):
         )
 
     def setup(self):
-        child_corner = self.child.bounds.corners[child_corner]
+        child_corner = self.child.bounds.corners[self.child_corner]
 
         dx = self.anchor[0] - child_corner[0]
         dy = self.anchor[1] - child_corner[1]

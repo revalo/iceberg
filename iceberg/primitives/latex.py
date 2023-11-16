@@ -142,13 +142,13 @@ class Tex(DrawableWithChild):
     tex: str
     preamble: str = _DEFAULT_PREAMBLE
     compiler: str = "latex"
-    scale: float = 1.0
+    svg_scale: float = 1.0
     color: Color = Color(0, 0, 0, 1)
 
     def setup(self) -> None:
         svg_filename = tex_content_to_svg_file(self.tex, self.preamble, self.compiler)
         self._svg = SVG(svg_filename=svg_filename, color=self.color)
-        self.set_child(self._svg.scale(self.scale))
+        self.set_child(self._svg.scale(self.svg_scale))
 
 
 class MathTex(DrawableWithChild):
@@ -157,7 +157,7 @@ class MathTex(DrawableWithChild):
     environment: str = "align*"
     compiler: str = "latex"
     color: Color = Color(0, 0, 0, 1)
-    scale: float = 1.0
+    svg_scale: float = 1.0
 
     def __init__(
         self,
@@ -166,7 +166,7 @@ class MathTex(DrawableWithChild):
         environment: str = "align*",
         compiler: str = "latex",
         color: Color = Color(0, 0, 0, 1),
-        scale: float = 1.0,
+        svg_scale: float = 1.0,
     ):
         self.init_from_fields(
             tex=tex,
@@ -174,7 +174,7 @@ class MathTex(DrawableWithChild):
             environment=environment,
             compiler=compiler,
             color=color,
-            scale=scale,
+            svg_scale=svg_scale,
         )
 
     def setup(self) -> None:
@@ -187,7 +187,7 @@ class MathTex(DrawableWithChild):
                 tex=tex,
                 preamble=self.preamble,
                 compiler=self.compiler,
-                scale=self.scale,
+                svg_scale=self.svg_scale,
                 color=self.color,
             )
         )

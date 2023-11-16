@@ -10,11 +10,15 @@ import dataclasses
 from .ease import EaseType
 
 _PRIMITIVE_INTERPOLATORS = {
-    int: lambda a, b, t: int(a + (b - a) * t),
+    int: lambda a, b, t: float(a + (b - a) * t),
     float: lambda a, b, t: a + (b - a) * t,
     np.ndarray: lambda a, b, t: a + (b - a) * t,
     bool: lambda a, b, t: a if t < 0.5 else b,
 }
+
+
+def _field_names(obj):
+    return set([x.name for x in dataclasses.fields(obj)])
 
 
 def _interpolate(sceneA, sceneB, t):
@@ -23,23 +27,24 @@ def _interpolate(sceneA, sceneB, t):
     # to get a dictionary representation of the scene.
 
     if type(sceneA) != type(sceneB):
-        raise ValueError("Scene graphs don't have the same structure.")
+        raise ValueError(
+            f"Scene graphs don't have the same structure. Type of {sceneA} is {type(sceneA)}, but type of {sceneB} is {type(sceneB)}."
+        )
 
     if isinstance(sceneA, ice.Drawable):
-        fieldsA = dataclasses.asdict(sceneA)
-        fieldsB = dataclasses.asdict(sceneB)
+        fieldsA = _field_names(sceneA)
+        fieldsB = _field_names(sceneB)
 
-        if fieldsA.keys() != fieldsB.keys():
-            raise ValueError("Scene graphs don't have the same structure.")
+        if fieldsA != fieldsB:
+            raise ValueError(
+                f"Scene graphs don't have the same structure. {sceneA} has fields {fieldsA}, but {sceneB} has fields {fieldsB}."
+            )
 
         new_scene_fields = {}
 
-        for field_name in fieldsA.keys():
+        for field_name in fieldsA:
             fieldA_value = getattr(sceneA, field_name)
             fieldB_value = getattr(sceneB, field_name)
-
-            if type(fieldA_value) != type(fieldB_value):
-                raise ValueError("Scene graphs don't have the same structure.")
 
             new_scene_fields[field_name] = _interpolate(fieldA_value, fieldB_value, t)
 
@@ -50,7 +55,9 @@ def _interpolate(sceneA, sceneB, t):
             return tuple(rv)
         return rv
     elif isinstance(sceneA, (int, float, np.ndarray)):
-        return _PRIMITIVE_INTERPOLATORS[type(sceneA)](sceneA, sceneB, t)
+        for type_, func in _PRIMITIVE_INTERPOLATORS.items():
+            if isinstance(sceneA, type_):
+                return func(sceneA, sceneB, t)
     elif isinstance(sceneA, ice.AnimatableProperty):
         return sceneA.__class__.interpolate(sceneA, sceneB, t)
 
