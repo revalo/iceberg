@@ -12,6 +12,7 @@ from iceberg.core import (
     Corner,
     StrokeCap,
     render_svg,
+    AnimatableProperty,
 )
 
 from iceberg.primitives import (
@@ -50,5 +51,5 @@ from iceberg.arrows import (
     LabelArrow,
 )
 
-from iceberg.animation import tween, EaseType, Animatable
-from iceberg.animation.scene import Playbook, Animated, Frozen, Scene
+from iceberg.animation import tween, EaseType
+from iceberg.animation.scene import Playbook, Animated, Scene

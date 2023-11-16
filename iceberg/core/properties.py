@@ -1,13 +1,14 @@
 from dataclasses import dataclass
 
 from typing import List, Optional, Tuple
+from typing_extensions import Self
 from enum import Enum
+from abc import ABC, abstractclassmethod
 
 import skia
 import numpy as np
 
 from iceberg.geometry import apply_transform
-from iceberg.animation.animatable import Animatable
 
 
 class Corner(object):
@@ -24,7 +25,17 @@ class Corner(object):
     CENTER = 8
 
 
-class Bounds(Animatable):
+class AnimatableProperty(ABC):
+    @abstractclassmethod
+    def interpolate(cls, start: Self, end: Self, progress: float):
+        pass
+
+
+def _interpolate_tuple(start, end, progress):
+    return tuple(start[i] + (end[i] - start[i]) * progress for i in range(len(start)))
+
+
+class Bounds(AnimatableProperty):
     """Represents a bounding box."""
 
     def __init__(
@@ -78,14 +89,6 @@ class Bounds(Animatable):
 
         self._compute_corners()
 
-    @property
-    def animatables(self):
-        return [np.array([self.left, self.top, self.right, self.bottom])]
-
-    def copy_with_animatables(self, animatables):
-        scalars = animatables[0]
-        return Bounds(*scalars)
-
     def transform(self, transform: np.ndarray):
         """Transform the bounds by the specified transform matrix.
 
@@ -135,6 +138,13 @@ class Bounds(Animatable):
     @property
     def size(self) -> Tuple[float, float]:
         return self.width, self.height
+
+    @classmethod
+    def interpolate(cls, start: Self, end: Self, progress: float):
+        vectorsA = [start.top, start.left, start.bottom, start.right]
+        vectorsB = [end.top, end.left, end.bottom, end.right]
+        vectors = _interpolate_tuple(vectorsA, vectorsB, progress)
+        return Bounds(*vectors)
 
     def inset(self, dx: float, dy: Optional[float] = None) -> "Bounds":
         """Inset the bounds by the specified amount.
@@ -273,7 +283,7 @@ class Bounds(Animatable):
         return self._computed_corners
 
 
-class Color(Animatable):
+class Color(AnimatableProperty):
     def __init__(self, r: float, g: float, b: float, a: float = 1.0) -> None:
         """Create a color object.
 
@@ -296,13 +306,12 @@ class Color(Animatable):
         self._b = b
         self._a = a
 
-    @property
-    def animatables(self):
-        return [np.array([self.r, self.g, self.b, self.a])]
-
-    def copy_with_animatables(self, animatables):
-        r, g, b, a = animatables[0]
-        return Color(r, g, b, a)
+    @classmethod
+    def interpolate(cls, start: Self, end: Self, progress: float):
+        vectorsA = [start.r, start.g, start.b, start.a]
+        vectorsB = [end.r, end.g, end.b, end.a]
+        vectors = _interpolate_tuple(vectorsA, vectorsB, progress)
+        return Color(*vectors)
 
     @property
     def r(self) -> float:
@@ -446,7 +455,7 @@ class StrokeCap(Enum):
     SQUARE = skia.Paint.kSquare_Cap
 
 
-class PathStyle(Animatable):
+class PathStyle(AnimatableProperty):
     """A style for drawing paths."""
 
     def __init__(
@@ -492,15 +501,14 @@ class PathStyle(Animatable):
             else None,
         )
 
-    @property
-    def animatables(self):
-        return [self.color, self.thickness]
-
-    def copy_with_animatables(self, animatables):
-        color, thickness = animatables
-
+    @classmethod
+    def interpolate(cls, start: Self, end: Self, progress: float):
         return PathStyle(
-            color, thickness, self._anti_alias, self._stroke, self._stroke_cap
+            Color.interpolate(start.color, end.color, progress),
+            start.thickness + (end.thickness - start.thickness) * progress,
+            start.anti_alias,
+            start._stroke,
+            start._stroke_cap,
         )
 
     @property

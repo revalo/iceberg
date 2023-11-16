@@ -8,7 +8,6 @@ import numpy as np
 import skia
 
 from iceberg import PathStyle, Drawable, DrawableWithChild
-from iceberg.animation.animatable import AnimatableSequence
 from iceberg.primitives import Compose, Line, Path, PartialPath, Transform
 
 

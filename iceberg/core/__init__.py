@@ -6,6 +6,7 @@ from .properties import (
     PathStyle,
     FontStyle,
     StrokeCap,
+    AnimatableProperty,
 )
 from .drawable import Drawable, DrawableWithChild
 from .renderer import Renderer, render_svg

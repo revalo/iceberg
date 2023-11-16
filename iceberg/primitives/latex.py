@@ -7,17 +7,11 @@ from absl import logging
 import os
 import re
 import shutil
-from iceberg.animation.animatable import AnimatableSequence
 
-from iceberg.primitives.layout import Transform
 
 from iceberg.utils import temp_filename, temp_directory
-from iceberg import DrawableWithChild, Bounds, Color
-from iceberg.core import Bounds
+from iceberg import DrawableWithChild, Color
 from iceberg.primitives.svg import SVG
-from iceberg.animation import Animatable
-
-from dataclasses import dataclass
 
 
 class LatexError(Exception):

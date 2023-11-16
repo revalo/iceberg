@@ -2,8 +2,6 @@ from typing import List, Sequence, Tuple, Union
 import skia
 
 from iceberg import Drawable, Bounds, Color, Colors, DrawableWithChild
-from iceberg.animation import Animatable
-from iceberg.animation.animatable import AnimatableSequence
 from iceberg.geometry import get_transform, apply_transform
 from dataclasses import dataclass, field
 from abc import ABC, abstractmethod, abstractproperty
@@ -52,6 +50,12 @@ class Blank(Drawable):
 
     def draw(self, canvas: skia.Canvas) -> None:
         canvas.drawRect(self.rectangle.to_skia(), self._paint)
+
+    @classmethod
+    def from_size(
+        cls, width: float, height: float, background_color: Color = Colors.BLACK
+    ):
+        return cls(Bounds.from_size(width, height), background_color)
 
 
 class Compose(Drawable):

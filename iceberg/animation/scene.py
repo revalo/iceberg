@@ -1,7 +1,7 @@
 from typing import Callable, Sequence, Union
 
 from iceberg import Drawable, Renderer
-from iceberg.animation import Animatable, tween, EaseType
+from iceberg.animation import tween, EaseType
 from PIL import Image
 import av
 import tqdm
@@ -16,14 +16,29 @@ import numpy as np
 class Animated(Drawable):
     """A drawable that depends on time."""
 
+    states: Sequence[Drawable]
+    durations: Union[Sequence[float], float]
+    ease_types: Union[Sequence[EaseType], EaseType] = EaseType.EASE_IN_OUT_QUAD
+    ease_fns: Union[Sequence[Callable], Callable] = None
+    start_time: float = 0
+
     def __init__(
         self,
-        states: Sequence[Animatable],
+        states: Sequence[Drawable],
         durations: Union[Sequence[float], float],
         ease_types: Union[Sequence[EaseType], EaseType] = EaseType.EASE_IN_OUT_QUAD,
-        ease_fns=None,
+        ease_fns: Union[Sequence[Callable], Callable] = None,
         start_time: float = 0,
-    ):
+    ) -> None:
+        self.init_from_fields(
+            states=states,
+            durations=durations,
+            ease_types=ease_types,
+            ease_fns=ease_fns,
+            start_time=start_time,
+        )
+
+    def setup(self):
         """A drawable that depends on time, given a sequence of drawables and durations.
 
         This drawable will animate between the given states, with the given durations and ease
@@ -40,31 +55,31 @@ class Animated(Drawable):
             start_time: The time at which to start the animation.
         """
 
-        if ease_fns is None:
-            ease_fns = ease_types
+        self._ease_fns = self.ease_fns
+        if self._ease_fns is None:
+            self._ease_fns = self.ease_types
 
-        if isinstance(durations, float) or isinstance(durations, int):
-            durations = [durations] * (len(states) - 1)
+        self._durations = self.durations
+        if isinstance(self._durations, float) or isinstance(self._durations, int):
+            self._durations = [self._durations] * (len(self.states) - 1)
 
-        if not isinstance(ease_fns, Sequence):
-            ease_fns = [ease_fns] * (len(states) - 1)
+        if not isinstance(self._ease_fns, Sequence):
+            self._ease_fns = [self._ease_fns] * (len(self.states) - 1)
 
-        assert len(states) >= 2, "Must have at least two states to animate between."
         assert (
-            len(states) == len(durations) + 1
+            len(self.states) >= 2
+        ), "Must have at least two states to animate between."
+        assert (
+            len(self.states) == len(self._durations) + 1
         ), "Every pair of states must have a duration."
         assert (
-            len(states) == len(ease_fns) + 1
+            len(self.states) == len(self._ease_fns) + 1
         ), "Every pair of states must have an ease."
 
-        self._states = states
-        self._durations = durations
-        self._ease_fns = ease_fns
-        self._total_duration = sum(durations) + start_time
-        self._start_time = start_time
+        self._states = self.states
+        self._total_duration = sum(self._durations) + self.start_time
+        self._start_time = self.start_time
         self.cursor = 0
-
-        super().__init__()
 
     @property
     def total_duration(self) -> float:
@@ -146,40 +161,40 @@ def _get_drawable_duration(drawable: Drawable) -> float:
     return duration
 
 
-class Frozen(Drawable):
-    def __init__(self, child: Drawable, t: float = None) -> None:
-        """Get a frozen drawable at time t. If t is None, then the drawable is frozen at the
-        end of its animation.
+# class Frozen(Drawable):
+#     def __init__(self, child: Drawable, t: float = None) -> None:
+#         """Get a frozen drawable at time t. If t is None, then the drawable is frozen at the
+#         end of its animation.
 
-        Args:
-            child: The drawable to freeze.
-            t: The time to freeze the drawable at.
-        """
+#         Args:
+#             child: The drawable to freeze.
+#             t: The time to freeze the drawable at.
+#         """
 
-        if t is None:
-            t = _get_drawable_duration(child)
+#         if t is None:
+#             t = _get_drawable_duration(child)
 
-        self._child = child
-        self._t = t
+#         self._child = child
+#         self._t = t
 
-        super().__init__()
+#         super().__init__()
 
-    def _time_freeze(self):
-        self._child.set_time(self._t)
+#     def _time_freeze(self):
+#         self._child.set_time(self._t)
 
-    @property
-    def bounds(self) -> Bounds:
-        self._time_freeze()
-        return self._child.bounds
+#     @property
+#     def bounds(self) -> Bounds:
+#         self._time_freeze()
+#         return self._child.bounds
 
-    @property
-    def children(self) -> Sequence[Drawable]:
-        self._time_freeze()
-        return self._child.children
+#     @property
+#     def children(self) -> Sequence[Drawable]:
+#         self._time_freeze()
+#         return self._child.children
 
-    def draw(self, canvas):
-        self._time_freeze()
-        self._child.draw(canvas)
+#     def draw(self, canvas):
+#         self._time_freeze()
+#         self._child.draw(canvas)
 
 
 class Scene(object):
@@ -287,7 +302,6 @@ class Scene(object):
                 if not _IS_GIF:
                     stream.width = bounds.width
                     stream.height = bounds.height
-                    # stream.pix_fmt = "yuv420p"
 
             frame_drawable = frame_drawable.crop(bounds)
 

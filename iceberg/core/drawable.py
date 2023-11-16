@@ -6,7 +6,7 @@ import types
 import functools
 
 from abc import ABC, abstractmethod, abstractproperty
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from iceberg.core import Bounds, Corner, Color
 from iceberg.utils import direction_equal
 import numpy as np
@@ -241,6 +241,22 @@ class Drawable(ABC, DrawableBase):
             padding=padding,
         )
 
+    def pad_left(self, padding: float):
+        """Pad the drawable on the left by the specified amount."""
+        return self.pad((padding, 0, 0, 0))
+
+    def pad_top(self, padding: float):
+        """Pad the drawable on the top by the specified amount."""
+        return self.pad((0, padding, 0, 0))
+
+    def pad_right(self, padding: float):
+        """Pad the drawable on the right by the specified amount."""
+        return self.pad((0, 0, padding, 0))
+
+    def pad_bottom(self, padding: float):
+        """Pad the drawable on the bottom by the specified amount."""
+        return self.pad((0, 0, 0, padding))
+
     def crop(self, bounds: Bounds) -> "Drawable":
         """Crop the drawable to the specified bounds."""
         from iceberg import Colors
@@ -400,6 +416,10 @@ class Drawable(ABC, DrawableBase):
         """
 
         children = []
+
+        if condition(self):
+            children.append(self)
+
         for child in self.children:
             if condition(child):
                 children.append(child)

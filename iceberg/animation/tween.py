@@ -4,18 +4,67 @@ from enum import Enum
 import numpy as np
 import math
 
-from .animatable import Animatable
+import iceberg as ice
+import dataclasses
+
 from .ease import EaseType
+
+_PRIMITIVE_INTERPOLATORS = {
+    int: lambda a, b, t: int(a + (b - a) * t),
+    float: lambda a, b, t: a + (b - a) * t,
+    np.ndarray: lambda a, b, t: a + (b - a) * t,
+    bool: lambda a, b, t: a if t < 0.5 else b,
+}
+
+
+def _interpolate(sceneA, sceneB, t):
+    # Recursively walk through the scene graph and interpolate between the two scenes.
+    # Use the fact that everything is a dataclass, so we can use dataclasses.asdict
+    # to get a dictionary representation of the scene.
+
+    if type(sceneA) != type(sceneB):
+        raise ValueError("Scene graphs don't have the same structure.")
+
+    if isinstance(sceneA, ice.Drawable):
+        fieldsA = dataclasses.asdict(sceneA)
+        fieldsB = dataclasses.asdict(sceneB)
+
+        if fieldsA.keys() != fieldsB.keys():
+            raise ValueError("Scene graphs don't have the same structure.")
+
+        new_scene_fields = {}
+
+        for field_name in fieldsA.keys():
+            fieldA_value = getattr(sceneA, field_name)
+            fieldB_value = getattr(sceneB, field_name)
+
+            if type(fieldA_value) != type(fieldB_value):
+                raise ValueError("Scene graphs don't have the same structure.")
+
+            new_scene_fields[field_name] = _interpolate(fieldA_value, fieldB_value, t)
+
+        return sceneA.__class__.from_fields(**new_scene_fields)
+    elif isinstance(sceneA, (list, tuple)):
+        rv = [_interpolate(a, b, t) for a, b in zip(sceneA, sceneB)]
+        if isinstance(sceneA, tuple):
+            return tuple(rv)
+        return rv
+    elif isinstance(sceneA, (int, float, np.ndarray)):
+        return _PRIMITIVE_INTERPOLATORS[type(sceneA)](sceneA, sceneB, t)
+    elif isinstance(sceneA, ice.AnimatableProperty):
+        return sceneA.__class__.interpolate(sceneA, sceneB, t)
+
+    return sceneA if t < 0.5 else sceneB
 
 
 def tween(
-    start: Union[Animatable, np.ndarray, float],
-    end: Union[Animatable, np.ndarray, float],
+    start,
+    end,
     progress: float,
     ease_type: EaseType = EaseType.EASE_IN_OUT_QUAD,
     ease_fn=None,
     ping_pong: bool = False,
-) -> Union[np.ndarray, float, Animatable]:
+):
     """Tween between two values.
 
     Args:
@@ -40,21 +89,4 @@ def tween(
         elif progress >= 0.5:
             progress = 1 - (progress - 0.5) * 2
 
-    if isinstance(start, Animatable):
-        start_scalars = start.animatables_to_vector()
-        end_scalars = end.animatables_to_vector()
-
-        tweened_scalars = tween(
-            start_scalars,
-            end_scalars,
-            progress,
-            ease_type=ease_type,
-            ease_fn=ease_fn,
-        )
-
-        # if progress < 0.99:
-        return start.copy_with_animatable_vector(tweened_scalars)
-
-        # return end.copy_with_animatable_vector(tweened_scalars)
-
-    return start + (end - start) * ease_fn(progress)
+    return _interpolate(start, end, ease_fn(progress))

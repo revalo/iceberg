@@ -10,8 +10,6 @@ from iceberg import (
     Colors,
     DrawableWithChild,
 )
-from iceberg.animation import Animatable
-from iceberg.animation.animatable import AnimatableSequence
 from iceberg.core import Bounds
 from iceberg.core.drawable import Drawable
 from iceberg.core.properties import PathStyle
@@ -283,16 +281,6 @@ class PartialPath(Drawable):
     @property
     def bounds(self) -> Bounds:
         return self._child_path.bounds
-
-    @property
-    def animatables(self) -> AnimatableSequence:
-        return [self._start, self._end]
-
-    def copy_with_animatables(self, animatables: AnimatableSequence):
-        start, end = animatables
-        return PartialPath(
-            self._child_path, start, end, self._subdivide_increment, self._interpolation
-        )
 
 
 class Line(Path):
