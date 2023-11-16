@@ -18,7 +18,7 @@ class LatexError(Exception):
     pass
 
 
-def create_tex_svg(full_tex: str, svg_file: str, compiler: str):
+def _create_tex_svg(full_tex: str, svg_file: str, compiler: str):
     if compiler == "latex":
         program = "latex"
         dvi_ext = ".dvi"
@@ -110,7 +110,7 @@ def tex_content_to_svg_file(
 
     svg_file = os.path.join(temp_directory(), temp_filename(tex=full_tex) + ".svg")
     if not os.path.exists(svg_file):
-        create_tex_svg(full_tex, svg_file, compiler)
+        _create_tex_svg(full_tex, svg_file, compiler)
     return svg_file
 
 
@@ -139,6 +139,16 @@ _DEFAULT_PREAMBLE = r"""
 
 
 class Tex(DrawableWithChild):
+    """A LaTeX object, which renders LaTeX using dvisvgm.
+
+    Args:
+        tex: The LaTeX code to render.
+        preamble: The LaTeX preamble to use.
+        compiler: The LaTeX compiler to use.
+        svg_scale: The scale of the SVG.
+        color: The color of the SVG.
+    """
+
     tex: str
     preamble: str = _DEFAULT_PREAMBLE
     compiler: str = "latex"
@@ -152,6 +162,17 @@ class Tex(DrawableWithChild):
 
 
 class MathTex(DrawableWithChild):
+    """A LaTeX math formula using the align* environment by default.
+
+    Args:
+        tex: The LaTeX code to render in math mode.
+        preamble: The LaTeX preamble to use.
+        environment: The LaTeX environment to use. Defaults to "align*".
+        compiler: The LaTeX compiler to use.
+        svg_scale: The scale of the SVG.
+        color: The color of the SVG.
+    """
+
     tex: str
     preamble: str = _DEFAULT_PREAMBLE
     environment: str = "align*"

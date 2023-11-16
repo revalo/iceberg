@@ -5,17 +5,17 @@ from iceberg.core import Bounds
 
 
 class SVG(Drawable):
+    """Initialize the SVG drawable.
+
+    Args:
+        svg_filename: The filename of the SVG file to load.
+        color: The color to use for the SVG. If not specified, the SVG will be drawn as-is.
+    """
+
     svg_filename: str
     color: Color = None
 
     def setup(self):
-        """Initialize the SVG drawable.
-
-        Args:
-            svg_filename: The filename of the SVG file to load.
-            color: The color to use for the SVG. If not specified, the SVG will be drawn as-is.
-        """
-
         self._svg_filename = self.svg_filename
         self._color = self.color
         self._paint = None

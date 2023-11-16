@@ -9,6 +9,13 @@ from enum import Enum
 
 
 class SimpleText(Drawable):
+    """Draw a simple text. This has no line wrapping.
+
+    Args:
+        text: The text to draw.
+        font_style: The font style to use.
+    """
+
     text: str
     font_style: FontStyle
 
@@ -35,6 +42,16 @@ class SimpleText(Drawable):
 
 
 class Text(Drawable):
+    """Main text class with line wrapping.
+
+    Args:
+        text: The text to draw.
+        font_style: The font style to use.
+        align: The alignment of the text.
+        width: The width of the text. If not specified, no line wrapping will be done.
+        line_spacing: The line spacing of the text.
+    """
+
     class Align(Enum):
         LEFT = 0
         RIGHT = 1

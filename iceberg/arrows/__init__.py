@@ -72,6 +72,17 @@ class ArrowHeadStyle(Enum):
 
 
 class ArrowHead(DrawableWithChild):
+    """Just the arrow head.
+
+    Args:
+        point: The point of the arrow head.
+        direction: The direction of the arrow head.
+        line_path_style: The style of the line.
+        angle: The angle of the arrow head in degrees.
+        head_length: The length of the arrow head.
+        arrow_head_style: The style of the arrow head.
+    """
+
     point: Tuple[float, float]
     direction: Tuple[float, float]
     line_path_style: PathStyle
@@ -98,17 +109,6 @@ class ArrowHead(DrawableWithChild):
         )
 
     def setup(self):
-        """Just the arrow head.
-
-        Args:
-            point: The point of the arrow head.
-            direction: The direction of the arrow head.
-            line_path_style: The style of the line.
-            angle: The angle of the arrow head in degrees.
-            head_length: The length of the arrow head.
-            arrow_head_style: The style of the arrow head.
-        """
-
         items = []
 
         corners = arrow_corners_from_direction_and_point(
@@ -144,6 +144,21 @@ class ArrowHead(DrawableWithChild):
 
 
 class Arrow(DrawableWithChild):
+    """Create an arrow.
+
+    Args:
+        start: The start coordinate.
+        end: The end coordinate.
+        line_path_style: The style of the line.
+        head_length: The length of the arrow head.
+        angle: The angle of the arrow head in degrees.
+        arrow_head_style: The style of the arrow head.
+        arrow_head_start: Whether to draw an arrow head at the start.
+        arrow_head_end: Whether to draw an arrow head at the end.
+        partial_start: The fraction of the arrow to draw at the start.
+        partial_end: The fraction of the arrow to draw at the end.
+    """
+
     start: Tuple[float, float]
     end: Tuple[float, float]
     line_path_style: PathStyle
@@ -182,21 +197,6 @@ class Arrow(DrawableWithChild):
         )
 
     def setup(self):
-        """Create an arrow.
-
-        Args:
-            start: The start coordinate.
-            end: The end coordinate.
-            line_path_style: The style of the line.
-            head_length: The length of the arrow head.
-            angle: The angle of the arrow head in degrees.
-            arrow_head_style: The style of the arrow head.
-            arrow_head_start: Whether to draw an arrow head at the start.
-            arrow_head_end: Whether to draw an arrow head at the end.
-            partial_start: The fraction of the arrow to draw at the start.
-            partial_end: The fraction of the arrow to draw at the end.
-        """
-
         self._midpoint = (np.array(self.start) + np.array(self.end)) / 2
         self._start = np.array(self.start)
         self._end = np.array(self.end)
@@ -306,6 +306,17 @@ class ArrowAlignDirection(Enum):
 
 
 class LabelArrow(DrawableWithChild):
+    """Combine an arrow alongside another drawable in a way that labels the arrow.
+
+    Args:
+        arrow: The arrow to be labeled.
+        child: The label to be placed alongside the arrow.
+        child_corner: The corner of the child to align with. See `Corner` for details.
+        placement: Whether to place the specified corner of the child above or below the arrow.
+        distance: The distance between the arrow and the child's specified corner.
+        rotated: Whether to rotate the child to match the arrow.
+    """
+
     arrow: Arrow
     child: Drawable
     child_corner: int
@@ -314,17 +325,6 @@ class LabelArrow(DrawableWithChild):
     rotated: bool = False
 
     def setup(self):
-        """Combine an arrow alongside another drawable in a way that labels the arrow.
-
-        Args:
-            arrow: The arrow to be labeled.
-            child: The label to be placed alongside the arrow.
-            child_corner: The corner of the child to align with. See `Corner` for details.
-            placement: Whether to place the specified corner of the child above or below the arrow.
-            distance: The distance between the arrow and the child's specified corner.
-            rotated: Whether to rotate the child to match the arrow.
-        """
-
         # Find normal vector.
         direction = (np.array(self.arrow.end) - np.array(self.arrow.start)).astype(
             np.float32

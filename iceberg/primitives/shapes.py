@@ -30,6 +30,18 @@ class BorderPosition(Enum):
 
 
 class Rectangle(Drawable):
+    """A rectangle.
+
+    Args:
+        rectangle: The bounds of the rectangle.
+        border_color: The color of the border.
+        fill_color: The color of the fill.
+        border_thickness: The thickness of the border.
+        anti_alias: Whether to use anti-aliasing.
+        border_position: The position of the border.
+        border_radius: The radius of the border.
+    """
+
     rectangle: Bounds
     border_color: Color = None
     fill_color: Color = None
@@ -126,6 +138,8 @@ class Rectangle(Drawable):
 
 
 class Ellipse(Rectangle):
+    """An ellipse. Has the same arguments as Rectangle, except renders an ellipse."""
+
     def draw(self, canvas):
         if self._fill_paint:
             canvas.drawOval(self._skia_rect, self._fill_paint)
@@ -135,7 +149,16 @@ class Ellipse(Rectangle):
 
 
 class Path(Drawable, ABC):
+    """Base class for paths."""
+
     def set_path(self, skia_path: skia.Path, path_style: PathStyle):
+        """Set the path and path style from the setup of a derived class.
+
+        Args:
+            skia_path: The path to set.
+            path_style: The path style to set.
+        """
+
         self._skia_path = skia_path
         self._path_style = path_style
 
@@ -145,12 +168,23 @@ class Path(Drawable, ABC):
 
     @classmethod
     def from_skia(cls, skia_path: skia.Path, path_style: PathStyle):
+        """Initialize a standalone path from a Skia path and path style.
+
+        Args:
+            skia_path: The Skia path.
+            path_style: The path style.
+
+        Returns:
+            The path.
+        """
+
         path = cls()
         path.set_path(skia_path, path_style)
         return path
 
     @property
     def skia_path(self) -> skia.Path:
+        """The Skia path."""
         return self._skia_path
 
     @property
@@ -162,6 +196,19 @@ class Path(Drawable, ABC):
 
 
 class PartialPath(Drawable):
+    """Part of a path, from start to end.
+
+    Args:
+        child_path: The path to draw.
+        start: The start of the partial path, between 0 and 1.
+        end: The end of the partial path, between 0 and 1.
+        subdivide_increment: The increment to use when subdividing the path.
+        interpolation: The interpolation to use when drawing the path.
+
+    Raises:
+        AssertionError: If start or end are not between 0 and 1 or if start > end.
+    """
+
     class Interpolation(Enum):
         LINEAR = 0
         CUBIC = 1
@@ -284,6 +331,14 @@ class PartialPath(Drawable):
 
 
 class Line(Path):
+    """A line.
+
+    Args:
+        start: The start of the line.
+        end: The end of the line.
+        path_style: The path style.
+    """
+
     start: Tuple[float, float]
     end: Tuple[float, float]
     path_style: PathStyle
@@ -305,6 +360,16 @@ class Line(Path):
 
 
 class CurvedCubicLine(Path):
+    """A cubic line with curved edges.
+
+    Args:
+        points: The points of the curve.
+        path_style: The path style.
+
+    Raises:
+        AssertionError: If there are fewer than 3 points.
+    """
+
     points: List[Tuple[float, float]]
     path_style: PathStyle
 
@@ -322,7 +387,14 @@ class CurvedCubicLine(Path):
 
 
 class GridOverlay(DrawableWithChild):
-    """Overlays a grid on top of a scene, for debugging and design."""
+    """Overlays a grid on top of a scene, for debugging and design.
+
+    Args:
+        scene: The scene to overlay the grid on.
+        spacing: The spacing between grid lines.
+        label_every: Label every nth grid line.
+        color: The color of the grid.
+    """
 
     scene: Drawable
     spacing: float = 20
