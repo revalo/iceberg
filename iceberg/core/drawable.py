@@ -526,10 +526,17 @@ class Drawable(ABC, DrawableBase):
     def _repr_png_(self):
         """Render the drawable as a PNG image in a Jupyter notebook."""
         from PIL import Image
+        import io
 
+        b = io.BytesIO()
         rendered_pixels = self.render()
         pil_image = Image.fromarray(rendered_pixels)
-        return pil_image._repr_image("PNG", compress_level=1)
+        try:
+            pil_image.save(b, "png")
+        except Exception:
+            return None
+
+        return b.getvalue()
 
 
 class DrawableWithChild(Drawable, ABC):
