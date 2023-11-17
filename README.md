@@ -18,6 +18,10 @@ Iceberg is a compositional diagramming and graphics library embedding in Python.
 <i>The above animation was 33 lines of code</i>
 </p>
 
+## Playground
+
+[Online Interactive Playground on Colab!](https://colab.research.google.com/drive/1rZsrmnxH5_WLQPrAsWl9Jk8Sj82X-LaT?usp=sharing)
+
 ## Testimonials
 
 <p align="left">
