@@ -319,7 +319,7 @@ class Drawable(ABC, DrawableBase):
         child = self.move_to(0, 0, corner)
         child = Transform(
             child=child,
-            scale=(x, y),
+            scaling=(x, y),
         )
         return child.move_to(lx, ly, corner)
 

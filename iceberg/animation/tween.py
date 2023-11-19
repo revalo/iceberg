@@ -50,7 +50,7 @@ def _interpolate(sceneA, sceneB, t, a_type=None, b_type=None):
             f"Scene graphs don't have the same structure. Type of {sceneA} is {a_type}, but type of {sceneB} is {b_type}."
         )
 
-    if a_type == typing.Union:
+    if a_type == typing.Union or a_type == typing.Optional or a_type == Ellipsis:
         a_type = type(sceneA)
 
     if issubclass(a_type, ice.Drawable):

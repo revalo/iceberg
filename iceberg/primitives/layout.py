@@ -122,7 +122,7 @@ class Transform(Drawable):
 
     child: Drawable
     position: Tuple[float, float] = (0, 0)
-    scale: Tuple[float, float] = (1, 1)
+    scaling: Tuple[float, float] = (1, 1)
     anchor: Tuple[float, float] = (0, 0)
     rotation: float = 0.0
     rotation_in_degrees: bool = True
@@ -136,7 +136,7 @@ class Transform(Drawable):
 
         self._transform = get_transform(
             position=self.position,
-            scale=self.scale,
+            scale=self.scaling,
             anchor=self.anchor,
             rotation=self.rotation,
             in_degrees=self.rotation_in_degrees,
