@@ -25,4 +25,8 @@ from .svg import SVG
 from .latex import Tex, MathTex
 from .filters import Blur, Opacity
 from .image import Image
-from .plotting import MatplotlibFigure
+
+from .plotting import _MATPLOTLIB_INSTALLED
+
+if _MATPLOTLIB_INSTALLED:
+    from .plotting import MatplotlibFigure
