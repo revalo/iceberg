@@ -1,3 +1,4 @@
+from enum import Enum
 import skia
 
 from iceberg import Drawable, Bounds, Color
@@ -25,11 +26,25 @@ class Image(Drawable):
         FileNotFoundError: If the filename does not exist.
     """
 
+    class ImageFilterQuality(Enum):
+        NEAREST_NEIGHBOR = skia.kNone_FilterQuality
+        LOW = skia.kLow_FilterQuality
+        MEDIUM = skia.kMedium_FilterQuality
+        HIGH = skia.kHigh_FilterQuality
+
     filename: str = None
     image: np.ndarray = None
+    filter_quality: ImageFilterQuality = ImageFilterQuality.HIGH
 
-    def __init__(self, filename: str = None, image: np.ndarray = None):
-        self.init_from_fields(filename=filename, image=image)
+    def __init__(
+        self,
+        filename: str = None,
+        image: np.ndarray = None,
+        filter_quality: ImageFilterQuality = ImageFilterQuality.HIGH,
+    ):
+        self.init_from_fields(
+            filename=filename, image=image, filter_quality=filter_quality
+        )
 
     def setup(self) -> None:
         if self.filename is None and self.image is None:
@@ -66,6 +81,11 @@ class Image(Drawable):
                 image, colorType=skia.ColorType.kRGBA_8888_ColorType
             )
 
+        self._paint = skia.Paint(
+            AntiAlias=True,
+            FilterQuality=self.filter_quality.value,
+        )
+
         self._bounds = Bounds(
             left=0,
             top=0,
@@ -78,4 +98,4 @@ class Image(Drawable):
         return self._bounds
 
     def draw(self, canvas: skia.Canvas) -> None:
-        canvas.drawImage(self._skia_image, 0, 0)
+        canvas.drawImage(self._skia_image, 0, 0, paint=self._paint)

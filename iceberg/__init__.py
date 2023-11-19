@@ -43,6 +43,7 @@ from iceberg.primitives import (
     Blur,
     Opacity,
     Image,
+    MatplotlibFigure,
 )
 
 from iceberg.arrows import (
