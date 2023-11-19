@@ -7,7 +7,7 @@ import functools
 
 from abc import ABC, abstractmethod, abstractproperty
 from dataclasses import dataclass, MISSING
-from iceberg.core import Bounds, Corner, Color
+from iceberg.core import Bounds, Corner, Color, Colors
 from iceberg.utils import direction_equal
 import numpy as np
 import skia
@@ -216,6 +216,23 @@ class Drawable(ABC, DrawableBase):
         # Self is not a child of any context, so raise an error.
         raise ChildNotFoundError()
 
+    def add(self, other: "Drawable") -> "Drawable":
+        """Add another drawable to this one.
+
+        Args:
+            other: The other drawable to add.
+
+        Returns:
+            The new drawable that contains both this drawable and the other drawable.
+        """
+
+        from iceberg.primitives.layout import Compose
+
+        return Compose([self, other])
+
+    def __add__(self, other: "Drawable") -> "Drawable":
+        return self.add(other)
+
     def background(self, background_color: Color) -> "Drawable":
         """Add a background to the drawable.
 
@@ -226,12 +243,12 @@ class Drawable(ABC, DrawableBase):
             The new drawable with the background.
         """
 
-        from iceberg.primitives.layout import Blank, Compose
+        from iceberg.primitives.layout import Blank
 
         background = Blank(self.bounds, background_color=background_color)
-        return Compose([background, self])
+        return background.add(self)
 
-    def anchor(self, corner: int):
+    def with_anchor(self, corner: int):
         """Anchor the drawable to the specified corner.
 
         Args:
@@ -265,6 +282,19 @@ class Drawable(ABC, DrawableBase):
             child=self,
             position=(x, y),
         )
+
+    def move_to(self, x: float, y: float, corner: Optional[Corner] = Corner.TOP_LEFT):
+        """Move the drawable to the specified absolute position.
+
+        Unlike `move`, this method moves the drawable to the specified absolute position.
+
+        Args:
+            x: The x position to move to.
+            y: The y position to move to.
+            corner: If specified, then the specified corner will be moved to the
+                specified position.
+        """
+        return self.with_anchor(corner).move(x, y)
 
     def scale(self, x: float, y: float = None):
         """Scale the drawable by the specified amount.
@@ -393,6 +423,30 @@ class Drawable(ABC, DrawableBase):
         """
 
         return self.next_to(other)
+
+    def debug_bounds(
+        self, color: Color = Colors.RED, thickness: float = 1.0
+    ) -> "Drawable":
+        """Draw the bounds of the drawable on top of it for debugging purposes.
+
+        Note that this does't change the bounds of the drawable, so it may be clipped,
+        and more importantly, it may not be visible if you just render the drawable as is
+        without any padding.
+
+        Args:
+            color: The color of the bounds.
+            thickness: The width of the bounds.
+
+        Returns:
+            The new drawable with the bounds drawn on top of it.
+        """
+
+        from iceberg.primitives import Rectangle, Anchor
+
+        bounds_rect = Rectangle(
+            self.bounds, border_color=color, border_thickness=thickness
+        )
+        return Anchor([self, bounds_rect])
 
     def child_transform(self, search_child: "Drawable") -> np.ndarray:
         """Get the transformation matrix from this drawable to the specified child.

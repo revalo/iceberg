@@ -329,6 +329,9 @@ class Color(AnimatableProperty):
     def a(self) -> float:
         return self._a
 
+    def with_alpha(self, alpha: float) -> "Color":
+        return Color(self.r, self.g, self.b, alpha)
+
     def to_skia(self) -> skia.Color4f:
         """Get the color as a skia.Color4f."""
         return skia.Color4f(self.r, self.g, self.b, self.a)

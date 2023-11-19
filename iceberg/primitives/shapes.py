@@ -40,6 +40,7 @@ class Rectangle(Drawable):
         anti_alias: Whether to use anti-aliasing.
         border_position: The position of the border.
         border_radius: The radius of the border.
+        dont_modify_bounds: Whether to modify the bounds of the rectangle to account for the border.
     """
 
     rectangle: Bounds
@@ -49,6 +50,7 @@ class Rectangle(Drawable):
     anti_alias: bool = True
     border_position: BorderPosition = BorderPosition.CENTER
     border_radius: Union[float, Tuple[float, float]] = 0.0
+    dont_modify_bounds: bool = False
 
     def __init__(
         self,
@@ -59,6 +61,7 @@ class Rectangle(Drawable):
         anti_alias: bool = True,
         border_position: BorderPosition = BorderPosition.CENTER,
         border_radius: Union[float, Tuple[float, float]] = 0.0,
+        dont_modify_bounds: bool = False,
     ):
         self.init_from_fields(
             rectangle=rectangle,
@@ -68,6 +71,7 @@ class Rectangle(Drawable):
             anti_alias=anti_alias,
             border_position=border_position,
             border_radius=border_radius,
+            dont_modify_bounds=dont_modify_bounds,
         )
 
     def setup(
@@ -94,6 +98,7 @@ class Rectangle(Drawable):
             else None
         )
 
+        self._passed_bounds = self.rectangle
         self._bounds = self.rectangle
         self._skia_rect = self.rectangle.to_skia()
         self._border_skia_rect = self.rectangle.inset(
@@ -116,6 +121,9 @@ class Rectangle(Drawable):
 
     @property
     def bounds(self) -> Bounds:
+        if self.dont_modify_bounds:
+            return self._passed_bounds
+
         return self._bounds
 
     @property

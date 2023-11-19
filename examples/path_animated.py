@@ -40,7 +40,7 @@ class Play(ice.Playbook):
                 fill_color=ice.Color.from_hex("#ff7675"),
             )
             .pad(5)
-            .anchor(ice.Corner.CENTER)
+            .with_anchor(ice.Corner.CENTER)
         ).add_centered(label)
         container = ice.Blank(
             ice.Bounds(size=circle.bounds.size), ice.Colors.TRANSPARENT
