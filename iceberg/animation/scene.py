@@ -307,9 +307,7 @@ class Scene(object):
 
             renderer.render(frame_drawable)
             frame_pixels = renderer.get_rendered_image()
-            frame_pixels = frame_pixels[
-                bounds.top : bounds.bottom, bounds.left : bounds.right
-            ]
+            frame_pixels = frame_pixels[: bounds.height, : bounds.width]
 
             if not _IS_GIF:
                 frame_pixels = np.round(frame_pixels[:, :, :3]).astype(np.uint8)
