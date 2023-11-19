@@ -315,7 +315,7 @@ class Drawable(ABC, DrawableBase):
         if y is None:
             y = x
 
-        lx, ly = self.bounds.left, self.bounds.top
+        lx, ly = self.bounds.corners[corner]
         child = self.move_to(0, 0, corner)
         child = Transform(
             child=child,
