@@ -1,6 +1,6 @@
 import re
 
-from setuptools import setup, find_packages
+from setuptools import setup
 
 with open("iceberg/__init__.py", encoding="utf8") as f:
     version = re.search(r'__version__ = "(.*?)"', f.read()).group(1)
