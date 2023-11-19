@@ -43,8 +43,14 @@ from iceberg.primitives import (
     Blur,
     Opacity,
     Image,
-    MatplotlibFigure,
 )
+
+
+from iceberg.primitives.plotting import _MATPLOTLIB_INSTALLED
+
+if _MATPLOTLIB_INSTALLED:
+    from iceberg.primitives.plotting import MatplotlibFigure
+
 
 from iceberg.arrows import (
     Arrow,
