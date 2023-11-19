@@ -48,15 +48,7 @@ if _MATPLOTLIB_INSTALLED:
             buffer.seek(0)
 
             if self.use_svg:
-                h = hashlib.sha1()
-                h.update(buffer.getvalue())
-                filename = h.hexdigest()
-                filename = os.path.join(temp_directory(), filename + ".svg")
-
-                with open(filename, "wb") as f:
-                    f.write(buffer.getvalue())
-
-                child = SVG(svg_filename=filename)
+                child = SVG(raw_svg=buffer.getvalue().decode("utf-8"))
             else:
                 pil_image = PILImage.open(buffer)
                 child = Image(

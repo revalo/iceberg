@@ -336,6 +336,23 @@ class Color(AnimatableProperty):
         """Get the color as a skia.Color4f."""
         return skia.Color4f(self.r, self.g, self.b, self.a)
 
+    def to_hex(self) -> str:
+        """Get the color as a hex string.
+
+        Returns:
+            The color as a hex string.
+        """
+
+        r = int(self.r * 255)
+        g = int(self.g * 255)
+        b = int(self.b * 255)
+        a = int(self.a * 255)
+
+        if a == 255:
+            return f"#{r:02x}{g:02x}{b:02x}"
+        else:
+            return f"#{r:02x}{g:02x}{b:02x}{a:02x}"
+
     @classmethod
     def from_skia(cls, color: skia.Color4f) -> "Color":
         """Create a color object from a skia.Color4f."""
