@@ -6,7 +6,7 @@ from PIL import Image
 import av
 import tqdm
 
-from iceberg.core import Bounds
+from iceberg.core import Bounds, dont_animate
 from iceberg.core.drawable import Drawable
 from abc import ABC, abstractmethod
 from absl import logging
@@ -16,11 +16,13 @@ import numpy as np
 class Animated(Drawable):
     """A drawable that depends on time."""
 
-    states: Sequence[Drawable]
-    durations: Union[Sequence[float], float]
-    ease_types: Union[Sequence[EaseType], EaseType] = EaseType.EASE_IN_OUT_QUAD
-    ease_fns: Union[Sequence[Callable], Callable] = None
-    start_time: float = 0
+    states: Sequence[Drawable] = dont_animate()
+    durations: Union[Sequence[float], float] = dont_animate()
+    ease_types: Union[Sequence[EaseType], EaseType] = dont_animate(
+        default=EaseType.EASE_IN_OUT_QUAD
+    )
+    ease_fns: Union[Sequence[Callable], Callable] = dont_animate(default=None)
+    start_time: float = dont_animate(default=0)
 
     def __init__(
         self,
@@ -124,7 +126,9 @@ class Animated(Drawable):
         return self._get_drawable_at_t(self._time).children
 
     def draw(self, canvas):
-        self._get_drawable_at_t(self._time).draw(canvas)
+        drawable = self._get_drawable_at_t(self._time)
+        drawable.set_time(self._time)
+        drawable.draw(canvas)
 
     def frozen(self, t: float = None):
         """Get a frozen version of this drawable at time t.
@@ -301,10 +305,11 @@ class Scene(object):
                     stream.width = bounds.width
                     stream.height = bounds.height
 
-            frame_drawable = frame_drawable.crop(bounds)
-
             renderer.render(frame_drawable)
             frame_pixels = renderer.get_rendered_image()
+            frame_pixels = frame_pixels[
+                bounds.top : bounds.bottom, bounds.left : bounds.right
+            ]
 
             if not _IS_GIF:
                 frame_pixels = np.round(frame_pixels[:, :, :3]).astype(np.uint8)
