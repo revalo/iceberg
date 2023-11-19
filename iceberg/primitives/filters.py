@@ -1,7 +1,7 @@
 from typing import Sequence
 import skia
 
-from iceberg import Drawable, Bounds
+from iceberg import Drawable, Bounds, Corner
 from iceberg.core import Bounds
 from iceberg.core.drawable import Drawable, DrawableWithChild
 
@@ -24,7 +24,7 @@ class Filter(Drawable):
         fake_canvas = picture_recorder.beginRecording(
             self._child.bounds.width, self._child.bounds.height
         )
-        self._child.draw(fake_canvas)
+        self._child.move_to(0, 0, Corner.TOP_LEFT).draw(fake_canvas)
         self._skia_picture = picture_recorder.finishRecordingAsPicture()
 
     @property
