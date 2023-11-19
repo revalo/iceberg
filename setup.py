@@ -17,5 +17,6 @@ setup(
         "tqdm>=4.62.3",
         "av>=11.0.0",
         "Pillow>=10.1.0",
+        "typing-extensions",
     ],
 )

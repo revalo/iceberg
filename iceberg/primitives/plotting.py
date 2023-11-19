@@ -9,6 +9,9 @@ import hashlib
 import os
 import numpy as np
 
+
+_MATPLOTLIB_INSTALLED = False
+
 # Check if matplotlib is installed.
 try:
     import matplotlib
