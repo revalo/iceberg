@@ -296,7 +296,9 @@ class Drawable(ABC, DrawableBase):
         """
         return self.with_anchor(corner).move(x, y)
 
-    def scale(self, x: float, y: float = None):
+    def scale(
+        self, x: float, y: float = None, corner: Optional[Corner] = Corner.CENTER
+    ):
         """Scale the drawable by the specified amount.
 
         Can be used as `drawable.scale(2)` or `drawable.scale(2, 3)`.
@@ -313,10 +315,13 @@ class Drawable(ABC, DrawableBase):
         if y is None:
             y = x
 
-        return Transform(
-            child=self,
+        lx, ly = self.bounds.left, self.bounds.top
+        child = self.move_to(0, 0, corner)
+        child = Transform(
+            child=child,
             scale=(x, y),
         )
+        return child.move_to(lx, ly, corner)
 
     def pad(
         self,
