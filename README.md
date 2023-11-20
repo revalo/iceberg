@@ -9,7 +9,7 @@
 <img src="images/logo.gif" width="150">
 </p>
 
-Iceberg is a compositional diagramming and graphics library embedding in Python. It is designed to be performant, extensible, and easy to use.
+Iceberg is a compositional diagramming and graphics library embedded in Python. It is designed to be performant, extensible, and easy to use.
 
 <p align="center">
 <img src="images/neural_network_compute.gif" width="500">
