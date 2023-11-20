@@ -264,6 +264,11 @@ class Arrow(DrawableWithChild):
         head_start_tangent = line.tangents[0]
         head_end_tangent = line.tangents[-1]
 
+        head_start = tuple(head_start)
+        head_end = tuple(head_end)
+        head_start_tangent = tuple(head_start_tangent)
+        head_end_tangent = tuple(head_end_tangent)
+
         if self._arrow_head_end:
             items.append(
                 ArrowHead(

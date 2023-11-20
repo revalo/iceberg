@@ -46,7 +46,7 @@ class Play(ice.Playbook):
             ice.Bounds(size=circle.bounds.size), ice.Colors.TRANSPARENT
         )
         container = ice.PointAlign(
-            frozen_line.points[-1],
+            tuple(frozen_line.points[-1]),
             container,
             ice.Corner.TOP_MIDDLE,
         )

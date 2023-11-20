@@ -279,15 +279,12 @@ class PartialPath(Drawable):
         self._points.append(point)
         self._tangents.append(tangent)
 
-        self._points = [tuple(point) for point in self._points]
-        self._tangents = [tuple(tangent) for tangent in self._tangents]
-
         self._partial_path = skia.Path()
-        self._partial_path.moveTo(*self._points[0])
+        self._partial_path.moveTo(self._points[0])
 
         if self.interpolation == self.Interpolation.LINEAR:
             for point in self._points[1:]:
-                self._partial_path.lineTo(*point)
+                self._partial_path.lineTo(point)
         elif self.interpolation == self.Interpolation.CUBIC:
             segment_length = self._total_length * self.subdivide_increment
 
@@ -303,18 +300,12 @@ class PartialPath(Drawable):
                 # But by scaling with the segment length we at least get
                 # a reasonable choice (in particular, this makes the shape of the
                 # interpolation invariant to scaling the entire path).
-                tangent = (tangent[0] * segment_length, tangent[1] * segment_length)
-                next_tangent = (
-                    next_tangent[0] * segment_length,
-                    next_tangent[1] * segment_length,
-                )
+                tangent = tangent * segment_length
+                next_tangent = next_tangent * segment_length
                 # Compute control points (i.e. convert from Hermite to Bezier curve):
-                p1 = (point[0] + tangent[0] / 3, point[1] + tangent[1] / 3)
-                p2 = (
-                    next_point[0] - next_tangent[0] / 3,
-                    next_point[1] - next_tangent[1] / 3,
-                )
-                self._partial_path.cubicTo(*p1, *p2, *next_point)
+                p1 = point + tangent * 0.333
+                p2 = next_point - next_tangent * 0.333
+                self._partial_path.cubicTo(p1, p2, next_point)
         else:
             raise ValueError(f"Unknown interpolation {self.interpolation}.")
 
@@ -322,11 +313,11 @@ class PartialPath(Drawable):
         canvas.drawPath(self._partial_path, self._child_path._path_style.skia_paint)
 
     @property
-    def tangents(self) -> Sequence[Tuple[float, float]]:
+    def tangents(self) -> Sequence[skia.Point]:
         return self._tangents
 
     @property
-    def points(self) -> Sequence[Tuple[float, float]]:
+    def points(self) -> Sequence[skia.Point]:
         return self._points
 
     @property
