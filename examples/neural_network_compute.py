@@ -137,8 +137,16 @@ class Play(ice.Playbook):
                         )
                         laser_animated = ice.Animated(
                             [
-                                ice.PartialPath(laser, *starts),
-                                ice.PartialPath(laser, *ends),
+                                ice.PartialPath(
+                                    laser,
+                                    *starts,
+                                    interpolation=ice.PartialPath.Interpolation.LINEAR
+                                ),
+                                ice.PartialPath(
+                                    laser,
+                                    *ends,
+                                    interpolation=ice.PartialPath.Interpolation.LINEAR
+                                ),
                             ],
                             0.5,
                             start_time=0.1 * node_index + 0.2 * line_index,
