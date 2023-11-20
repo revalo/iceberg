@@ -19,17 +19,24 @@ Iceberg is a compositional diagramming and graphics library embedding in Python.
 </p>
 
 ## Playground
+<a target="_blank" href="https://colab.research.google.com/github/revalo/iceberg/blob/main/docs/blank.ipynb">
+  <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
+</a>
 
-[Online Interactive Playground on Colab!](https://colab.research.google.com/drive/1rZsrmnxH5_WLQPrAsWl9Jk8Sj82X-LaT?usp=sharing)
+[Online Interactive Playground on Colab!](https://colab.research.google.com/github/revalo/iceberg/blob/main/docs/blank.ipynb)
 
-## Testimonials
+<!-- ## Testimonials
 
 <p align="left">
 <img src="images/testimonial.jpg" width="400">
 </p>
 <p align="left">
 <img src="images/testimonial2.jpg" width="400">
-</p>
+</p> -->
+
+## Documentation
+
+A walkthrough tutorial on diagramming with Iceberg can be found [here](https://github.com/revalo/iceberg/blob/main/docs/tutorial.ipynb).
 
 ## Showcase
 
