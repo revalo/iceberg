@@ -65,6 +65,10 @@ class Renderer(object):
             A new Renderer.
         """
 
+        _force_gpu_env = os.environ.get("FORCE_ICEBERG_USE_GPU")
+        if _force_gpu_env is not None:
+            gpu = _force_gpu_env.lower() in ["true", "1"]
+
         self._gpu = gpu
         self._skia_surface = skia_surface
         self._bounds = None
