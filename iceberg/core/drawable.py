@@ -470,7 +470,7 @@ class Drawable(ABC, DrawableBase):
 
         from iceberg.primitives.layout import Transform
 
-        if self == search_child:
+        if self is search_child:
             return np.eye(3)
 
         for child in self.children:
