@@ -1,10 +1,9 @@
 from enum import Enum
-import skia
-
-from iceberg import Drawable, Bounds, Color
-from iceberg.core import Bounds
 
 import numpy as np
+import skia
+
+from iceberg import Bounds, Drawable
 
 
 class Image(Drawable):

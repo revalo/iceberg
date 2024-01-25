@@ -1,14 +1,11 @@
+import io
+
+import numpy as np
+from PIL import Image as PILImage
+
 from iceberg import DrawableWithChild
 from iceberg.primitives.image import Image
 from iceberg.primitives.svg import SVG
-from iceberg.utils import temp_directory
-from PIL import Image as PILImage
-
-import io
-import hashlib
-import os
-import numpy as np
-
 
 _MATPLOTLIB_INSTALLED = False
 

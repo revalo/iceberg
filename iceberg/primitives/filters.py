@@ -1,9 +1,8 @@
 from typing import Sequence
+
 import skia
 
-from iceberg import Drawable, Bounds, Corner
-from iceberg.core import Bounds
-from iceberg.core.drawable import Drawable, DrawableWithChild
+from iceberg import Bounds, Corner, Drawable, DrawableWithChild
 
 
 class Filter(Drawable):

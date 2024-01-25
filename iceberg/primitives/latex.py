@@ -2,16 +2,15 @@
 https://github.com/ManimCommunity/manim
 """
 
-from absl import logging
-
 import os
 import re
 import shutil
 
+from absl import logging
 
-from iceberg.utils import temp_filename, temp_directory
-from iceberg import DrawableWithChild, Color
+from iceberg import Color, DrawableWithChild
 from iceberg.primitives.svg import SVG
+from iceberg.utils import temp_directory, temp_filename
 
 
 class LatexError(Exception):

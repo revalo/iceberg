@@ -1,13 +1,12 @@
-from absl import logging
-
 import os
 import shutil
 import subprocess
 
+from absl import logging
 
-from iceberg.utils import temp_filename, temp_directory
-from iceberg import DrawableWithChild, Color
+from iceberg import Color, DrawableWithChild
 from iceberg.primitives.svg import SVG
+from iceberg.utils import temp_directory, temp_filename
 
 
 class TypstError(Exception):
@@ -57,24 +56,6 @@ def _create_typst_svg(typst_source: str, svg_file: str):
     with open(root + ".typ", "w", encoding="utf-8") as typst_file:
         typst_file.write(typst_source)
 
-    # # tex to dvi
-    # if os.system(
-    #     " ".join(
-    #         (
-    #             _PROGRAM,
-    #             "compile",
-    #             f'"{root}.typ"',
-    #             f'"{root}.svg"',
-    #             ">",
-    #             os.devnull,
-    #         )
-    #     )
-    # ):
-    #     logging.error("Typst Error! Not a worry, it happens to the best of us.")
-    #     # TODO: Read the error message from stderr.
-    #     raise TypstError("Typst Error!")
-
-    # Use subprocess instead of os.system, so we can capture stderr.
     try:
         subprocess.run(
             [

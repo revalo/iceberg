@@ -1,26 +1,23 @@
-from typing import List, Optional, Sequence, Tuple, Union
+import math
+from abc import ABC
+from enum import Enum
+from typing import List, Sequence, Tuple, Union
+
 import skia
 
 from iceberg import (
-    Drawable,
     Bounds,
     Color,
-    FontStyle,
-    Corner,
     Colors,
+    Corner,
+    Drawable,
     DrawableWithChild,
+    FontStyle,
 )
-from iceberg.core import Bounds
-from iceberg.core.drawable import Drawable
 from iceberg.core.properties import PathStyle
-from iceberg.geometry import get_transform, apply_transform
+
 from .layout import Compose
 from .text import SimpleText
-from dataclasses import dataclass
-from abc import ABC, abstractmethod, abstractproperty
-from enum import Enum
-
-import math
 
 
 class BorderPosition(Enum):

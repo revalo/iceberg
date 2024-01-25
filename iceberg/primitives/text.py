@@ -1,11 +1,9 @@
+from enum import Enum
+
 import skia
 
-from iceberg import Drawable, Bounds
-from iceberg.core import Bounds
+from iceberg import Bounds, Drawable
 from iceberg.core.properties import FontStyle
-
-from dataclasses import dataclass
-from enum import Enum
 
 
 class SimpleText(Drawable):
