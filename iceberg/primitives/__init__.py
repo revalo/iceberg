@@ -23,6 +23,7 @@ from .layout import (
 from .text import SimpleText, Text
 from .svg import SVG
 from .latex import Tex, MathTex
+from .typst import Typst, MathTypst
 from .filters import Blur, Opacity
 from .image import Image
 

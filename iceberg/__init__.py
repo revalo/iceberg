@@ -40,6 +40,8 @@ from iceberg.primitives import (
     SVG,
     Tex,
     MathTex,
+    Typst,
+    MathTypst,
     Blur,
     Opacity,
     Image,

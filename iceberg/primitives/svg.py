@@ -3,7 +3,6 @@ import hashlib
 import os
 
 from iceberg import Drawable, Bounds, Color
-from iceberg.core import Bounds
 from iceberg.utils import temp_directory
 
 

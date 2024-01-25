@@ -18,5 +18,6 @@ setup(
         "av>=11.0.0",
         "Pillow>=10.1.0",
         "typing-extensions",
+        "lxml>=5.1.0",
     ],
 )
