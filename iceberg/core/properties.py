@@ -575,7 +575,7 @@ class FontStyle(object):
 
     def __post_init__(self):
         families = set(FontStyle.available_fonts())
-        if self.filename is None and not self.family in families:
+        if self.filename is None and self.family not in families:
             raise ValueError(
                 f"Invalid font family: {self.family}. Please call FontStyle.available_fonts() to get the list of available fonts."
             )
