@@ -26,6 +26,7 @@ from .latex import Tex, MathTex
 from .typst import Typst, MathTypst
 from .filters import Blur, Opacity
 from .image import Image
+from .lines import GeneralLine, AutoLine
 
 from .plotting import _MATPLOTLIB_INSTALLED
 

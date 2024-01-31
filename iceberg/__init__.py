@@ -15,6 +15,7 @@ from iceberg.core import (
     AnimatableProperty,
     drawable_field,
     dont_animate,
+    SplineType,
 )
 
 from iceberg.primitives import (
@@ -45,6 +46,8 @@ from iceberg.primitives import (
     Blur,
     Opacity,
     Image,
+    GeneralLine,
+    AutoLine,
 )
 
 

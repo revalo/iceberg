@@ -602,3 +602,9 @@ class FontStyle(object):
     @staticmethod
     def available_fonts() -> List[str]:
         return list(skia.FontMgr())
+
+
+class SplineType(Enum):
+    LINEAR = 0
+    QUADRATIC = 1
+    CUBIC = 2
