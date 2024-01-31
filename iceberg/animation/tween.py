@@ -82,7 +82,7 @@ def _interpolate(sceneA, sceneB, t, a_type=None, b_type=None):
             )
 
         return sceneA.__class__.from_fields(**new_scene_fields)
-    elif issubclass(a_type, (list, tuple)):
+    elif issubclass(a_type, (list, tuple, Sequence)):
         sub_type = [None] * len(sceneA)
         if a_hint:
             if len(a_hint.__args__) == len(sceneA):
