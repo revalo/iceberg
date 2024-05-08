@@ -61,6 +61,7 @@ from iceberg.arrows import (
     ArrowHeadStyle,
     ArrowAlignDirection,
     LabelArrow,
+    ArrowPath,
 )
 
 from iceberg.animation import tween, EaseType
@@ -121,4 +122,5 @@ __all__ = [
     "Animated",
     "Scene",
     "Frozen",
+    "ArrowPath",
 ]

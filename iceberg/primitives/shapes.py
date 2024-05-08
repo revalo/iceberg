@@ -325,6 +325,10 @@ class PartialPath(Drawable):
     def bounds(self) -> Bounds:
         return self._child_path.bounds
 
+    @property
+    def total_length(self) -> float:
+        return self._total_length
+
 
 class Line(Path):
     """A line.
