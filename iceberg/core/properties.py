@@ -480,7 +480,7 @@ class PathStyle(AnimatableProperty):
 
     def __init__(
         self,
-        color: Color,
+        color: Color = Colors.BLACK,
         thickness: float = 1.0,
         anti_alias: bool = True,
         stroke: bool = True,

@@ -1,5 +1,4 @@
-"""Built-in library for arrows.
-"""
+"""Built-in library for arrows."""
 
 from enum import Enum
 from typing import Tuple
@@ -354,7 +353,7 @@ class LabelArrow(DrawableWithChild):
 
         if self.rotated:
             cx, cy = self.child.bounds.center
-            child = Transform(
+            self.child = Transform(
                 self.child,
                 rotation=angle,
                 rotation_in_degrees=False,

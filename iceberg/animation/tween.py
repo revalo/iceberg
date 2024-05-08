@@ -1,12 +1,10 @@
-from typing import Union, Sequence
-
-from enum import Enum
-import numpy as np
-import math
-
-import iceberg as ice
 import dataclasses
 import typing
+from typing import Sequence
+
+import numpy as np
+
+import iceberg as ice
 
 from .ease import EaseType
 
