@@ -259,7 +259,13 @@ class Drawable(ABC, DrawableBase):
         cx, cy = self.bounds.corners[corner]
         return self.move(-cx, -cy)
 
-    def move(self, x: float, y: float, corner: Optional[Corner] = None):
+    def move(
+        self,
+        x: float,
+        y: float,
+        corner: Optional[Corner] = None,
+        modify_bounds: bool = True,
+    ):
         """Move the drawable by the specified amount.
 
         Args:
@@ -269,6 +275,7 @@ class Drawable(ABC, DrawableBase):
                 specified amount, relative to the current position of the *top-left*
                 corner. In particular, if the top-left corner is currently at (0, 0),
                 then the specified corner will be moved to (x, y).
+            modify_bounds: If False, the bounds of the drawable will not be modified.
         """
         from iceberg.primitives.layout import Transform
 
@@ -280,6 +287,7 @@ class Drawable(ABC, DrawableBase):
         return Transform(
             child=self,
             position=(x, y),
+            modify_bounds=modify_bounds,
         )
 
     def move_to(self, x: float, y: float, corner: Optional[Corner] = Corner.TOP_LEFT):

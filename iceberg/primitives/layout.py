@@ -126,6 +126,7 @@ class Transform(Drawable):
     anchor: Tuple[float, float] = (0, 0)
     rotation: float = 0.0
     rotation_in_degrees: bool = True
+    modify_bounds: bool = True
 
     def setup(self) -> None:
         self._child_bounds = self.child.bounds
@@ -181,7 +182,7 @@ class Transform(Drawable):
 
     @property
     def bounds(self) -> Bounds:
-        return self._transformed_bounds
+        return self._transformed_bounds if self.modify_bounds else self._child_bounds
 
     def draw(self, canvas: skia.Canvas):
         canvas.save()
