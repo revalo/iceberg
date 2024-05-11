@@ -22,8 +22,8 @@ from .layout import (
     Anchor,
 )
 from .text import SimpleText, Text
-from .svg import SVG
-from .latex import Tex, MathTex
+from .svg import SVG, SVGPath
+from .latex import Tex, MathTex, Brace
 from .typst import Typst, MathTypst
 from .filters import Blur, Opacity
 from .image import Image
@@ -67,4 +67,6 @@ __all__ = [
     "MatplotlibFigure",
     "Point",
     "CubicBezier",
+    "SVGPath",
+    "Brace",
 ]

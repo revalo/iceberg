@@ -8,8 +8,8 @@ import shutil
 
 from absl import logging
 
-from iceberg import Color, DrawableWithChild
-from iceberg.primitives.svg import SVG
+from iceberg import Color, Colors, DrawableWithChild
+from iceberg.primitives.svg import SVG, SVGPath
 from iceberg.utils import temp_directory, temp_filename
 
 
@@ -211,3 +211,74 @@ class MathTex(DrawableWithChild):
                 color=self.color,
             )
         )
+
+
+# Also adapted from github.com/ManimCommunity/manim under MIT License.
+class Brace(DrawableWithChild):
+    """A LaTeX style brace.
+
+    Args:
+        target_width: The width of the brace.
+        target_height: The height of the brace.
+        sharpness: The sharpness of the brace.
+        color: The color of the brace.
+    """
+
+    target_width: float
+    target_height: float = 15
+    sharpness: float = 2.0
+    color: Color = Colors.BLACK
+
+    def __init__(
+        self,
+        target_width: float,
+        target_height: float = 15,
+        sharpness: float = 2.0,
+        color: Color = Colors.BLACK,
+    ):
+        self.init_from_fields(
+            target_width=target_width,
+            target_height=target_height,
+            sharpness=sharpness,
+            color=color,
+        )
+
+    def setup(self):
+        path_string_template = (
+            "m0.01216 0c-0.01152 0-0.01216 6.103e-4 -0.01216 0.01311v0.007762c0.06776 "
+            "0.122 0.1799 0.1455 0.2307 0.1455h{0}c0.03046 3.899e-4 0.07964 0.00449 "
+            "0.1246 0.02636 0.0537 0.02695 0.07418 0.05816 0.08648 0.07769 0.001562 "
+            "0.002538 0.004539 0.002563 0.01098 0.002563 0.006444-2e-8 0.009421-2.47e-"
+            "5 0.01098-0.002563 0.0123-0.01953 0.03278-0.05074 0.08648-0.07769 0.04491"
+            "-0.02187 0.09409-0.02597 0.1246-0.02636h{0}c0.05077 0 0.1629-0.02346 "
+            "0.2307-0.1455v-0.007762c-1.78e-6 -0.0125-6.365e-4 -0.01311-0.01216-0.0131"
+            "1-0.006444-3.919e-8 -0.009348 2.448e-5 -0.01091 0.002563-0.0123 0.01953-"
+            "0.03278 0.05074-0.08648 0.07769-0.04491 0.02187-0.09416 0.02597-0.1246 "
+            "0.02636h{1}c-0.04786 0-0.1502 0.02094-0.2185 0.1256-0.06833-0.1046-0.1706"
+            "-0.1256-0.2185-0.1256h{1}c-0.03046-3.899e-4 -0.07972-0.004491-0.1246-0.02"
+            "636-0.0537-0.02695-0.07418-0.05816-0.08648-0.07769-0.001562-0.002538-"
+            "0.004467-0.002563-0.01091-0.002563z"
+        )
+        default_min_width = 0.90552
+        default_height = 0.272985
+
+        y_scale = self.target_height / default_height
+        target_width_scaled = self.target_width / y_scale
+
+        linear_section_length = max(
+            0,
+            (target_width_scaled / 2 * self.sharpness - default_min_width) / 2,
+        )
+        path = SVGPath(
+            path_string_template.format(
+                linear_section_length,
+                -linear_section_length,
+            ),
+            fill_color=self.color,
+        )
+
+        x_scale = self.target_width / path.bounds.width
+        y_scale = self.target_height / path.bounds.height
+        path = path.scale(x_scale, y_scale)
+
+        self.set_child(path)

@@ -38,8 +38,10 @@ from iceberg.primitives import (
     SimpleText,
     Text,
     SVG,
+    SVGPath,
     Tex,
     MathTex,
+    Brace,
     Typst,
     MathTypst,
     Blur,
@@ -127,6 +129,8 @@ __all__ = [
     "ArrowPath",
     "Point",
     "CubicBezier",
+    "SVGPath",
+    "Brace",
 ]
 
 # Expose commonly used classes and enums directly in the iceberg namespace.
