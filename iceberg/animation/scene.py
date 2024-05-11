@@ -1,16 +1,15 @@
+from abc import ABC, abstractmethod
 from typing import Callable, Sequence, Union
 
-from iceberg import Drawable, Renderer, DrawableWithChild
-from iceberg.animation import tween, EaseType
-from PIL import Image
 import av
-import tqdm
-
-from iceberg.core import Bounds, dont_animate
-from iceberg.core.drawable import Drawable
-from abc import ABC, abstractmethod
-from absl import logging
 import numpy as np
+import tqdm
+from absl import logging
+from PIL import Image
+
+from iceberg import Drawable, DrawableWithChild, Renderer
+from iceberg.animation import EaseType, tween
+from iceberg.core import Bounds, dont_animate
 
 
 class Animated(Drawable):
@@ -338,8 +337,9 @@ class Scene(object):
     def ipython_display(
         self, fps: int = 60, loop: bool = True, display_format: str = "mp4"
     ) -> None:
-        from IPython.display import Video, display, HTML
         import base64
+
+        from IPython.display import HTML, Video, display
 
         if display_format == "mp4":
             html_attributes = ["controls"]
