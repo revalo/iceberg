@@ -393,6 +393,42 @@ class Drawable(ABC, DrawableBase):
             [blank, self],
         )
 
+    def opacity(self, opacity: float) -> "Drawable":
+        """Set the opacity of the drawable.
+
+        Args:
+            opacity: The opacity to set.
+
+        Returns:
+            The new drawable with the opacity set.
+        """
+
+        from iceberg.primitives.filters import Opacity
+
+        return Opacity(
+            child=self,
+            opacity=opacity,
+        )
+
+    def blur(self, sigma: float, sigma_y: float = None) -> "Drawable":
+        """Blur the drawable by sigma.
+
+        Args:
+            sigma: The sigma of the blur.
+            sigma_y: The sigma of the blur in the y direction. If None, sigma is used.
+
+        Returns:
+            The new drawable that is blurred.
+        """
+
+        from iceberg.primitives.filters import Blur
+
+        return Blur(
+            child=self,
+            sigma=sigma,
+            sigma_y=sigma_y,
+        )
+
     def next_to(
         self,
         other: "Drawable",

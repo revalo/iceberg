@@ -2,7 +2,7 @@ from typing import Sequence
 
 import skia
 
-from iceberg import Bounds, Corner, Drawable, DrawableWithChild
+from iceberg import Bounds, Drawable, DrawableWithChild
 
 
 class Filter(Drawable):
@@ -20,10 +20,9 @@ class Filter(Drawable):
         self._child = child
 
         picture_recorder = skia.PictureRecorder()
-        fake_canvas = picture_recorder.beginRecording(
-            self._child.bounds.width, self._child.bounds.height
-        )
-        self._child.move_to(0, 0, Corner.TOP_LEFT).draw(fake_canvas)
+        fake_canvas = picture_recorder.beginRecording(self._child.bounds.to_skia())
+
+        self._child.draw(fake_canvas)
         self._skia_picture = picture_recorder.finishRecordingAsPicture()
 
     @property
@@ -44,13 +43,19 @@ class Blur(Filter):
     Args:
         child: The child to blur.
         sigma: The sigma of the blur.
+        sigma_y: The sigma of the blur in the y direction. If None, sigma is used.
     """
 
     child: Drawable
     sigma: float
+    sigma_y: float = None
 
     def setup(self):
-        paint = skia.Paint(ImageFilter=skia.ImageFilters.Blur(self.sigma, self.sigma))
+        paint = skia.Paint(
+            ImageFilter=skia.ImageFilters.Blur(
+                self.sigma, self.sigma if self.sigma_y is None else self.sigma_y
+            )
+        )
         self.set_paint(self.child, paint)
 
 
