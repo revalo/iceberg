@@ -20,6 +20,7 @@ except ImportError:
 
 if _MATPLOTLIB_INSTALLED:
     import matplotlib.figure
+    import matplotlib.axes
 
     class MatplotlibFigure(DrawableWithChild):
         """Import a matplotlib figure as a drawable for iceberg.
@@ -57,3 +58,33 @@ if _MATPLOTLIB_INSTALLED:
                 )
 
             self.set_child(child)
+
+        def axes_coordinates(
+            self, x: float, y: float, axes: matplotlib.axes.Axes = None
+        ) -> tuple[float, float]:
+            """Convert axes coordinates to figure coordinates.
+
+            If called within a scene, will return the relative coordinates to the scene.
+
+            Args:
+                x: The x coordinate.
+                y: The y coordinate.
+                axes: The axes to use. If None, uses the first axes in the figure.
+
+            Returns:
+                The transformed coordinates.
+            """
+            if axes is None:
+                assert len(self.figure.axes) > 0, "No axes in the figure."
+                axes = self.figure.axes[0]
+
+            transform = axes.transData + self.figure.transFigure.inverted()
+            tx, ty = transform.transform([x, y])
+            ty = 1 - ty
+            tx *= self.relative_bounds.width
+            ty *= self.relative_bounds.height
+
+            tx += self.relative_bounds.left
+            ty += self.relative_bounds.top
+
+            return tx, ty
