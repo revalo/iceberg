@@ -27,7 +27,7 @@ from .latex import Tex, MathTex
 from .typst import Typst, MathTypst
 from .filters import Blur, Opacity
 from .image import Image
-from .splines import SmoothPath
+from .splines import SmoothPath, CubicBezier
 
 from .plotting import _MATPLOTLIB_INSTALLED
 
@@ -66,4 +66,5 @@ __all__ = [
     "SmoothPath",
     "MatplotlibFigure",
     "Point",
+    "CubicBezier",
 ]

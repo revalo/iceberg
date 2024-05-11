@@ -47,6 +47,7 @@ from iceberg.primitives import (
     Image,
     SmoothPath,
     Point,
+    CubicBezier,
 )
 
 
@@ -125,6 +126,7 @@ __all__ = [
     "Frozen",
     "ArrowPath",
     "Point",
+    "CubicBezier",
 ]
 
 # Expose commonly used classes and enums directly in the iceberg namespace.

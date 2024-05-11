@@ -6,6 +6,39 @@ from iceberg.core.properties import PathStyle
 from iceberg.primitives.shapes import Path
 
 
+class CubicBezier(Path):
+    """A normal bezier cubic line.
+
+    Args:
+        points: The points of the curve.
+        path_style: The path style.
+
+    Raises:
+        AssertionError: If there are fewer than 3 points.
+    """
+
+    points: List[Tuple[float, float]]
+    path_style: PathStyle
+
+    def __init__(
+        self, points: List[Tuple[float, float]], path_style: PathStyle = PathStyle()
+    ):
+        self.init_from_fields(points=points, path_style=path_style)
+
+    def setup(self):
+        assert len(self.points) >= 4, "A cubic bezier line requires at least 4 points."
+        assert len(self.points) % 3 == 1, "The number of points must be 3n + 1."
+
+        path = skia.Path()
+        path.moveTo(*self.points[0])
+
+        # Take points in groups of 4 and
+        for i in range(1, len(self.points), 3):
+            path.cubicTo(*self.points[i], *self.points[i + 1], *self.points[i + 2])
+
+        self.set_path(path, self.path_style)
+
+
 class SmoothPath(Path):
     """A path that takes in a bunch of points and interpolates them.
 
