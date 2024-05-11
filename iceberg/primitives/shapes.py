@@ -486,13 +486,17 @@ class Point(DrawableWithChild):
     color: Color = Colors.RED
     radius: float = 2
 
+    def __init__(
+        self, point: Tuple[float, float], color: Color = Colors.RED, radius: float = 2
+    ):
+        self.init_from_fields(point=point, color=color, radius=radius)
+
     def setup(self):
         self.set_child(
             Ellipse(
                 rectangle=Bounds(
                     center=self.point,
-                    width=self.radius * 2,
-                    height=self.radius * 2,
+                    size=(self.radius * 2, self.radius * 2),
                 ),
                 fill_color=self.color,
             )
