@@ -290,6 +290,7 @@ class Align(DrawableWithChild):
     anchor_corner: int = dont_animate()
     child_corner: int = dont_animate()
     direction: np.ndarray = field(default_factory=lambda: Directions.ORIGIN)
+    include_anchor: bool = True
 
     def __init__(
         self,
@@ -298,6 +299,7 @@ class Align(DrawableWithChild):
         anchor_corner: int,
         child_corner: int,
         direction: np.ndarray = Directions.ORIGIN,
+        include_anchor: bool = True,
     ):
         """Initialize an align drawable.
 
@@ -329,11 +331,12 @@ class Align(DrawableWithChild):
             anchor_corner=anchor_corner,
             child_corner=child_corner,
             direction=direction,
+            include_anchor=include_anchor,
         )
 
     def setup(self):
-        anchor_corner = self.anchor.bounds.corners[self.anchor_corner]
-        child_corner = self.child.bounds.corners[self.child_corner]
+        anchor_corner = self.anchor.relative_bounds.corners[self.anchor_corner]
+        child_corner = self.child.relative_bounds.corners[self.child_corner]
 
         dx = anchor_corner[0] - child_corner[0]
         dy = anchor_corner[1] - child_corner[1]
@@ -346,7 +349,10 @@ class Align(DrawableWithChild):
             position=(dx, dy),
         )
 
-        self.set_child(Compose(self.anchor, child_transformed))
+        if self.include_anchor:
+            self.set_child(Compose(self.anchor, child_transformed))
+        else:
+            self.set_child(child_transformed)
 
 
 class PointAlign(DrawableWithChild):

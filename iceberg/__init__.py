@@ -46,6 +46,7 @@ from iceberg.primitives import (
     Opacity,
     Image,
     SmoothPath,
+    Point,
 )
 
 
@@ -123,4 +124,34 @@ __all__ = [
     "Scene",
     "Frozen",
     "ArrowPath",
+    "Point",
 ]
+
+# Expose commonly used classes and enums directly in the iceberg namespace.
+TOP_LEFT = Corner.TOP_LEFT
+TOP_MIDDLE = Corner.TOP_MIDDLE
+TOP_RIGHT = Corner.TOP_RIGHT
+MIDDLE_LEFT = Corner.MIDDLE_LEFT
+CENTER = Corner.CENTER
+MIDDLE_RIGHT = Corner.MIDDLE_RIGHT
+BOTTOM_LEFT = Corner.BOTTOM_LEFT
+BOTTOM_MIDDLE = Corner.BOTTOM_MIDDLE
+BOTTOM_RIGHT = Corner.BOTTOM_RIGHT
+
+LEFT = Directions.LEFT
+RIGHT = Directions.RIGHT
+UP = Directions.UP
+DOWN = Directions.DOWN
+
+VERTICAL = Arrange.Direction.VERTICAL
+HORIZONTAL = Arrange.Direction.HORIZONTAL
+
+BLACK = Colors.BLACK
+WHITE = Colors.WHITE
+RED = Colors.RED
+GREEN = Colors.GREEN
+BLUE = Colors.BLUE
+YELLOW = Colors.YELLOW
+CYAN = Colors.CYAN
+MAGENTA = Colors.MAGENTA
+TRANSPARENT = Colors.TRANSPARENT

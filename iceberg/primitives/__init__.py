@@ -7,6 +7,7 @@ from .shapes import (
     CurvedCubicLine,
     PartialPath,
     GridOverlay,
+    Point,
 )
 from .layout import (
     Transform,
@@ -64,4 +65,5 @@ __all__ = [
     "Image",
     "SmoothPath",
     "MatplotlibFigure",
+    "Point",
 ]

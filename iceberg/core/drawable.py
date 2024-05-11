@@ -98,8 +98,7 @@ def dont_animate(
     )
 
 
-def _drawable_field(*, kw_only: bool = False, default: Optional[Any] = ...) -> Any:
-    ...
+def _drawable_field(*, kw_only: bool = False, default: Optional[Any] = ...) -> Any: ...
 
 
 @tpe.dataclass_transform(field_specifiers=(_drawable_field,))  # type: ignore[literal-required]
@@ -214,7 +213,7 @@ class Drawable(ABC, DrawableBase):
                 pass
 
         # Self is not a child of any context, so raise an error.
-        raise ChildNotFoundError()
+        return self.bounds
 
     def add(self, other: "Drawable") -> "Drawable":
         """Add another drawable to this one.
@@ -296,6 +295,30 @@ class Drawable(ABC, DrawableBase):
         """
         return self.with_anchor(corner).move(x, y)
 
+    def relative_to(
+        self,
+        other: "Drawable",
+        self_corner_or_direction: Union[Corner, np.ndarray] = Corner.TOP_LEFT,
+        other_corner: Optional[Corner] = Corner.TOP_RIGHT,
+        no_gap: bool = False,
+    ):
+        """Move the drawable to be relative to another drawable.
+
+        Args:
+            other: The other drawable to be relative to.
+            self_corner: The corner of this drawable to be relative to.
+            other_corner: The corner of the other drawable to be relative to.
+        """
+
+        if isinstance(self_corner_or_direction, np.ndarray):
+            return other.next_to(
+                self, self_corner_or_direction, no_gap=no_gap, include_anchor=False
+            )
+
+        ox, oy = other.relative_bounds.corners[other_corner]
+        sx, sy = self.relative_bounds.corners[self_corner_or_direction]
+        return self.move(ox - sx, oy - sy)
+
     def scale(
         self, x: float, y: float = None, corner: Optional[Corner] = Corner.CENTER
     ):
@@ -367,6 +390,7 @@ class Drawable(ABC, DrawableBase):
         other: "Drawable",
         direction: np.ndarray = np.zeros(2),
         no_gap: bool = False,
+        include_anchor: bool = True,
     ) -> "Drawable":
         """Place another drawable next to this one, and return the new drawable.
 
@@ -384,6 +408,7 @@ class Drawable(ABC, DrawableBase):
             no_gap: If True, the other drawable will be placed right next to this one, with no gap.
                 The scale of `direction` is ignored in this case (`direction` is only used
                 to determine which corners to align).
+            include_anchor: If False, the final drawable will not include the anchor drawable.
 
         Returns:
             The new drawable that contains both this drawable and the other drawable.
@@ -415,7 +440,9 @@ class Drawable(ABC, DrawableBase):
         if no_gap:
             direction = Directions.ORIGIN
 
-        return Align(self, other, anchor_corner, other_corner, direction)
+        return Align(
+            self, other, anchor_corner, other_corner, direction, include_anchor
+        )
 
     def add_centered(self, other: "Drawable") -> "Drawable":
         """Place another drawable in the center of this one, and return the new drawable.

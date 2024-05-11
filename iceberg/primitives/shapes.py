@@ -477,3 +477,23 @@ class GridOverlay(DrawableWithChild):
         self.set_child(
             Compose([self.scene] + vertical_lines + horizontal_lines + labels)
         )
+
+
+class Point(DrawableWithChild):
+    """A utility class to draw a point at a given location."""
+
+    point: Tuple[float, float] = (0, 0)
+    color: Color = Colors.RED
+    radius: float = 2
+
+    def setup(self):
+        self.set_child(
+            Ellipse(
+                rectangle=Bounds(
+                    center=self.point,
+                    width=self.radius * 2,
+                    height=self.radius * 2,
+                ),
+                fill_color=self.color,
+            )
+        )

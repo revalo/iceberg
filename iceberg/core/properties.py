@@ -139,6 +139,38 @@ class Bounds(AnimatableProperty):
     def size(self) -> Tuple[float, float]:
         return self.width, self.height
 
+    @property
+    def top_left(self) -> Tuple[float, float]:
+        return self.corners[Corner.TOP_LEFT]
+
+    @property
+    def top_middle(self) -> Tuple[float, float]:
+        return self.corners[Corner.TOP_MIDDLE]
+
+    @property
+    def top_right(self) -> Tuple[float, float]:
+        return self.corners[Corner.TOP_RIGHT]
+
+    @property
+    def middle_right(self) -> Tuple[float, float]:
+        return self.corners[Corner.MIDDLE_RIGHT]
+
+    @property
+    def bottom_right(self) -> Tuple[float, float]:
+        return self.corners[Corner.BOTTOM_RIGHT]
+
+    @property
+    def bottom_middle(self) -> Tuple[float, float]:
+        return self.corners[Corner.BOTTOM_MIDDLE]
+
+    @property
+    def bottom_left(self) -> Tuple[float, float]:
+        return self.corners[Corner.BOTTOM_LEFT]
+
+    @property
+    def middle_left(self) -> Tuple[float, float]:
+        return self.corners[Corner.MIDDLE_LEFT]
+
     @classmethod
     def interpolate(cls, start: Self, end: Self, progress: float):
         vectorsA = [start.top, start.left, start.bottom, start.right]
