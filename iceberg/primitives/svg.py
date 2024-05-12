@@ -2,7 +2,7 @@ import skia
 import hashlib
 import os
 
-from iceberg import Drawable, Bounds, Color, Colors
+from iceberg import Drawable, Bounds, Color, Colors, PathStyle
 from iceberg.utils import temp_directory
 
 
@@ -110,17 +110,20 @@ class SVGPath(Drawable):
     svg_path_string: str
     fill_color: Color = Colors.BLACK
     stroke_color: Color = None
+    stroke_path_style: PathStyle = None
 
     def __init__(
         self,
         svg_path_string: str,
         fill_color: Color = Colors.BLACK,
         stroke_color: Color = None,
+        stroke_path_style: PathStyle = None,
     ):
         self.init_from_fields(
             svg_path_string=svg_path_string,
             fill_color=fill_color,
             stroke_color=stroke_color,
+            stroke_path_style=stroke_path_style,
         )
 
     def setup(self):
@@ -134,6 +137,14 @@ class SVGPath(Drawable):
             if self.stroke_color
             else None
         )
+
+        # Override stroke paint with stroke path style if it is set.
+        self._stroke_paint = (
+            self.stroke_path_style.skia_paint
+            if self.stroke_path_style
+            else self._stroke_paint
+        )
+
         self._fill_paint = (
             skia.Paint(
                 AntiAlias=True,
