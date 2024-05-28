@@ -52,7 +52,7 @@ A composable Neural Network diagramming class written in iceberg. Full example i
 <img src="images/nn.gif" width="500">
 
 ```python
-import icerberg as ice
+import iceberg as ice
 
 network = NeuralNetwork(
     # Number of nodes in each layer!
