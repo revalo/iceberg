@@ -301,6 +301,14 @@ class Scene(object):
                 bounds = frame_drawable.bounds.round()
 
                 if not _IS_GIF:
+                    # Force width to be a multiple of 2
+                    if bounds.width % 2 != 0:
+                        bounds = Bounds(
+                            top=bounds.top,
+                            left=bounds.left,
+                            size=(bounds.width - 1, bounds.height),
+                        )
+
                     stream.width = bounds.width
                     stream.height = bounds.height
 
