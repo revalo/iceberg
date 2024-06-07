@@ -12,6 +12,8 @@ from iceberg.utils import direction_equal
 import numpy as np
 import skia
 import dataclasses
+import contextlib
+import copy
 
 
 def copy_func(f):
@@ -429,6 +431,35 @@ class Drawable(ABC, DrawableBase):
             sigma_y=sigma_y,
         )
 
+    def tag(self, tag: str) -> "Drawable":
+        """Tag the drawable with a string.
+
+        Args:
+            tag: The tag to set.
+
+        Returns:
+            The new drawable with the tag set.
+        """
+
+        return Tag(
+            child=self,
+            tag_val=tag,
+        )
+
+    def select_all(self, query: str) -> "Drawable":
+        return [
+            d.child
+            for d in self.find_all(
+                lambda d: isinstance(d, Tag) and query in d.tag_val.split()
+            )
+        ]
+
+    def select(self, query: str) -> "Drawable":
+        rv = self.select_all(query)
+        if len(rv) == 0:
+            raise ValueError(f"No drawable found with tag '{query}'")
+        return rv[0]
+
     def next_to(
         self,
         other: "Drawable",
@@ -620,6 +651,33 @@ class Drawable(ABC, DrawableBase):
     def __exit__(self, exc_type, exc_value, traceback):
         assert _scene_context_stack.pop() is self
 
+    def __deepcopy__(self, memo):
+        fields = dataclasses.fields(self)
+        new_fields = {}
+        for field in fields:
+            field_value = getattr(self, field.name)
+            new_fields[field.name] = copy.deepcopy(field_value)
+        return self.__class__.from_fields(**new_fields)
+
+    @contextlib.contextmanager
+    def mutable_copy(self):
+        self_copy: "Drawable" = copy.deepcopy(self)
+        try:
+            yield self_copy
+        finally:
+            fields = dataclasses.fields(self_copy)
+            new_fields = {}
+            for field in fields:
+                field_value = getattr(self_copy, field.name)
+                new_fields[field.name] = copy.deepcopy(field_value)
+            self_copy.init_from_fields(**new_fields)
+
+    def replace(self, **kwargs) -> "Drawable":
+        with self.mutable_copy() as copy:
+            for key, value in kwargs.items():
+                setattr(copy, key, value)
+            return copy
+
     def render(
         self,
         filename: Union[str, Path] = None,
@@ -687,3 +745,14 @@ class DrawableWithChild(Drawable, ABC):
 
     def draw(self, canvas: skia.Canvas):
         self._child.draw(canvas)
+
+
+class Tag(DrawableWithChild):
+    child: Drawable
+    tag_val: str = None
+
+    def __init__(self, child: Drawable, tag_val: str = None):
+        self.init_from_fields(child=child, tag_val=tag_val)
+
+    def setup(self):
+        self.set_child(self.child)
