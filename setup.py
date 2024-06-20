@@ -13,7 +13,7 @@ setup(
         "absl-py>=1.0.0",
         "glfw==2.5.1",
         "numpy>=1.21.0",
-        "skia-python==87.5",
+        "skia-python>=87.5",
         "tqdm>=4.62.3",
         "av>=11.0.0",
         "Pillow>=10.1.0",
