@@ -50,6 +50,7 @@ from iceberg.primitives import (
     SmoothPath,
     Point,
     CubicBezier,
+    GridOverlay,
 )
 
 
@@ -131,6 +132,7 @@ __all__ = [
     "CubicBezier",
     "SVGPath",
     "Brace",
+    "GridOverlay",
 ]
 
 # Expose commonly used classes and enums directly in the iceberg namespace.
