@@ -460,8 +460,8 @@ class GridOverlay(DrawableWithChild):
             if i % self.label_every == x_offset_index:
                 labels.append(
                     SimpleText(
-                        str(round(x)),
-                        font_style,
+                        text=str(round(x)),
+                        font_style=font_style,
                     ).move(x, y_lower - 5, corner=Corner.BOTTOM_MIDDLE)
                 )
 
@@ -469,8 +469,8 @@ class GridOverlay(DrawableWithChild):
             if i % self.label_every == y_offset_index:
                 labels.append(
                     SimpleText(
-                        str(round(y)),
-                        font_style,
+                        text=str(round(y)),
+                        font_style=font_style,
                     ).move(x_lower - 5, y, corner=Corner.MIDDLE_RIGHT)
                 )
 
