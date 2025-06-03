@@ -505,3 +505,29 @@ class Grid(DrawableWithChild):
             current_x = 0
 
         self.set_child(Compose(self._padded_children))
+
+
+class ClipRect(Drawable):
+    child: Drawable
+    rect: Bounds
+
+    def __init__(self, child: Drawable, rect: Bounds):
+        self.init_from_fields(child=child, rect=rect)
+
+    def setup(self):
+        self._child = self.child
+        self._rect = self.rect
+
+    def draw(self, canvas: skia.Canvas):
+        canvas.save()
+        canvas.clipRect(self._rect.to_skia())
+        self._child.draw(canvas)
+        canvas.restore()
+
+    @property
+    def bounds(self) -> Bounds:
+        return self._rect
+
+    @property
+    def children(self) -> Sequence[Drawable]:
+        return [self._child]

@@ -382,16 +382,19 @@ class Drawable(ABC, DrawableBase):
         """Pad the drawable on the bottom by the specified amount."""
         return self.pad((0, 0, 0, padding))
 
-    def crop(self, bounds: Bounds) -> "Drawable":
+    def crop(self, bounds: Bounds, clip: bool = False) -> "Drawable":
         """Crop the drawable to the specified bounds."""
+
         from iceberg import Colors
-        from iceberg.primitives.layout import Anchor, Blank
+        from iceberg.primitives.layout import Anchor, Blank, ClipRect
 
-        blank = Blank(bounds, Colors.TRANSPARENT)
-
-        return Anchor(
-            [blank, self],
-        )
+        if clip:
+            return ClipRect(self, bounds)
+        else:
+            blank = Blank(bounds, Colors.TRANSPARENT)
+            return Anchor(
+                [blank, self],
+            )
 
     def opacity(self, opacity: float) -> "Drawable":
         """Set the opacity of the drawable.
